@@ -40,29 +40,27 @@ Smartparks GPS tracker hardware repository
    * note: minimum one message per day, a watchdog safety mechanism
  * note: ABP keys are factory written into the flash
  
-### LoRaWAN packet structure
+### LoRaWAN packet structure:
  * PORT1: GPS location: [lat] [long] [alt] [hdop] [time_to_fix]
  * PORT2: system status: [battery_level] [temperature]...
  * PORT0: setings: [configuration variables for device]
    * when received saved in flash, upgrade persistent // figure out what happens with settings
    
 
- 
-
-* hardware stack
-  * board1 
-    * top side - gps ceramic antena
-    * bottom side - LNA matching circuit and GPS (uBlox M8B)
-  * board2 - spacer
-  * board3
-    * power 
-    * accelerometer
-  * board4 - spacer
-  * board5
-    * bottom side - MCU + LoRa (Murata) + uFL connector
-  * board6
-    * top side - uFL and matching circuit
-    * bottom side - LoRa antena (antenova) + TAG connect for programming
+### Hardware stack:
+ * board1 
+   * top side - gps ceramic antena
+   * bottom side - LNA matching circuit and GPS (uBlox M8B)
+ * board2 - spacer
+ * board3
+   * power 
+   * accelerometer
+ * board4 - spacer
+ * board5
+   * bottom side - MCU + LoRa (Murata) + uFL connector
+ * board6
+   * top side - uFL and matching circuit
+   * bottom side - LoRa antena (antenova) + TAG connect for programming
   
 NOTE: Boards are stacked. //expain this
 
