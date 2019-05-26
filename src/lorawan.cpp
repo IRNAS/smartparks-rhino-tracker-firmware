@@ -22,8 +22,14 @@ char devEui[32]; // read from the processor
 
 void lorawan_init(void){
     LoRaWAN.begin(EU868);
-    LoRaWAN.addChannel(1, 868300000, 0, 6);
-
+    LoRaWAN.addChannel(1, 868100000, 0, 5);
+    LoRaWAN.addChannel(2, 868300000, 0, 5);
+    LoRaWAN.addChannel(3, 868500000, 0, 5);
+    LoRaWAN.addChannel(4, 867100000, 0, 5);
+    LoRaWAN.addChannel(5, 867300000, 0, 5);
+    LoRaWAN.addChannel(6, 867500000, 0, 5);
+    LoRaWAN.addChannel(7, 867900000, 0, 5);
+    LoRaWAN.addChannel(8, 867900000, 0, 5);
     LoRaWAN.setDutyCycle(false);
     // LoRaWAN.setAntennaGain(2.0);
     
@@ -45,6 +51,8 @@ void lorawan_init(void){
     #ifdef LORAWAN_ABP
     LoRaWAN.joinABP(devAddr, nwkSKey, appSKey);
     #endif
+
+    lorawan_joinCallback(); // call join callback manually to execute all the steps, necessary for ABP or OTAA with saved session
 }
 
 int lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
@@ -103,15 +111,6 @@ int lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
     return response;
 }
 
-void lorawan_transmitCallback(void)
-{
-  STM32L0.wakeup();
-  #ifdef debug
-    serial_debug.println("transmitCallback() timer");
-  #endif
-}
-
-
 // Callback on Join failed/success
 void lorawan_joinCallback(void)
 {
@@ -120,8 +119,11 @@ void lorawan_joinCallback(void)
       #ifdef debug
         serial_debug.println("JOINED");
       #endif
-      //force trigger transmitt callback
-      lorawan_transmitCallback();
+      //send all messages out on join
+      settings_send_flag = true;
+      status_send_flag = true;
+      sensor_send_flag = true;
+      LoRaWAN.setRX2Channel(869525000, 3); // SF12 - 0 for join, then SF 9 - 3, see https://github.com/TheThingsNetwork/ttn/issues/155
     }
     else
     {

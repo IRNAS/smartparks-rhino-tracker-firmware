@@ -54,10 +54,6 @@ void setup() {
   lorawan_init();
   status_init();
   sensor_init();
-  //send all messages out on boot
-  settings_send_flag = true;
-  status_send_flag = true;
-  sensor_send_flag = true;
 }
 
 
