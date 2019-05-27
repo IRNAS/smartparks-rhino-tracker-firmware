@@ -23,7 +23,7 @@ extern boolean settings_updated;
  *    bit 5 - temperature sensor enabled
  *    bit 6 - humidity sensor enabled
  *    bit 7 - pressure sensor enabled
- * lorawan_datarate_adr - lorawan fix reporting datarate, range 0 - 5 (SF7-SF12)
+ * lorawan_datarate_adr - lorawan fix reporting datarate, range 0 - 5 (SF7-SF12), upper nibble is adr, lower nibble is datarate
  * sensor_interval -  send interval in minutes, range 1 - 1440, default 60
  * gps_cold_fix_timeout - cold fix timeout in seconds, range 0-600
  * gps_hot_fix_timeout - hot fix timeout in seconds, range 0-600
