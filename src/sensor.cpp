@@ -4,6 +4,8 @@
 //#define serial_debug  Serial
 
 TimerMillis sensor_timer;
+TimerMillis sensor_gps_timer_check;
+TimerMillis sensor_gps_timer_timeout;
 
 sensorPacket_t sensor_packet;
 boolean sensor_send_flag = false;
@@ -78,6 +80,47 @@ void sensor_gps_init(){
     // disable backup
   }
 }
+
+void sensor_gps_start(){
+  // Start acquiring position
+  // Power up GPS
+  // Short delay for it to wake-up
+  // GNSS.resume();
+
+  // start callback untill fix is acquired and backup timeout
+  sensor_gps_timer_check.stop();
+  sensor_gps_timer_check.start(sensor_gps_acquiring_callback, 0, 1000); // run every second
+  sensor_gps_timer_timeout.stop();
+  sensor_gps_timer_timeout.start(sensor_gps_stop, 0, ((gps_hot_fix==true)?settings_packet.data.gps_hot_fix_timeout:settings_packet.data.gps_cold_fix_timeout)*1000); // run specified timeout
+}
+
+void sensor_gps_acquiring_callback(){
+  // Periodically check fix quality and timeout
+  boolean fix=false;
+  if(fix){
+    sensor_gps_timer_check.stop();
+    sensor_gps_timer_timeout.stop();
+    sensor_gps_stop();
+  }
+}
+
+void sensor_gps_stop(){
+  // Save location
+  // GNSS.suspend(); // may fail, make sure to check
+  // Power off GPS
+
+  double latitude, longitude, hdopGps = 0;
+  int16_t altitudeGps = 0xFFFF;
+
+  sensor_packet.data.lat = ((latitude + 90) / 180.0) * 16777215;
+  sensor_packet.data.lon = ((longitude + 180) / 360.0) * 16777215;
+  sensor_packet.data.alt = altitudeGps;
+  sensor_packet.data.satellites_hdop = (satellites<<4)|(hdopGps&0x0f);
+  sensor_packet.data.time_to_fix = 0;
+
+  sensor_send(); // now call the packet to be sent
+}
+
 /**
  * @brief initialize sensors upon boot or new settings
  * 
@@ -97,6 +140,7 @@ void sensor_init(void){
 
   sensor_system_functions_load();
 
+  sensor_gps_init();
 
 
   // Accelerometer

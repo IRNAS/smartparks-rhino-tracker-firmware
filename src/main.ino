@@ -90,7 +90,8 @@ void loop() {
     settings_send_flag=false;
   }
   else if(sensor_send_flag==true){
-    sensor_send();
+    sensor_gps_start();
+    //sensor_send(); // called when GPS is done
     sensor_send_flag=false;
   }
   else if(status_send_flag==true){

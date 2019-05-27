@@ -15,7 +15,11 @@ extern boolean sensor_send_flag;
  * 
  */
 struct sensorData_t{
-  uint8_t   status;
+  uint32_t lat;
+  uint32_t lon;
+  uint16_t alt;
+  uint8_t hdop;
+  uint8_t time_to_fix;
 }__attribute__((packed));
 
 union sensorPacket_t{
