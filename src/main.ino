@@ -25,17 +25,7 @@ void callbackWatchdog(void)
   /*#ifdef debug
     serial_debug.print("callbackWatchdog(): ");
     serial_debug.println(millis());
-  #endif*/
-
-  // if any of the flags are high, wake up
-  if(settings_updated|settings_send_flag|status_send_flag|sensor_send_flag){
-    STM32L0.wakeup();
-    #ifdef debug
-      serial_debug.print("callbackWatchdog(): wakeup: ");
-      serial_debug.println(millis());
-    #endif
-  }
-  
+  #endif*/  
 }
 
 void setup() {
@@ -44,8 +34,10 @@ void setup() {
   watchdog.start(callbackWatchdog, 0, 8500);
 
   // Serial port debug setup
-  #ifdef debug
+  #ifdef serial_debug
     serial_debug.begin(115200);
+  #endif
+  #ifdef debug
     serial_debug.println("setup(): serial debug begin");
   #endif
 
@@ -54,50 +46,57 @@ void setup() {
   lorawan_init();
   status_init();
   sensor_init();
+  settings_send_flag = true;
+  status_send_flag = true;
+  sensor_send_flag = true;
 }
 
 
 void loop() {
+
   //event processing loop
   //check all the flags and handle them in priority order
   //note one per loop is processed, ensuring minimum 30s lorawan packet spacing
   //check if settings have been updated
 
-  #ifdef debug
-    serial_debug.print("loop( ");
-    serial_debug.print("settings_updated: ");
-    serial_debug.print(settings_updated);
-    serial_debug.print(" settings_send_flag: ");
-    serial_debug.print(settings_send_flag);
-    serial_debug.print(" sensor_send_flag: ");
-    serial_debug.print(sensor_send_flag);
-    serial_debug.print(" status_send_flag: ");
-    serial_debug.print(status_send_flag);
-    serial_debug.println(" )");
-  #endif
+  // if any of the flags are high, do work
+  if(settings_updated|settings_send_flag|status_send_flag|sensor_send_flag){
 
-  
-  if(settings_updated==true){
-    status_init();
-    sensor_init();
-    settings_updated=false;
-    settings_send_flag = true;
-    status_send_flag = true;
-    sensor_send_flag = true;
+    #ifdef debug
+      serial_debug.print("loop( ");
+      serial_debug.print("settings_updated: ");
+      serial_debug.print(settings_updated);
+      serial_debug.print(" settings_send_flag: ");
+      serial_debug.print(settings_send_flag);
+      serial_debug.print(" sensor_send_flag: ");
+      serial_debug.print(sensor_send_flag);
+      serial_debug.print(" status_send_flag: ");
+      serial_debug.print(status_send_flag);
+      serial_debug.println(" )");
+    #endif
+
+
+    if(settings_updated==true){
+      status_init();
+      sensor_init();
+      settings_updated=false;
+      settings_send_flag = true;
+      status_send_flag = true;
+      sensor_send_flag = true;
+    }
+    if(settings_send_flag==true){
+      settings_send();
+      settings_send_flag=false;
+    }
+    else if(sensor_send_flag==true){
+      sensor_send();
+      sensor_send_flag=false;
+    }
+    else if(status_send_flag==true){
+      status_send();
+      status_send_flag=false;
+    }
   }
-  if(settings_send_flag==true){
-    settings_send();
-    settings_send_flag=false;
-  }
-  else if(sensor_send_flag==true){
-    sensor_gps_start();
-    //sensor_send(); // called when GPS is done
-    sensor_send_flag=false;
-  }
-  else if(status_send_flag==true){
-    status_send();
-    status_send_flag=false;
-  }
-  //go to stop state
-  STM32L0.stop();
+  //go to stop state for 10 seconds
+  STM32L0.stop(10000);
 }

@@ -27,7 +27,7 @@ extern boolean settings_updated;
  * sensor_interval -  send interval in minutes, range 1 - 1440, default 60
  * gps_cold_fix_timeout - cold fix timeout in seconds, range 0-600
  * gps_hot_fix_timeout - hot fix timeout in seconds, range 0-600
- * gps_minimal_hdop - minimal hdop to have a valid fix- values are *10, thus divide to get the number
+ * gps_minimal_ehpe - minimal hdop to have a valid fix- values are *10, thus divide to get the number
  * mode_slow_voltage_threshold - in % of the charge, range 1 - 100
  */
 struct settingsData_t{
@@ -37,7 +37,7 @@ struct settingsData_t{
   uint16_t  sensor_interval;
   uint16_t  gps_cold_fix_timeout;
   uint16_t  gps_hot_fix_timeout;
-  uint8_t   gps_minimal_hdop;
+  uint8_t   gps_minimal_ehpe;
   uint8_t   mode_slow_voltage_threshold;
 }__attribute__((packed));
 

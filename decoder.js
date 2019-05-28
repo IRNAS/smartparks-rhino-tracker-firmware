@@ -38,7 +38,7 @@ function Decoder(bytes) {
         decoded.sensor_interval = (bytes[5] << 8) | bytes[4];
         decoded.gps_cold_fix_timeout = (bytes[7] << 8) | bytes[6];
         decoded.gps_hot_fix_timeout = (bytes[9] << 8) | bytes[8];
-        decoded.gps_minimal_hdop = bytes[10];
+        decoded.gps_minimal_ehpe = bytes[10];
         decoded.mode_slow_voltage_threshold = bytes[11];
     }
     else if (port === 2){
@@ -50,7 +50,17 @@ function Decoder(bytes) {
         decoded.system_functions_errors = bytes[5];
       }
       else if (port === 1){
-        decoded.status = bytes[0];
+        decoded.lat = ((bytes[0]<<16)>>>0) + ((bytes[1]<<8)>>>0) + bytes[2];
+        decoded.lat = (decoded.lat / 16777215.0 * 180) - 90;
+        decoded.lon = ((bytes[3]<<16)>>>0) + ((bytes[4]<<8)>>>0) + bytes[5];
+        decoded.lon = (decoded.lon / 16777215.0 * 360) - 180;
+        decoded.alt = (bytes[7] << 8) | bytes[6];
+        decoded.satellites = (bytes[8] >> 4);
+        decoded.hdop = (bytes[8] & 0x0f);
+        decoded.time_to_fix = bytes[9];
+        decoded.epe = (bytes[11] << 8) | bytes[10];
+        decoded.lux = bytes[12];
+        decoded.motion = bytes[13];
       }
 
     return decoded;
