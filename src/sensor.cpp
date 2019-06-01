@@ -1,7 +1,7 @@
 #include "sensor.h"
 
-#define //debug
-#define //serial_debug  Serial
+//#define debug
+//#define serial_debug  Serial
 
 TimerMillis sensor_timer;
 TimerMillis sensor_gps_timer_check;
@@ -79,6 +79,10 @@ void sensor_gps_init(void){
   if((gps_periodic==true)|(gps_triggered==true)){
     boolean error=false;
     //initialize gps
+    pinMode(GPS_EN,OUTPUT);
+    digitalWrite(GPS_EN,HIGH);
+    pinMode(GPS_BCK,OUTPUT);
+    digitalWrite(GPS_BCK,HIGH);
     GNSS.end();
     error=sensor_gps_busy_timeout(3000); //if re-initialized this is required
     GNSS.begin(Serial1, GNSS.MODE_UBLOX, GNSS.RATE_1HZ);
@@ -86,6 +90,40 @@ void sensor_gps_init(void){
     GNSS.setConstellation(GNSS.CONSTELLATION_GPS_AND_GLONASS);
     error=sensor_gps_busy_timeout(3000);
 
+    //set error bits if GPS is not present and self-disable
+    if(error){
+      // GPS periodic error
+      bitSet(status_packet.data.system_functions_errors,0);
+      // GPS triggered error
+      bitSet(status_packet.data.system_functions_errors,1);
+      // Self-disable
+      gps_periodic=false;
+      gps_triggered=false;
+      #ifdef debug
+        serial_debug.print("gps init failed");
+        serial_debug.println("");
+      #endif
+      return;
+    }
+    // TODO initialize accelerometer and setup triggered mode enabled
+    if(gps_triggered==true){
+      boolean error=true;
+      //initialize accelerometer and set up the triggers
+      if(error){
+        //self-disable if triggered mode is unavailable
+        gps_triggered=false;
+      }
+    }
+
+    // Accoridng to UBLOX the ephemeris data is valid for maximally 4 hours, if fix interval is greater then that, backup may not be efficient and disablign it automatically in this case.
+    // See https://portal.u-blox.com/s/question/0D52p00008HKCT7CAP/time-to-fix-first
+    if((gps_hot_fix==true)&(settings_packet.data.sensor_interval<240)){
+      digitalWrite(GPS_BCK,HIGH);
+    }
+    else{
+      digitalWrite(GPS_BCK,LOW);
+    }
+    
     // Processor will be in sleep while waiting for fix, do not wake up from GPS librayr
     GNSS.disableWakeup();
     // This function will be called upon receiving a new GPS location
@@ -94,36 +132,27 @@ void sensor_gps_init(void){
     GNSS.disableWakeup();
     // GPS to sleep
     GNSS.suspend();
-    //set error bits
-    if(error){
-      // GPS periodic error
-      bitSet(status_packet.data.system_functions_errors,0);
-      // GPS triggered error
-      bitSet(status_packet.data.system_functions_errors,1);
-      #ifdef debug
-        serial_debug.print("gps init failed");
-        serial_debug.println("");
-      #endif
-      return;
-    }
-    if(gps_hot_fix==true){
-      // enable backup power pin
-    }
+    // Disable GPS power
+    digitalWrite(GPS_EN,LOW);
+
     #ifdef debug
       serial_debug.print("gps initialized");
       serial_debug.println("");
     #endif
   }
   else{
-    // disable GPS completely
+    // Disable GPS power
     // disable power
+    digitalWrite(GPS_EN,LOW);
     // disable backup
+    digitalWrite(GPS_BCK,LOW);
   }
 }
 
 void sensor_gps_start(void){
   // Start acquiring position
   // Power up GPS
+  digitalWrite(GPS_EN,HIGH);
   delay(10);
   GNSS.resume();
   #ifdef debug
@@ -155,6 +184,7 @@ void sensor_gps_stop(void){
     serial_debug.println(" )");
   #endif
   // Power off GPS
+  digitalWrite(GPS_EN,LOW);
 }
 
 /**
@@ -199,49 +229,59 @@ void sensor_init(void){
 }
 
 void sensor_read(void){
-  sensor_gps_fix_time=millis();
-  // Prepare GPS
-  sensor_gps_start();
-  // Go to sleep for hot or cold fix timeout, if fix is acquired or timeout, the sleep will be broken and process resumed
-  STM32L0.stop(((gps_hot_fix==true)?settings_packet.data.gps_hot_fix_timeout:settings_packet.data.gps_cold_fix_timeout)*1000);
-  // Stop GPS
-  sensor_gps_stop();
-  // Calculate fix duration
-  float time_to_fix = (millis()-sensor_gps_fix_time); //in seconds
+  // check if GPS is enabled and then proceed
+  if((gps_periodic==true)|(gps_triggered==true)){
+    sensor_gps_fix_time=millis();
+    // Prepare GPS
+    sensor_gps_start();
+    // Go to sleep for hot or cold fix timeout, if fix is acquired or timeout, the sleep will be broken and process resumed
+    STM32L0.stop(((gps_hot_fix==true)?settings_packet.data.gps_hot_fix_timeout:settings_packet.data.gps_cold_fix_timeout)*1000);
+    // Stop GPS
+    sensor_gps_stop();
+    // Calculate fix duration
+    float time_to_fix = (millis()-sensor_gps_fix_time); //in seconds
 
-  float latitude, longitude, hdop, epe, satellites, altitude = 0;
-  latitude = sensor_gps_location.latitude();
-  longitude = sensor_gps_location.longitude();
-  altitude = sensor_gps_location.altitude();
-  hdop = sensor_gps_location.hdop();
-  epe = sensor_gps_location.ehpe();
-  satellites = sensor_gps_location.satellites();
+    float latitude, longitude, hdop, epe, satellites, altitude = 0;
+    latitude = sensor_gps_location.latitude();
+    longitude = sensor_gps_location.longitude();
+    altitude = sensor_gps_location.altitude();
+    hdop = sensor_gps_location.hdop();
+    epe = sensor_gps_location.ehpe();
+    satellites = sensor_gps_location.satellites();
 
-  // 3 of 4 bytes of the variable are populated with data
-  uint32_t lat_packed = (uint32_t)(((latitude + 90) / 180.0) * 16777215);
-  uint32_t lon_packed = (uint32_t)(((longitude + 180) / 360.0) * 16777215);
-  sensor_packet.data.lat1 = lat_packed >> 16;
-  sensor_packet.data.lat2 = lat_packed >> 8;
-  sensor_packet.data.lat3 = lat_packed;
-  sensor_packet.data.lon1 = lon_packed >> 16;
-  sensor_packet.data.lon1 = lon_packed >> 8;
-  sensor_packet.data.lon1 = lon_packed;
-  sensor_packet.data.alt = (uint16_t)altitude;
-  sensor_packet.data.satellites_hdop = (((uint8_t)satellites)<<4)|(((uint8_t)hdop)&0x0f);
-  sensor_packet.data.time_to_fix = (uint8_t)(time_to_fix/1000);
-  sensor_packet.data.epe = (uint16_t)epe;
-    
-  #ifdef debug
-    serial_debug.print("gps(");
-    serial_debug.print(" lat: "); serial_debug.print(latitude,7);
-    serial_debug.print(" lon "); serial_debug.print(longitude,7);
-    serial_debug.print(" alt: "); serial_debug.print(altitude,3);
-    serial_debug.print(" hdop: "); serial_debug.print(hdop,2);     
-    serial_debug.print(" epe: "); serial_debug.print(epe,2);
-    serial_debug.print(" sat: "); serial_debug.print(satellites,0); 
-    serial_debug.print(" ttf: "); serial_debug.print(time_to_fix); 
-    serial_debug.println(" )"); 
-  #endif  
+    // 3 of 4 bytes of the variable are populated with data
+    uint32_t lat_packed = (uint32_t)(((latitude + 90) / 180.0) * 16777215);
+    uint32_t lon_packed = (uint32_t)(((longitude + 180) / 360.0) * 16777215);
+    sensor_packet.data.lat1 = lat_packed >> 16;
+    sensor_packet.data.lat2 = lat_packed >> 8;
+    sensor_packet.data.lat3 = lat_packed;
+    sensor_packet.data.lon1 = lon_packed >> 16;
+    sensor_packet.data.lon1 = lon_packed >> 8;
+    sensor_packet.data.lon1 = lon_packed;
+    sensor_packet.data.alt = (uint16_t)altitude;
+    sensor_packet.data.satellites_hdop = (((uint8_t)satellites)<<4)|(((uint8_t)hdop)&0x0f);
+    sensor_packet.data.time_to_fix = (uint8_t)(time_to_fix/1000);
+    sensor_packet.data.epe = (uint16_t)epe;
+      
+    #ifdef debug
+      serial_debug.print("gps(");
+      serial_debug.print(" lat: "); serial_debug.print(latitude,7);
+      serial_debug.print(" lon "); serial_debug.print(longitude,7);
+      serial_debug.print(" alt: "); serial_debug.print(altitude,3);
+      serial_debug.print(" hdop: "); serial_debug.print(hdop,2);     
+      serial_debug.print(" epe: "); serial_debug.print(epe,2);
+      serial_debug.print(" sat: "); serial_debug.print(satellites,0); 
+      serial_debug.print(" ttf: "); serial_debug.print(time_to_fix); 
+      serial_debug.println(" )"); 
+    #endif  
+  }
+  else{
+    #ifdef debug
+      serial_debug.print("sensor_read(");
+      serial_debug.print(" GPS not enabled");
+      serial_debug.println(" )"); 
+    #endif  
+  }
 }
 
 /**

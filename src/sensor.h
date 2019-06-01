@@ -8,6 +8,7 @@
 #include "settings.h"
 #include "status.h"
 #include "GNSS.h"
+#include "board.h"
 
 extern boolean sensor_send_flag;
 

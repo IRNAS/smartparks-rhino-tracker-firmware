@@ -1,5 +1,6 @@
 #include <STM32L0.h> 
 #include "TimerMillis.h"
+#include "board.h"
 #include "command.h"
 #include "lorawan.h"
 #include "sensor.h"
@@ -7,8 +8,8 @@
 #include "status.h"
 #include "project_utils.h"
 
-//#define debug
-//#define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
 
 // Initialize timer for watchdog
 TimerMillis watchdog;
