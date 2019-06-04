@@ -83,6 +83,7 @@ void sensor_gps_init(void){
     digitalWrite(GPS_EN,HIGH);
     pinMode(GPS_BCK,OUTPUT);
     digitalWrite(GPS_BCK,HIGH);
+    delay(300); // wait for ublox to boot
     GNSS.end();
     error=sensor_gps_busy_timeout(3000); //if re-initialized this is required
     GNSS.begin(Serial1, GNSS.MODE_UBLOX, GNSS.RATE_1HZ);
@@ -99,6 +100,9 @@ void sensor_gps_init(void){
       // Self-disable
       gps_periodic=false;
       gps_triggered=false;
+      // Disable GPS power
+      digitalWrite(GPS_EN,LOW);
+      digitalWrite(GPS_BCK,LOW);
       #ifdef debug
         serial_debug.print("gps init failed");
         serial_debug.println("");
@@ -134,6 +138,7 @@ void sensor_gps_init(void){
     GNSS.suspend();
     // Disable GPS power
     digitalWrite(GPS_EN,LOW);
+    digitalWrite(GPS_BCK,LOW);
 
     #ifdef debug
       serial_debug.print("gps initialized");
@@ -234,6 +239,7 @@ void sensor_read(void){
     sensor_gps_fix_time=millis();
     // Prepare GPS
     sensor_gps_start();
+    // TODO: More detailed handling is required to allow for euphemeris download and ocassional cold fix when scheduled hot fix
     // Go to sleep for hot or cold fix timeout, if fix is acquired or timeout, the sleep will be broken and process resumed
     STM32L0.stop(((gps_hot_fix==true)?settings_packet.data.gps_hot_fix_timeout:settings_packet.data.gps_cold_fix_timeout)*1000);
     // Stop GPS
@@ -256,8 +262,8 @@ void sensor_read(void){
     sensor_packet.data.lat2 = lat_packed >> 8;
     sensor_packet.data.lat3 = lat_packed;
     sensor_packet.data.lon1 = lon_packed >> 16;
-    sensor_packet.data.lon1 = lon_packed >> 8;
-    sensor_packet.data.lon1 = lon_packed;
+    sensor_packet.data.lon2 = lon_packed >> 8;
+    sensor_packet.data.lon3 = lon_packed;
     sensor_packet.data.alt = (uint16_t)altitude;
     sensor_packet.data.satellites_hdop = (((uint8_t)satellites)<<4)|(((uint8_t)hdop)&0x0f);
     sensor_packet.data.time_to_fix = (uint8_t)(time_to_fix/1000);
