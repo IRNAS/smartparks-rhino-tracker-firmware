@@ -23,10 +23,19 @@ void callbackWatchdog(void)
 {
   STM32L0.wdtReset();
   
-  /*#ifdef debug
+  #ifdef debug
     serial_debug.print("callbackWatchdog(): ");
     serial_debug.println(millis());
-  #endif*/  
+  #endif
+
+    // if any of the flags are high, wake up
+  if(settings_updated|settings_send_flag|status_send_flag|sensor_send_flag){
+    STM32L0.wakeup();
+    #ifdef debug
+      serial_debug.print("callbackWatchdog(): wakeup: ");
+      serial_debug.println(millis());
+    #endif
+  }
 }
 
 void setup() {
@@ -59,7 +68,6 @@ void loop() {
   //check all the flags and handle them in priority order
   //note one per loop is processed, ensuring minimum 30s lorawan packet spacing
   //check if settings have been updated
-
   // if any of the flags are high, do work
   if(settings_updated|settings_send_flag|status_send_flag|sensor_send_flag){
 
@@ -98,6 +106,6 @@ void loop() {
       status_send_flag=false;
     }
   }
-  //go to stop state for 10 seconds
-  STM32L0.stop(10000);
+  //go to stop state
+  STM32L0.stop();
 }
