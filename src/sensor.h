@@ -38,6 +38,7 @@ union sensorPacket_t{
 
 static const uint8_t sensor_packet_port = 1;
 extern sensorPacket_t sensor_packet;
+extern boolean sensor_gps_active;
 
 void sensor_timer_callback(void);
 void sensor_system_functions_load(void);
@@ -47,6 +48,7 @@ void sensor_gps_start(void);
 void sensor_gps_acquiring_callback(void);
 void sensor_gps_stop(void);
 void sensor_init(void);
+void sensor_read(void);
 void sensor_send(void);
 
 #endif

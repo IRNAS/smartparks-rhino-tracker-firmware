@@ -3,8 +3,8 @@
 //#define debug
 //#define serial_debug  Serial
 
-#define LORAWAN_ABP
-//#define LORAWAN_OTAA
+//#define LORAWAN_ABP
+#define LORAWAN_OTAA
 
 #ifdef LORAWAN_ABP
 // LoraWAN ABP configuration
@@ -15,7 +15,7 @@ const char *appSKey = "74A22F5287DAA0A6AA9639B32A721190";
 
 #ifdef LORAWAN_OTAA
 // LoraWAN ABP configuration
-const char *appEui  = "70B3D57ED001CCE3";
+const char *appEui  = "70B3D57ED001CC77";
 const char *appKey  = "003FF34E9F1C8864953D78DCFBBC84F8";
 char devEui[32]; // read from the processor
 #endif

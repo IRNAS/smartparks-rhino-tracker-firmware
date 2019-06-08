@@ -5,8 +5,6 @@ uint8_t resetCause = 0xff;
 //#define debug
 //#define serial_debug  Serial
 
-TimerMillis status_timer;
-
 boolean status_send_flag = false;
 statusPacket_t status_packet;
 
@@ -19,8 +17,8 @@ void status_timer_callback(void)
 }
 
 void status_init(void){ 
-    status_timer.stop();
-    status_timer.start(status_timer_callback, 0, settings_packet.data.system_status_interval*60*1000);
+    //status_timer.stop();
+    //status_timer.start(status_timer_callback, 0, settings_packet.data.system_status_interval*60*1000);
     #ifdef debug
         serial_debug.print("status_init - status_timer_callback( ");
         serial_debug.print("interval: ");

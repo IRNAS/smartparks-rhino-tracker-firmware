@@ -29,6 +29,8 @@ extern boolean settings_updated;
  * gps_hot_fix_timeout - hot fix timeout in seconds, range 0-600
  * gps_minimal_ehpe - minimal hdop to have a valid fix- values are *10, thus divide to get the number
  * mode_slow_voltage_threshold - in % of the charge, range 1 - 100
+ * gps_settings - enable/disable certain features
+ *    bit 0 - gps 3d fix required
  */
 struct settingsData_t{
   uint16_t  system_status_interval;
@@ -39,6 +41,7 @@ struct settingsData_t{
   uint16_t  gps_hot_fix_timeout;
   uint8_t   gps_minimal_ehpe;
   uint8_t   mode_slow_voltage_threshold;
+  uint8_t   gps_settings;
 }__attribute__((packed));
 
 union settingsPacket_t{

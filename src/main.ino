@@ -14,6 +14,9 @@
 // Initialize timer for watchdog
 TimerMillis watchdog;
 
+long event_status_last = 0;
+long event_sensor_last = 0;
+
 /*
  *  Function:     void callbackWatchdog(void)
  *  Description:  function called with timer to kick the watchdog
@@ -23,32 +26,43 @@ void callbackWatchdog(void)
 {
   STM32L0.wdtReset();
   
-  #ifdef debug
-    serial_debug.print("callbackWatchdog(): ");
+  /*#ifdef debug
+    serial_debug.print("wdt(): ");
     serial_debug.println(millis());
-  #endif
+  #endif*/
+
+  // determine which events need to be scheduled
+  if((millis()-event_status_last)>(settings_packet.data.system_status_interval*60*1000)){
+    status_send_flag = true;
+    event_status_last=millis();
+  }
+  if((millis()-event_sensor_last)>(settings_packet.data.sensor_interval*60*1000)){
+    sensor_send_flag = true;
+    event_sensor_last=millis();
+  }
 
     // if any of the flags are high, wake up
   if(settings_updated|settings_send_flag|status_send_flag|sensor_send_flag){
     STM32L0.wakeup();
-    #ifdef debug
-      serial_debug.print("callbackWatchdog(): wakeup: ");
-      serial_debug.println(millis());
-    #endif
+    /*#ifdef debug
+      serial_debug.print("wakeup(");
+      serial_debug.print(millis());
+      serial_debug.println(")");
+    #endif*/
   }
 }
 
 void setup() {
   // Watchdog
   STM32L0.wdtEnable(18000);
-  watchdog.start(callbackWatchdog, 0, 8500);
+  watchdog.start(callbackWatchdog, 0, 5000);
 
   // Serial port debug setup
   #ifdef serial_debug
     serial_debug.begin(115200);
   #endif
   #ifdef debug
-    serial_debug.println("setup(): serial debug begin");
+    serial_debug.println("setup(serial debug begin)");
   #endif
 
   // setup lorawan
@@ -59,6 +73,8 @@ void setup() {
   settings_send_flag = true;
   status_send_flag = true;
   sensor_send_flag = true;
+  event_status_last=millis();
+  event_sensor_last=millis();
 }
 
 
@@ -71,7 +87,7 @@ void loop() {
   // if any of the flags are high, do work
   if(settings_updated|settings_send_flag|status_send_flag|sensor_send_flag){
 
-    #ifdef debug
+    /*#ifdef debug
       serial_debug.print("loop( ");
       serial_debug.print("settings_updated: ");
       serial_debug.print(settings_updated);
@@ -82,7 +98,7 @@ void loop() {
       serial_debug.print(" status_send_flag: ");
       serial_debug.print(status_send_flag);
       serial_debug.println(" )");
-    #endif
+    #endif*/
 
 
     if(settings_updated==true){
@@ -98,7 +114,11 @@ void loop() {
       settings_send_flag=false;
     }
     else if(sensor_send_flag==true){
-      sensor_send();
+      //sensor_send();
+      //skip GPS action if still active
+      if(!sensor_gps_active){
+        sensor_gps_start();
+      }
       sensor_send_flag=false;
     }
     else if(status_send_flag==true){

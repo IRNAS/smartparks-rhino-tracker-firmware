@@ -37,14 +37,15 @@ void settings_timer_callback(void)
  */
 void settings_init(void){
     //hardcoded defaults
-    settings_packet.data.system_status_interval=1;
+    settings_packet.data.system_status_interval=5;
     settings_packet.data.system_functions=0xff;
     settings_packet.data.lorawan_datarate_adr=3;
-    settings_packet.data.sensor_interval=1;
-    settings_packet.data.gps_cold_fix_timeout=30;
-    settings_packet.data.gps_hot_fix_timeout=120;
-    settings_packet.data.gps_minimal_ehpe=40;
+    settings_packet.data.sensor_interval=2;
+    settings_packet.data.gps_cold_fix_timeout=200;
+    settings_packet.data.gps_hot_fix_timeout=200;
+    settings_packet.data.gps_minimal_ehpe=50;
     settings_packet.data.mode_slow_voltage_threshold=1;
+    settings_packet.data.gps_settings=0x00;
 
     // here implement reading from eeprom
 
@@ -69,6 +70,7 @@ void settings_from_downlink(void)
     settings_packet.data.gps_hot_fix_timeout=constrain(settings_packet_downlink.data.gps_hot_fix_timeout, 0, 600);
     settings_packet.data.gps_minimal_ehpe=constrain(settings_packet_downlink.data.gps_minimal_ehpe, 0, 100);
     settings_packet.data.mode_slow_voltage_threshold=constrain(settings_packet_downlink.data.mode_slow_voltage_threshold, 1, 100);
+    settings_packet.data.gps_settings=constrain(settings_packet_downlink.data.gps_settings, 0, 0xff);
     //store to eeprom when implemented
 
     settings_updated = true;
