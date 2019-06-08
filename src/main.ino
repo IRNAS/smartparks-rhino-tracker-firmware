@@ -342,6 +342,11 @@ void loop() {
 
   // check if the existing state has timed out and transition to next state
   if(state_check_timeout()){
+    #ifdef debug
+      serial_debug.print("timeout(");
+      serial_debug.print(state);
+      serial_debug.println(")");
+    #endif
     state_transition(state_next);
   }
 
@@ -353,6 +358,7 @@ void loop() {
     serial_debug.print(",");
     serial_debug.print(millis());
     serial_debug.println(")");
+    serial_debug.flush();
   #endif
 
   // reset the event loop start to show the loop has finished

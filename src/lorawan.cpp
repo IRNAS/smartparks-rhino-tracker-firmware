@@ -72,8 +72,7 @@ int lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
       }*/
       #endif
 
-      if (LoRaWAN.joined())
-      {
+      if (LoRaWAN.joined()){
         // set datarate, take only the lower 4 bytes, highest bit sets ADR on/off
         LoRaWAN.setADR(settings_packet.data.lorawan_datarate_adr>>7);
         LoRaWAN.setDataRate(settings_packet.data.lorawan_datarate_adr&0x0f);
@@ -99,22 +98,24 @@ int lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
             serial_debug.print(size);
             serial_debug.println(" )");
           #endif
-          // int sendPacket(uint8_t port, const uint8_t *buffer, size_t size, bool confirmed = false);
-          response = LoRaWAN.sendPacket(port, buffer, size, false);
+        // int sendPacket(uint8_t port, const uint8_t *buffer, size_t size, bool confirmed = false);
+        response = LoRaWAN.sendPacket(port, buffer, size, false);
+        if(response>0){
           lorawan_send_successful = false;
           break; // jump out of the for loop if successful
+        }
       }
       else{
         #ifdef debug
-            serial_debug.println("lorawan_send() lora not joined");
+          serial_debug.println("lorawan_send() lora not joined");
         #endif
         break; // jump out of the for loop as the retry does not resolve a join
       }
     }
     else{
-        #ifdef debug
-            serial_debug.println("lorawan_send() lora busy");
-        #endif
+      #ifdef debug
+        serial_debug.println("lorawan_send() lora busy");
+      #endif
     }
     delay(100); // retry every 100ms
   }

@@ -122,10 +122,14 @@ void sensor_gps_init(void){
     //GNSS.suspend();
     //GNSS.end();
     delay(1000); // wait for ublox to boot
-    serial_debug.println("1");
     for(int i=0;i<3;i++){
+      //https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/issues/86
+      //workaround for the above issue
+      if(!digitalRead(PA10)){
+        error=1;
+        break;
+      }
       GNSS.begin(Serial1, GNSS.MODE_UBLOX, GNSS.RATE_1HZ);
-      serial_debug.println("2");
       error=sensor_gps_busy_timeout(3000); //if re-initialized this is required
       if(!error){
         break;
@@ -138,10 +142,6 @@ void sensor_gps_init(void){
         delay(300);
       }
     }
-    // see default config https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/blob/18fb1cc81c6bc91b25e3346595f820985f2267e5/libraries/GNSS/src/utility/gnss_core.c#L2904
-    GNSS.setConstellation(GNSS.CONSTELLATION_GPS_AND_GLONASS);
-    error=sensor_gps_busy_timeout(3000);
-
     //set error bits if GPS is not present and self-disable
     if(error){
       // GPS periodic error
@@ -179,10 +179,10 @@ void sensor_gps_init(void){
       sensor_gps_backup(false);
     }
     
+    // see default config https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/blob/18fb1cc81c6bc91b25e3346595f820985f2267e5/libraries/GNSS/src/utility/gnss_core.c#L2904
+    GNSS.setConstellation(GNSS.CONSTELLATION_GPS_AND_GLONASS);
     // Processor will be in sleep while waiting for fix, do not wake up from GPS librayr
     GNSS.disableWakeup();
-    // Enable external antenna as that enables th external LNA
-    GNSS.setAntenna(GNSS.ANTENNA_INTERNAL);
     // Enable Assist Now Autonomous mode
     GNSS.setAutonomous(true);
     /// Set platform to portable as default
