@@ -57,6 +57,6 @@ uint8_t settings_get_packet_port(void);
 void settings_timer_callback(void);
 void settings_init(void);
 void settings_from_downlink(void);
-void settings_send(void);
+boolean settings_send(void);
 
 #endif

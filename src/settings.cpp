@@ -80,9 +80,12 @@ void settings_from_downlink(void)
  * @brief Settings send via lorawan
  * 
  */
-void settings_send(void){
+boolean settings_send(void){
     #ifdef debug
         serial_debug.println("settings_send()");
     #endif
-    lorawan_send(settings_packet_port, &settings_packet.bytes[0], sizeof(settingsData_t));
+    if(lorawan_send(settings_packet_port, &settings_packet.bytes[0], sizeof(settingsData_t))==0){
+        return false;
+    }
+    return true;
 }

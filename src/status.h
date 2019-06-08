@@ -48,6 +48,6 @@ extern statusPacket_t status_packet;
 
 void status_timer_callback(void);
 void status_init(void);
-void status_send(void);
+boolean status_send(void);
 
 #endif

@@ -112,19 +112,29 @@ void sensor_gps_backup(boolean enable){
 void sensor_gps_init(void){
   // Check if GPS is enabled, then set it up accordingly
   if((gps_periodic==true)|(gps_triggered==true)){
+    #ifdef debug
+      serial_debug.print("gps(sensor_gps_init()");
+      serial_debug.println(")");
+    #endif
     boolean error=false;
     sensor_gps_power(true);
     sensor_gps_backup(true);
-    GNSS.suspend();
-    GNSS.end();
+    //GNSS.suspend();
+    //GNSS.end();
     delay(1000); // wait for ublox to boot
+    serial_debug.println("1");
     for(int i=0;i<3;i++){
       GNSS.begin(Serial1, GNSS.MODE_UBLOX, GNSS.RATE_1HZ);
+      serial_debug.println("2");
       error=sensor_gps_busy_timeout(3000); //if re-initialized this is required
       if(!error){
         break;
       }
       else{
+        #ifdef debug
+          serial_debug.print("gps(begin timeout");
+          serial_debug.println(")");
+        #endif
         delay(300);
       }
     }
@@ -194,11 +204,15 @@ void sensor_gps_init(void){
     // Disable GPS power
     sensor_gps_power(false);
     sensor_gps_backup(false);
+    #ifdef debug
+      serial_debug.print("gps(disabled");
+      serial_debug.println(")");
+    #endif
   }
 }
 
-void sensor_gps_start(void){
-
+boolean sensor_gps_start(void){
+  boolean response = false;
     // check if GPS is enabled and then proceed
   if((gps_periodic==true)|(gps_triggered==true)){
     sensor_gps_fix_time=millis();
@@ -206,7 +220,7 @@ void sensor_gps_start(void){
     // Power up GPS
     sensor_gps_power(true);
     delay(300);
-    GNSS.resume();
+    response=GNSS.resume();
     //flag that gps is active
     sensor_gps_active = true;
     // TODO: More detailed handling is required to allow for euphemeris download and ocassional cold fix when scheduled hot fix
@@ -221,9 +235,7 @@ void sensor_gps_start(void){
       serial_debug.println(")");
     #endif
   }
-  else{
-    //sensor_gps_stop();
-  }
+  return response;
 }
 
 void sensor_gps_acquiring_callback(void){
@@ -296,8 +308,6 @@ void sensor_gps_stop(void){
     serial_debug.print(" ttf: "); serial_debug.print(time_to_fix); 
     serial_debug.println(" )"); 
   #endif  
-
-  sensor_send();
 }
 
 /**
@@ -307,19 +317,12 @@ void sensor_gps_stop(void){
  * 
  */
 void sensor_init(void){
-  //sensor_timer.stop();
-  //sensor_timer.start(sensor_timer_callback, 0, settings_packet.data.sensor_interval*60*1000);
-
   #ifdef debug
-    serial_debug.print("sensor_init - sensor_timer_callback( ");
-    serial_debug.print("interval: ");
-    serial_debug.print(settings_packet.data.sensor_interval);
-    serial_debug.println(" )");
+    serial_debug.print("sensor_init(");
+    serial_debug.println(")");
   #endif
 
   sensor_system_functions_load();
-
-  sensor_gps_init();
 
 
   // Accelerometer
@@ -341,19 +344,8 @@ void sensor_init(void){
   }   
 }
 
-void sensor_read(void){
-  // check if GPS is enabled and then proceed
-  if((gps_periodic==true)|(gps_triggered==true)){
-
-    
-  }
-  else{
-    #ifdef debug
-      serial_debug.print("sensor_read(");
-      serial_debug.print(" GPS not enabled");
-      serial_debug.println(" )"); 
-    #endif  
-  }
+boolean sensor_read(void){
+  return true;
 }
 
 /**
@@ -362,8 +354,9 @@ void sensor_read(void){
  * @details Make sure to do this only for features enabled in the settings
  * 
  */
-void sensor_send(void){
-    //assemble information
-    sensor_read();
-    lorawan_send(sensor_packet_port, &sensor_packet.bytes[0], sizeof(sensorData_t));
+boolean sensor_send(void){
+  if(lorawan_send(sensor_packet_port, &sensor_packet.bytes[0], sizeof(sensorData_t))==0){
+    return false;
+  }
+  return true;
 }
