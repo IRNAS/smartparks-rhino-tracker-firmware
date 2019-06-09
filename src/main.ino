@@ -143,6 +143,16 @@ void setup() {
 void loop() {
   long sleep = -1;
   event_loop_start = millis();
+  #ifdef debug
+    serial_debug.print("fsm(");
+    serial_debug.print(state);
+    serial_debug.print(",");
+    serial_debug.print(sleep);
+    serial_debug.print(",");
+    serial_debug.print(millis());
+    serial_debug.println(")");
+    serial_debug.flush();
+  #endif
   // FSM implementaiton for clarity of process loop
   switch (state)
   {
@@ -169,7 +179,8 @@ void loop() {
     }
     else{
       // TODO: decide what to do if LoraWAN fails
-      // currently the state will auto-retry until timeout
+      // Currently very harsh, doing full system reset
+      STM32L0.reset();
     }
     break;
   case LORAWAN_JOIN:
@@ -273,7 +284,7 @@ void loop() {
     break;
   case GPS_READ:
     // defaults for timing out
-    state_timeout_duration=100*60*1000;
+    state_timeout_duration=10*60*1000;
     state_next=IDLE;
     // action
     // transition
@@ -282,7 +293,7 @@ void loop() {
     }
     else{
       // sleep for 1 second and check
-      sleep=1000;
+      sleep=4000;
     }
     break;
   case SENSOR_READ:
@@ -349,17 +360,6 @@ void loop() {
     #endif
     state_transition(state_next);
   }
-
-  #ifdef debug
-    serial_debug.print("fsm(");
-    serial_debug.print(state);
-    serial_debug.print(",");
-    serial_debug.print(sleep);
-    serial_debug.print(",");
-    serial_debug.print(millis());
-    serial_debug.println(")");
-    serial_debug.flush();
-  #endif
 
   // reset the event loop start to show the loop has finished
   event_loop_start = 0;

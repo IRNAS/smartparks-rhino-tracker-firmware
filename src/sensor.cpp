@@ -88,25 +88,29 @@ boolean sensor_gps_busy_timeout(uint16_t timeout){
 }
 
 void sensor_gps_power(boolean enable){
-  /*if(enable){
+  /*#ifndef STM32L0_CONFIG_PIN_GNSS_ENABLE
+  if(enable){
     pinMode(GPS_EN,OUTPUT);
     digitalWrite(GPS_EN,HIGH);
   }
   else{
-    //digitalWrite(GPS_EN,LOW);
-    //pinMode(GPS_EN,INPUT_PULLDOWN);
-  }*/
+    digitalWrite(GPS_EN,LOW);
+    pinMode(GPS_EN,INPUT_PULLDOWN);
+  }
+  #endif*/
 }
 
 void sensor_gps_backup(boolean enable){
-  /*if(enable){
+  /*#ifndef STM32L0_CONFIG_PIN_GNSS_ENABLE
+  if(enable){
     pinMode(GPS_BCK,OUTPUT);
     digitalWrite(GPS_BCK,HIGH);
   }
   else{
     digitalWrite(GPS_BCK,LOW);
     pinMode(GPS_BCK,INPUT_PULLDOWN);
-  }*/
+  }
+  #endif*/
 }
 
 void sensor_gps_init(void){
@@ -119,16 +123,16 @@ void sensor_gps_init(void){
     boolean error=false;
     sensor_gps_power(true);
     sensor_gps_backup(true);
-    //GNSS.suspend();
-    //GNSS.end();
     delay(1000); // wait for ublox to boot
     for(int i=0;i<3;i++){
       //https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/issues/86
       //workaround for the above issue
+      /*pinMode(GPS_EN,OUTPUT);
+      digitalWrite(GPS_EN,HIGH);
       if(!digitalRead(PA10)){
         error=1;
         break;
-      }
+      }*/
       GNSS.begin(Serial1, GNSS.MODE_UBLOX, GNSS.RATE_1HZ);
       error=sensor_gps_busy_timeout(3000); //if re-initialized this is required
       if(!error){
@@ -180,17 +184,29 @@ void sensor_gps_init(void){
     }
     
     // see default config https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/blob/18fb1cc81c6bc91b25e3346595f820985f2267e5/libraries/GNSS/src/utility/gnss_core.c#L2904
+    error=sensor_gps_busy_timeout(1000);
     GNSS.setConstellation(GNSS.CONSTELLATION_GPS_AND_GLONASS);
     // Processor will be in sleep while waiting for fix, do not wake up from GPS librayr
     GNSS.disableWakeup();
     // Enable Assist Now Autonomous mode
+    error=sensor_gps_busy_timeout(1000);
     GNSS.setAutonomous(true);
     /// Set platform to portable as default
+    error=sensor_gps_busy_timeout(1000);
     GNSS.setPlatform(GNSS.PLATFORM_PORTABLE);
     // This function will be called upon receiving a new GPS location
     GNSS.onLocation(sensor_gps_acquiring_callback);
     // GPS to sleep
+    error=sensor_gps_busy_timeout(1000);
     GNSS.suspend();
+    //set error bits if GPS is not present and self-disable
+    if(error){
+      #ifdef debug
+        serial_debug.print("gps(settings failed");
+        serial_debug.println(")");
+      #endif
+      return;
+    }
     delay(300); // must be here otherwise baudrate and other commands are not saved
     // Disable GPS power
     sensor_gps_power(false);
@@ -219,8 +235,20 @@ boolean sensor_gps_start(void){
     // Start acquiring position
     // Power up GPS
     sensor_gps_power(true);
-    delay(300);
-    response=GNSS.resume();
+    for(int i=0;i<3;i++){
+      delay(300);
+      sensor_gps_busy_timeout(1000);
+      response=GNSS.resume();
+      if(response){
+        break;
+      }
+      else{
+        #ifdef debug
+          serial_debug.print("gps(resume failed ");
+          serial_debug.println(")");
+        #endif
+      }
+    }
     //flag that gps is active
     sensor_gps_active = true;
     // TODO: More detailed handling is required to allow for euphemeris download and ocassional cold fix when scheduled hot fix
@@ -242,11 +270,17 @@ void sensor_gps_acquiring_callback(void){
   // Check if new location information is available
   if(GNSS.location(sensor_gps_location)){
     float ehpe = sensor_gps_location.ehpe();
-    /*#ifdef debug
+    #ifdef debug
     serial_debug.print("gps( ehpe ");
     serial_debug.print(ehpe);
+    serial_debug.print(" sat ");
+    serial_debug.print(sensor_gps_location.satellites());
+    serial_debug.print(" aopcfg ");
+    serial_debug.print(sensor_gps_location.aopCfgStatus());
+    serial_debug.print(" aop ");
+    serial_debug.print(sensor_gps_location.aopStatus());
     serial_debug.println(" )");
-    #endif*/
+    #endif
     if(((sensor_gps_location.fixType() == GNSSLocation::TYPE_2D)&!gps_settings_d3)|(sensor_gps_location.fixType() == GNSSLocation::TYPE_3D)){
       if((ehpe <= settings_packet.data.gps_minimal_ehpe) && sensor_gps_location.fullyResolved()){
         // fix acquired
@@ -264,7 +298,8 @@ void sensor_gps_acquiring_callback(void){
 void sensor_gps_stop(void){
   sensor_gps_timeout.stop();
   // Calculate fix duration
-  time_to_fix = (millis()-sensor_gps_fix_time); //in secondss
+  time_to_fix = (millis()-sensor_gps_fix_time); //in seconds
+  sensor_gps_busy_timeout(100);
   GNSS.suspend();
   // Power off GPS
   sensor_gps_power(false);
