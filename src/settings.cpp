@@ -84,8 +84,5 @@ boolean settings_send(void){
     #ifdef debug
         serial_debug.println("settings_send()");
     #endif
-    if(lorawan_send(settings_packet_port, &settings_packet.bytes[0], sizeof(settingsData_t))==0){
-        return false;
-    }
-    return true;
+    return lorawan_send(settings_packet_port, &settings_packet.bytes[0], sizeof(settingsData_t));
 }

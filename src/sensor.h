@@ -43,7 +43,7 @@ extern boolean sensor_gps_active;
 void sensor_timer_callback(void);
 void sensor_system_functions_load(void);
 boolean sensor_gps_busy_timeout(uint16_t timeout);
-void sensor_gps_init(void);
+boolean sensor_gps_init(void);
 boolean sensor_gps_start(void);
 void sensor_gps_acquiring_callback(void);
 void sensor_gps_stop(void);

@@ -27,6 +27,7 @@ enum state_e{
   SETTINGS_SEND,
   STATUS_SEND,
   GPS_START,
+  GPS_RUN,
   GPS_READ,
   SENSOR_READ,
   SENSOR_SEND,
@@ -35,8 +36,8 @@ enum state_e{
 } ;
 
 state_e state = INIT;
-state_e state_next;
-state_e state_prev;
+state_e state_goto_timeout;
+state_e state_prev = INIT;
 unsigned long state_timeout_start;
 unsigned long state_timeout_duration;
 
@@ -101,7 +102,6 @@ void state_transition(state_e next){
   // mark the time state has been entered
   state_timeout_start = millis();
   // move to the following state
-  state_prev=state;
   state=next;
 }
 
@@ -145,6 +145,8 @@ void loop() {
   event_loop_start = millis();
   #ifdef debug
     serial_debug.print("fsm(");
+    serial_debug.print(state_prev);
+    serial_debug.print(">");
     serial_debug.print(state);
     serial_debug.print(",");
     serial_debug.print(sleep);
@@ -153,13 +155,16 @@ void loop() {
     serial_debug.println(")");
     serial_debug.flush();
   #endif
+
+  // update prevous state
+  state_prev=state;
   // FSM implementaiton for clarity of process loop
   switch (state)
   {
   case INIT:
     // defaults for timing out
     state_timeout_duration=0;
-    state_next=INIT;
+    state_goto_timeout=INIT;
     // setup default settings
     settings_init();
     // load settings, currently can not return an error, thus proceed directly
@@ -171,7 +176,7 @@ void loop() {
   case LORAWAN_INIT:
     // defaults for timing out
     state_timeout_duration=1000;
-    state_next=INIT;
+    state_goto_timeout=INIT;
     // transition
     // if initialization successful, move forward
     if(lorawan_init()){
@@ -186,7 +191,7 @@ void loop() {
   case LORAWAN_JOIN:
     // defaults for timing out
     state_timeout_duration=60000;
-    state_next=INIT;
+    state_goto_timeout=INIT;
     // transition
     if(lorawan_joined()){
       state_transition(GENERAL_INIT);
@@ -200,7 +205,7 @@ void loop() {
   case GENERAL_INIT:
     // defaults for timing out
     state_timeout_duration=10000;
-    state_next=IDLE;
+    state_goto_timeout=IDLE;
     // setup default settings
     status_init(); // currently does not report a fail, should not be possible anyhow
     event_status_last=millis();
@@ -216,7 +221,7 @@ void loop() {
   case IDLE:
     // defaults for timing out
     state_timeout_duration=25*60*60*1000; // 25h maximum
-    state_next=INIT;
+    state_goto_timeout=INIT;
     // transition based on triggers
     if(settings_updated|settings_send_flag|status_send_flag|sensor_send_flag){
       if(settings_updated==true){
@@ -247,7 +252,7 @@ void loop() {
   case SETTINGS_SEND:
     // defaults for timing out
     state_timeout_duration=2000;
-    state_next=IDLE;
+    state_goto_timeout=IDLE;
     // action
     // transition
     if(settings_send()){
@@ -260,7 +265,7 @@ void loop() {
   case STATUS_SEND:
     // defaults for timing out
     state_timeout_duration=2000;
-    state_next=IDLE;
+    state_goto_timeout=IDLE;
     // transition
     if(status_send()){
       state_transition(LORAWAN_TRANSMIT);
@@ -271,21 +276,38 @@ void loop() {
     break;
   case GPS_START:
     // defaults for timing out
-    state_timeout_duration=0;
-    state_next=GPS_READ;
+    state_timeout_duration=3000;
+    state_goto_timeout=GENERAL_INIT;
     // action
+
     // transition
     if(sensor_gps_start()){
+      state_transition(GPS_RUN);
+    }
+    else{
+      // sleep for 1 second and check
+      sleep=1000;
+    }
+    break;
+  case GPS_RUN:
+    // defaults for timing out
+    state_timeout_duration=3000;
+    state_goto_timeout=GENERAL_INIT;
+    // action
+    // this state is here if gps does not send data and should reinit
+    // transition
+    if(sensor_gps_active==true){
       state_transition(GPS_READ);
     }
     else{
-      state_transition(SENSOR_READ);
+      // sleep for 1 second and check
+      sleep=1000;
     }
     break;
   case GPS_READ:
     // defaults for timing out
     state_timeout_duration=10*60*1000;
-    state_next=IDLE;
+    state_goto_timeout=IDLE;
     // action
     // transition
     if(sensor_gps_active==false){
@@ -299,7 +321,7 @@ void loop() {
   case SENSOR_READ:
     // defaults for timing out
     state_timeout_duration=0;
-    state_next=SENSOR_SEND;
+    state_goto_timeout=SENSOR_SEND;
     // transition
     if(sensor_read()){
       state_transition(SENSOR_SEND);
@@ -312,7 +334,7 @@ void loop() {
   case SENSOR_SEND:
     // defaults for timing out
     state_timeout_duration=2000;
-    state_next=IDLE;
+    state_goto_timeout=IDLE;
     // transition
     if(sensor_send()){
       state_transition(LORAWAN_TRANSMIT);
@@ -324,21 +346,22 @@ void loop() {
     break;
   case LORAWAN_TRANSMIT:
     // defaults for timing out, transmission should not take more then 10s
-    state_timeout_duration=10000;
-    state_next=LORAWAN_INIT;
+    state_timeout_duration=15000;
+    state_goto_timeout=LORAWAN_INIT;
     // transition
     // if tx fails, reinit lorawan
     if(lorawan_send_successful){
       state_transition(IDLE);
     }
     else{
-      sleep=1000;
+      // tx successful flag is expected in about 3s after sending, note lora rx windows most complete
+      sleep=5000;
     }
     break;
   case HIBERNATION:
     // defaults for timing out
     state_timeout_duration=0;
-    state_next=IDLE;
+    state_goto_timeout=IDLE;
     // action
     // TODO: implement this feature
     // transition
@@ -358,7 +381,7 @@ void loop() {
       serial_debug.print(state);
       serial_debug.println(")");
     #endif
-    state_transition(state_next);
+    state_transition(state_goto_timeout);
   }
 
   // reset the event loop start to show the loop has finished

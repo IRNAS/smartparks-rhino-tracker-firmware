@@ -88,32 +88,29 @@ boolean sensor_gps_busy_timeout(uint16_t timeout){
 }
 
 void sensor_gps_power(boolean enable){
-  /*#ifndef STM32L0_CONFIG_PIN_GNSS_ENABLE
   if(enable){
-    pinMode(GPS_EN,OUTPUT);
-    digitalWrite(GPS_EN,HIGH);
+    //pinMode(GPS_EN,OUTPUT);
+    //digitalWrite(GPS_EN,HIGH);
   }
   else{
     digitalWrite(GPS_EN,LOW);
+    delay(100);
     pinMode(GPS_EN,INPUT_PULLDOWN);
   }
-  #endif*/
 }
 
 void sensor_gps_backup(boolean enable){
-  /*#ifndef STM32L0_CONFIG_PIN_GNSS_ENABLE
   if(enable){
-    pinMode(GPS_BCK,OUTPUT);
-    digitalWrite(GPS_BCK,HIGH);
+    //pinMode(GPS_BCK,OUTPUT);
+    //digitalWrite(GPS_BCK,HIGH);
   }
   else{
-    digitalWrite(GPS_BCK,LOW);
-    pinMode(GPS_BCK,INPUT_PULLDOWN);
+    //digitalWrite(GPS_BCK,LOW);
+    //pinMode(GPS_BCK,INPUT_PULLDOWN);
   }
-  #endif*/
 }
 
-void sensor_gps_init(void){
+boolean sensor_gps_init(void){
   // Check if GPS is enabled, then set it up accordingly
   if((gps_periodic==true)|(gps_triggered==true)){
     #ifdef debug
@@ -121,18 +118,15 @@ void sensor_gps_init(void){
       serial_debug.println(")");
     #endif
     boolean error=false;
+    sensor_gps_power(false);
+    GNSS.suspend();
+    delay(500);
     sensor_gps_power(true);
     sensor_gps_backup(true);
     delay(1000); // wait for ublox to boot
     for(int i=0;i<3;i++){
       //https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/issues/86
-      //workaround for the above issue
-      /*pinMode(GPS_EN,OUTPUT);
-      digitalWrite(GPS_EN,HIGH);
-      if(!digitalRead(PA10)){
-        error=1;
-        break;
-      }*/
+      // workaround for the above issue implemented in library
       GNSS.begin(Serial1, GNSS.MODE_UBLOX, GNSS.RATE_1HZ);
       error=sensor_gps_busy_timeout(3000); //if re-initialized this is required
       if(!error){
@@ -162,7 +156,7 @@ void sensor_gps_init(void){
         serial_debug.print("gps(failed");
         serial_debug.println(")");
       #endif
-      return;
+      return false;
     }
     // TODO initialize accelerometer and setup triggered mode enabled
     if(gps_triggered==true){
@@ -191,6 +185,9 @@ void sensor_gps_init(void){
     // Enable Assist Now Autonomous mode
     error=sensor_gps_busy_timeout(1000);
     GNSS.setAutonomous(true);
+    // Enable Internall antenna - TODO: validate
+    error=sensor_gps_busy_timeout(1000);
+    GNSS.setAntenna(GNSS.ANTENNA_INTERNAL);
     /// Set platform to portable as default
     error=sensor_gps_busy_timeout(1000);
     GNSS.setPlatform(GNSS.PLATFORM_PORTABLE);
@@ -205,9 +202,9 @@ void sensor_gps_init(void){
         serial_debug.print("gps(settings failed");
         serial_debug.println(")");
       #endif
-      return;
+      return false;
     }
-    delay(300); // must be here otherwise baudrate and other commands are not saved
+    delay(3000); // must be here otherwise baudrate and other commands are not saved
     // Disable GPS power
     sensor_gps_power(false);
 
@@ -225,32 +222,35 @@ void sensor_gps_init(void){
       serial_debug.println(")");
     #endif
   }
+  return true;
 }
 
 boolean sensor_gps_start(void){
   boolean response = false;
+  sensor_gps_active = false;
     // check if GPS is enabled and then proceed
   if((gps_periodic==true)|(gps_triggered==true)){
-    sensor_gps_fix_time=millis();
-    // Start acquiring position
-    // Power up GPS
-    sensor_gps_power(true);
-    for(int i=0;i<3;i++){
-      delay(300);
+    // make sure GPS is reset, note backup power is still on
+    if(gps_hot_fix==true){
+      sensor_gps_power(true);
       sensor_gps_busy_timeout(1000);
       response=GNSS.resume();
-      if(response){
-        break;
-      }
-      else{
-        #ifdef debug
-          serial_debug.print("gps(resume failed ");
-          serial_debug.println(")");
-        #endif
-      }
     }
-    //flag that gps is active
-    sensor_gps_active = true;
+    else{
+      response=sensor_gps_init();
+    }
+
+    if(response==false){
+      #ifdef debug
+        serial_debug.print("gps(resume failed ");
+        serial_debug.println(")");
+      #endif
+      return false;
+    }
+
+    sensor_gps_fix_time=millis();
+    // Start acquiring position
+
     // TODO: More detailed handling is required to allow for euphemeris download and ocassional cold fix when scheduled hot fix
     // Go to sleep for hot or cold fix timeout, if fix is acquired or timeout, the sleep will be broken and process resumed
     long sensor_timeout = ((gps_hot_fix==true)?settings_packet.data.gps_hot_fix_timeout:settings_packet.data.gps_cold_fix_timeout)*1000;
@@ -263,32 +263,34 @@ boolean sensor_gps_start(void){
       serial_debug.println(")");
     #endif
   }
-  return response;
+  return true;
 }
 
 void sensor_gps_acquiring_callback(void){
+  //flag that gps is active
+  sensor_gps_active = true;
   // Check if new location information is available
   if(GNSS.location(sensor_gps_location)){
     float ehpe = sensor_gps_location.ehpe();
-    #ifdef debug
-    serial_debug.print("gps( ehpe ");
-    serial_debug.print(ehpe);
-    serial_debug.print(" sat ");
-    serial_debug.print(sensor_gps_location.satellites());
-    serial_debug.print(" aopcfg ");
-    serial_debug.print(sensor_gps_location.aopCfgStatus());
-    serial_debug.print(" aop ");
-    serial_debug.print(sensor_gps_location.aopStatus());
-    serial_debug.println(" )");
-    #endif
+    /*#ifdef debug
+      serial_debug.print("gps( ehpe ");
+      serial_debug.print(ehpe);
+      serial_debug.print(" sat ");
+      serial_debug.print(sensor_gps_location.satellites());
+      serial_debug.print(" aopcfg ");
+      serial_debug.print(sensor_gps_location.aopCfgStatus());
+      serial_debug.print(" aop ");
+      serial_debug.print(sensor_gps_location.aopStatus());
+      serial_debug.println(" )");
+    #endif*/
     if(((sensor_gps_location.fixType() == GNSSLocation::TYPE_2D)&!gps_settings_d3)|(sensor_gps_location.fixType() == GNSSLocation::TYPE_3D)){
       if((ehpe <= settings_packet.data.gps_minimal_ehpe) && sensor_gps_location.fullyResolved()){
         // fix acquired
         // Stop GPS
-        #ifdef debug
+        /*#ifdef debug
           serial_debug.print("gps(fix");
           serial_debug.println(")");
-        #endif
+        #endif*/
         sensor_gps_stop();
       }
   }
@@ -300,15 +302,21 @@ void sensor_gps_stop(void){
   // Calculate fix duration
   time_to_fix = (millis()-sensor_gps_fix_time); //in seconds
   sensor_gps_busy_timeout(100);
-  GNSS.suspend();
+  if(gps_hot_fix==true){
+    GNSS.suspend();
+  }
+  else{
+    GNSS.end();
+  }
   // Power off GPS
   sensor_gps_power(false);
   // flag gps is inactive
   sensor_gps_active = false;
-  #ifdef debug
+
+  /*#ifdef debug
     serial_debug.print("gps(stopped");
     serial_debug.println(")");
-  #endif
+  #endif*/
 
   float latitude, longitude, hdop, epe, satellites, altitude = 0;
   latitude = sensor_gps_location.latitude();
@@ -334,14 +342,14 @@ void sensor_gps_stop(void){
     
   #ifdef debug
     serial_debug.print("gps(");
-    serial_debug.print(" lat: "); serial_debug.print(latitude,7);
+    serial_debug.print("lat: "); serial_debug.print(latitude,7);
     serial_debug.print(" lon "); serial_debug.print(longitude,7);
     serial_debug.print(" alt: "); serial_debug.print(altitude,3);
     serial_debug.print(" hdop: "); serial_debug.print(hdop,2);     
     serial_debug.print(" epe: "); serial_debug.print(epe,2);
     serial_debug.print(" sat: "); serial_debug.print(satellites,0); 
     serial_debug.print(" ttf: "); serial_debug.print(time_to_fix); 
-    serial_debug.println(" )"); 
+    serial_debug.println(")"); 
   #endif  
 }
 
@@ -390,8 +398,5 @@ boolean sensor_read(void){
  * 
  */
 boolean sensor_send(void){
-  if(lorawan_send(sensor_packet_port, &sensor_packet.bytes[0], sizeof(sensorData_t))==0){
-    return false;
-  }
-  return true;
+  return lorawan_send(sensor_packet_port, &sensor_packet.bytes[0], sizeof(sensorData_t));
 }

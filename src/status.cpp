@@ -57,8 +57,5 @@ boolean status_send(void){
     serial_debug.println(" )");
   #endif
 
-  if(lorawan_send(status_packet_port, &status_packet.bytes[0], sizeof(statusData_t))==0){
-    return false;
-  }
-  return true;
+  return lorawan_send(status_packet_port, &status_packet.bytes[0], sizeof(statusData_t));
 }

@@ -60,66 +60,59 @@ boolean lorawan_init(void){
   return true;
 }
 
-int lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
+boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
+  #ifdef debug
+    serial_debug.println("lorawan_send() init");
+  #endif
   int response = 0; 
-  for(int i;i<3;i++){
-    if(!LoRaWAN.busy()){
-
-      #ifdef LORAWAN_OTAA
-      /*if (!LoRaWAN.linkGateways())
-      {
-        LoRaWAN.rejoinOTAA();
-      }*/
-      #endif
-
-      if (LoRaWAN.joined()){
-        // set datarate, take only the lower 4 bytes, highest bit sets ADR on/off
-        LoRaWAN.setADR(settings_packet.data.lorawan_datarate_adr>>7);
-        LoRaWAN.setDataRate(settings_packet.data.lorawan_datarate_adr&0x0f);
-          #ifdef debug
-            serial_debug.print("lorawan_send( ");
-            serial_debug.print("TimeOnAir: ");
-            serial_debug.print(LoRaWAN.getTimeOnAir());
-            serial_debug.print(", NextTxTime: ");
-            serial_debug.print(LoRaWAN.getNextTxTime());
-            serial_debug.print(", MaxPayloadSize: ");
-            serial_debug.print(LoRaWAN.getMaxPayloadSize());
-            serial_debug.print(", DR: ");
-            serial_debug.print(LoRaWAN.getDataRate());
-            serial_debug.print(", TxPower: ");
-            serial_debug.print(LoRaWAN.getTxPower(), 1);
-            serial_debug.print("dbm, UpLinkCounter: ");
-            serial_debug.print(LoRaWAN.getUpLinkCounter());
-            serial_debug.print(", DownLinkCounter: ");
-            serial_debug.print(LoRaWAN.getDownLinkCounter());
-            serial_debug.print(", Port: ");
-            serial_debug.print(port);
-            serial_debug.print(", Size: ");
-            serial_debug.print(size);
-            serial_debug.println(" )");
-          #endif
-        // int sendPacket(uint8_t port, const uint8_t *buffer, size_t size, bool confirmed = false);
-        response = LoRaWAN.sendPacket(port, buffer, size, false);
-        if(response>0){
-          lorawan_send_successful = false;
-          break; // jump out of the for loop if successful
-        }
-      }
-      else{
-        #ifdef debug
-          serial_debug.println("lorawan_send() lora not joined");
-        #endif
-        break; // jump out of the for loop as the retry does not resolve a join
-      }
-    }
-    else{
-      #ifdef debug
-        serial_debug.println("lorawan_send() lora busy");
-      #endif
-    }
-    delay(100); // retry every 100ms
+  if (!LoRaWAN.joined()) {
+    #ifdef debug
+      serial_debug.println("lorawan_send() not joined");
+    #endif
+    return false;
   }
-  return response;
+
+  if (LoRaWAN.busy()) {
+    #ifdef debug
+      serial_debug.println("lorawan_send() busy");
+    #endif
+    return false;
+  }
+
+  LoRaWAN.setADR(settings_packet.data.lorawan_datarate_adr>>7);
+  LoRaWAN.setDataRate(settings_packet.data.lorawan_datarate_adr&0x0f);
+  #ifdef debug
+    serial_debug.print("lorawan_send( ");
+    serial_debug.print("TimeOnAir: ");
+    serial_debug.print(LoRaWAN.getTimeOnAir());
+    serial_debug.print(", NextTxTime: ");
+    serial_debug.print(LoRaWAN.getNextTxTime());
+    serial_debug.print(", MaxPayloadSize: ");
+    serial_debug.print(LoRaWAN.getMaxPayloadSize());
+    serial_debug.print(", DR: ");
+    serial_debug.print(LoRaWAN.getDataRate());
+    serial_debug.print(", TxPower: ");
+    serial_debug.print(LoRaWAN.getTxPower(), 1);
+    serial_debug.print("dbm, UpLinkCounter: ");
+    serial_debug.print(LoRaWAN.getUpLinkCounter());
+    serial_debug.print(", DownLinkCounter: ");
+    serial_debug.print(LoRaWAN.getDownLinkCounter());
+    serial_debug.print(", Port: ");
+    serial_debug.print(port);
+    serial_debug.print(", Size: ");
+    serial_debug.print(size);
+    serial_debug.println(" )");
+  #endif
+  // int sendPacket(uint8_t port, const uint8_t *buffer, size_t size, bool confirmed = false);
+  response = LoRaWAN.sendPacket(port, buffer, size, false);
+  if(response>0){
+    #ifdef debug
+      serial_debug.println("lorawan_send() sendPacket");
+    #endif
+    lorawan_send_successful = false;
+    return true;
+  }
+  return false;
 }
 
 // Callback on Join failed/success
@@ -221,6 +214,10 @@ void lorawan_receiveCallback(void)
 //callback on link lost, handle rejoining schedule here
 void lorawan_doneCallback(void)
 {
+  #ifdef debug
+    serial_debug.println("DONE()");
+  #endif
+
   if (!LoRaWAN.linkGateways())
   {
     #ifdef debug
