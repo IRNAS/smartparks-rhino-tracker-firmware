@@ -84,7 +84,7 @@ void callbackPeriodic(void){
   }
 
   // if any of the flags are high, wake up
-  if(settings_updated|settings_send_flag|status_send_flag|sensor_send_flag){
+  if(settings_updated|status_send_flag|sensor_send_flag){
     STM32L0.wakeup();
     /*#ifdef debug
       serial_debug.print("wakeup(");
@@ -211,11 +211,13 @@ void loop() {
     event_status_last=millis();
     sensor_init(); // currently does not report a fail, TODO
     sensor_send_flag = true;
+    status_send_flag = true;
+    sensor_send_flag = true;
     event_sensor_last=millis();
     sensor_gps_init(); // self disables if fail present
     // transition
     if(true){
-      state_transition(IDLE);
+      state_transition(SETTINGS_SEND);
     }
     break;
   case IDLE:
@@ -223,22 +225,18 @@ void loop() {
     state_timeout_duration=25*60*60*1000; // 25h maximum
     state_goto_timeout=INIT;
     // transition based on triggers
-    if(settings_updated|settings_send_flag|status_send_flag|sensor_send_flag){
+    if(settings_updated|status_send_flag|sensor_send_flag){
       if(settings_updated==true){
-        state_transition(LORAWAN_INIT);
+        state_transition(GENERAL_INIT);
         settings_updated=false;
-      }
-      else if(settings_send_flag==true){
-        state_transition(SETTINGS_SEND);
-        settings_send_flag=false;
-      }
-      else if(sensor_send_flag==true){
-        state_transition(GPS_START);
-        sensor_send_flag=false;
       }
       else if(status_send_flag==true){
         state_transition(STATUS_SEND);
         status_send_flag=false;
+      }
+      else if(sensor_send_flag==true){
+        state_transition(GPS_START);
+        sensor_send_flag=false;
       }
       else{
         // This should never happen

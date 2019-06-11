@@ -123,10 +123,6 @@ void lorawan_joinCallback(void)
       #ifdef debug
         serial_debug.println("JOINED");
       #endif
-      //send all messages out on join
-      settings_send_flag = true;
-      status_send_flag = true;
-      sensor_send_flag = true;
       LoRaWAN.setRX2Channel(869525000, 3); // SF12 - 0 for join, then SF 9 - 3, see https://github.com/TheThingsNetwork/ttn/issues/155
     }
     else

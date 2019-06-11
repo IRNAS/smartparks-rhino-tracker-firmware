@@ -6,7 +6,6 @@
 #include <STM32L0.h>
 #include "lorawan.h"
 
-extern boolean settings_send_flag;
 extern boolean settings_updated;
 
 /**
