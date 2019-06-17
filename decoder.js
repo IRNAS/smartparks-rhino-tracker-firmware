@@ -66,7 +66,7 @@ function Decoder(bytes) {
         decoded.system_functions_errors = {};//bytes[5];
         decoded.system_functions_errors.gps_periodic_error =  ((bytes[5] >> 0)&0x01)? 1 : 0;
         decoded.system_functions_errors.gps_triggered_error =  ((bytes[5] >> 1)&0x01)? 1 : 0;
-        decoded.system_functions_errors.gps_fix_eror =  ((bytes[5] >> 2)&0x01)? 1 : 0;
+        decoded.system_functions_errors.gps_fix_error =  ((bytes[5] >> 2)&0x01)? 1 : 0;
         decoded.system_functions_errors.accelerometer_error =  ((bytes[5] >> 3)&0x01)? 1 : 0;
         decoded.system_functions_errors.light_error =  ((bytes[5] >> 4)&0x01)? 1 : 0;
         decoded.system_functions_errors.temperature_error =  ((bytes[5] >> 5)&0x01)? 1 : 0;

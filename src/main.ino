@@ -18,6 +18,8 @@ long event_status_last = 0;
 long event_sensor_last = 0;
 long event_loop_start = 0;
 
+bool reed_switch = false;
+
 enum state_e{
   INIT,
   LORAWAN_INIT,
@@ -43,9 +45,19 @@ unsigned long state_timeout_duration;
 
 // function prototypes because Arduino failes if using enum otherwise
 void callbackPeriodic(void);
+void callbackReed(void);
 void state_transition(state_e next);
 bool state_check_timeout(void);
 
+/*
+ *  Function:     void callbackReedvoid)
+ *  Description:  function called when reed gpio has changed
+ */
+
+void callbackReed(void){
+    reed_switch=~digitalRead(PIN_REED);
+    STM32L0.wakeup();
+}
 
 /*
  *  Function:     void callbackPeriodic(void)
@@ -61,17 +73,19 @@ void callbackPeriodic(void){
   #endif*/
 
   unsigned long elapsed;
-  // determine which events need to be scheduled
 
-  elapsed = millis()-event_status_last;
-  if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
-    event_status_last=millis();
-    status_send_flag = true;
-  }
-  elapsed = millis()-event_sensor_last;
-  if(elapsed>=(settings_packet.data.sensor_interval*60*1000)){
-    event_sensor_last=millis();
-    sensor_send_flag = true;
+  // determine which events need to be scheduled, except in hibernation
+  if(state!=HIBERNATION){
+    elapsed = millis()-event_status_last;
+    if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
+      event_status_last=millis();
+      status_send_flag = true;
+    }
+    elapsed = millis()-event_sensor_last;
+    if(elapsed>=(settings_packet.data.sensor_interval*60*1000)){
+      event_sensor_last=millis();
+      sensor_send_flag = true;
+    }
   }
 
   // if the main loop is running and not sleeping
@@ -127,6 +141,10 @@ void setup() {
   STM32L0.wdtEnable(18000);
   periodic.start(callbackPeriodic, 0, 5000);
 
+  // Reed switch
+  pinMode(PIN_REED,INPUT_PULLUP);
+  attachInterrupt(PIN_REED,callbackReed,CHANGE);
+
   // Serial port debug setup
   #ifdef serial_debug
     serial_debug.begin(115200);
@@ -165,6 +183,7 @@ void loop() {
     // defaults for timing out
     state_timeout_duration=0;
     state_goto_timeout=INIT;
+    // LED diode
     // setup default settings
     settings_init();
     // load settings, currently can not return an error, thus proceed directly
@@ -195,6 +214,8 @@ void loop() {
     // transition
     if(lorawan_joined()){
       state_transition(GENERAL_INIT);
+      // LED diode
+      digitalWrite(LED_RED,LOW);
     }
     else{
       // TODO: create a more elaborate timeout mechanism
@@ -224,8 +245,17 @@ void loop() {
     // defaults for timing out
     state_timeout_duration=25*60*60*1000; // 25h maximum
     state_goto_timeout=INIT;
+    // LED diode
+    digitalWrite(LED_RED,LOW);
+    
+    if(reed_switch){
+      state_transition(HIBERNATION);
+      // LED diode
+      delay(100);
+      digitalWrite(LED_RED,HIGH);
+    }
     // transition based on triggers
-    if(settings_updated|status_send_flag|sensor_send_flag){
+    else if(settings_updated|status_send_flag|sensor_send_flag){
       if(settings_updated==true){
         state_transition(GENERAL_INIT);
         settings_updated=false;
@@ -279,7 +309,12 @@ void loop() {
     // action
 
     // transition
-    if(sensor_gps_start()){
+    // if GPS error, skip reading
+    if(status_packet.data.system_functions_errors&0x03){
+      state_transition(SENSOR_READ);
+    }
+    //if gps started continue
+    else if(sensor_gps_start()){
       state_transition(GPS_RUN);
     }
     else{
@@ -358,13 +393,22 @@ void loop() {
     break;
   case HIBERNATION:
     // defaults for timing out
-    state_timeout_duration=0;
+    state_timeout_duration=24*60*60*1000; // 24h maximum
     state_goto_timeout=IDLE;
+    // LED diode
+    digitalWrite(LED_RED,LOW);
+    //TODO - bypass for testing
+    state_transition(IDLE);
     // action
-    // TODO: implement this feature
-    // transition
-    if(true){
+    if(digitalRead(PIN_REED==HIGH)){
       state_transition(IDLE);
+      // LED diode
+      digitalWrite(LED_RED,HIGH);
+      // Send status immediately
+      status_send_flag=HIGH;
+    }
+    else{
+      sleep=600000;
     }
     break;
   default:

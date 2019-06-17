@@ -1,7 +1,7 @@
 import json
 
 data = {}
-data['system_status_interval'] = 10
+data['system_status_interval'] = 15
 
 system_functions = {}
 system_functions['gps_periodic'] = True
@@ -20,13 +20,13 @@ lorawan_datarate_adr["confirmed_uplink"]=False
 lorawan_datarate_adr["adr"]=False
 data['lorawan_datarate_adr'] = lorawan_datarate_adr
 
-data['sensor_interval'] = 60
+data['sensor_interval'] =10
 
 data['gps_cold_fix_timeout'] = 180
 
 data['gps_hot_fix_timeout'] = 180
 
-data['gps_minimal_ehpe'] = 50
+data['gps_minimal_ehpe'] = 40
 
 data['mode_slow_voltage_threshold'] = 1
 

@@ -93,9 +93,9 @@ void sensor_gps_power(boolean enable){
     //digitalWrite(GPS_EN,HIGH);
   }
   else{
-    digitalWrite(GPS_EN,LOW);
+    //digitalWrite(GPS_EN,LOW);
     delay(100);
-    pinMode(GPS_EN,INPUT_PULLDOWN);
+    //pinMode(GPS_EN,INPUT_PULLDOWN);
   }
 }
 
