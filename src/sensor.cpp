@@ -101,12 +101,12 @@ void sensor_gps_power(boolean enable){
 
 void sensor_gps_backup(boolean enable){
   if(enable){
-    //pinMode(GPS_BCK,OUTPUT);
-    //digitalWrite(GPS_BCK,HIGH);
+    pinMode(GPS_BCK,OUTPUT);
+    digitalWrite(GPS_BCK,HIGH);
   }
   else{
-    //digitalWrite(GPS_BCK,LOW);
-    //pinMode(GPS_BCK,INPUT_PULLDOWN);
+    digitalWrite(GPS_BCK,LOW);
+    pinMode(GPS_BCK,INPUT_PULLDOWN);
   }
 }
 
@@ -217,6 +217,10 @@ boolean sensor_gps_init(void){
     // Disable GPS power
     sensor_gps_power(false);
     sensor_gps_backup(false);
+    // GPS periodic error
+    bitSet(status_packet.data.system_functions_errors,0);
+    // GPS triggered error
+    bitSet(status_packet.data.system_functions_errors,1);
     #ifdef debug
       serial_debug.print("gps(disabled");
       serial_debug.println(")");
@@ -368,6 +372,29 @@ void sensor_init(void){
   sensor_system_functions_load();
 
 
+  Wire.begin();
+  Wire.beginTransmission(LIS2DH12_ADDR);
+  Wire.write(LIS2DW12_WHO_AM_I);
+  Wire.endTransmission();
+  Wire.requestFrom(LIS2DH12_ADDR, (uint8_t)1);
+  uint8_t dummy = Wire.read(); 
+
+  if(dummy!=0x44){
+      #ifdef debug
+        serial_debug.print("LIS not found: 0x");
+        serial_debug.println(dummy,HEX);
+      #endif
+  }
+
+  #ifdef debug
+      serial_debug.print("LIS present: 0x");
+      serial_debug.println(dummy,HEX);
+  #endif
+
+  Wire.beginTransmission(LIS2DH12_ADDR);
+  Wire.write(LIS2DW12_CTRL1);
+  Wire.write(0x00);
+  Wire.endTransmission();
   // Accelerometer
   if(accelerometer_enabled==true){
     // check if present
