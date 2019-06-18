@@ -9,6 +9,11 @@
 #include "status.h"
 #include "GNSS.h"
 #include "board.h"
+#include "Wire.h"
+
+#define LIS2DH12_ADDR 0x18
+#define LIS2DW12_WHO_AM_I                    0x0FU
+#define LIS2DW12_CTRL1                       0x20U
 
 extern boolean sensor_send_flag;
 

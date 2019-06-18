@@ -117,7 +117,7 @@ boolean sensor_gps_init(void){
       serial_debug.print("gps(sensor_gps_init()");
       serial_debug.println(")");
     #endif
-    boolean error=false;
+    boolean error=true;
     sensor_gps_power(false);
     GNSS.suspend();
     delay(500);
@@ -142,6 +142,7 @@ boolean sensor_gps_init(void){
     }
     //set error bits if GPS is not present and self-disable
     if(error){
+      GNSS.end();
       // GPS periodic error
       bitSet(status_packet.data.system_functions_errors,0);
       // GPS triggered error
