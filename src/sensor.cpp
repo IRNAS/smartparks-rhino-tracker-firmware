@@ -22,6 +22,7 @@ boolean gps_settings_d3 = false;
 GNSSLocation sensor_gps_location;
 unsigned long sensor_gps_fix_time;
 unsigned long sensor_gps_reply_time;
+unsigned long sensor_gps_last_fix_time;
 float time_to_fix;
 
 /**
@@ -169,14 +170,8 @@ boolean sensor_gps_init(void){
       }
     }
 
-    // Accoridng to UBLOX the ephemeris data is valid for maximally 4 hours, if fix interval is greater then that, backup may not be efficient and disablign it automatically in this case.
-    // See https://portal.u-blox.com/s/question/0D52p00008HKCT7CAP/time-to-fix-first
-    if((gps_hot_fix==true)&(settings_packet.data.sensor_interval<240)){
-      sensor_gps_backup(true);
-    }
-    else{
-      sensor_gps_backup(false);
-    }
+    // backup is enabled in init and disabled if cold-fix usage in shutdown.
+    sensor_gps_backup(true);
     
     // see default config https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/blob/18fb1cc81c6bc91b25e3346595f820985f2267e5/libraries/GNSS/src/utility/gnss_core.c#L2904
     error=sensor_gps_busy_timeout(1000);
@@ -197,14 +192,10 @@ boolean sensor_gps_init(void){
     // GPS to sleep
     error=sensor_gps_busy_timeout(1000);
     GNSS.suspend();
-    //set error bits if GPS is not present and self-disable
-    if(error){
-      #ifdef debug
-        serial_debug.print("gps(settings failed");
-        serial_debug.println(")");
-      #endif
-      return false;
-    }
+    // initialize lat fix time
+    sensor_gps_last_fix_time=0;
+    time_to_fix=0;
+    sensor_gps_busy_timeout(1000);// TODO: remove delay belof if above works
     delay(3000); // must be here otherwise baudrate and other commands are not saved
     // Disable GPS power
     sensor_gps_power(false);
@@ -256,9 +247,17 @@ boolean sensor_gps_start(void){
     sensor_gps_fix_time=millis();
     // Start acquiring position
 
-    // TODO: More detailed handling is required to allow for euphemeris download and ocassional cold fix when scheduled hot fix
     // Go to sleep for hot or cold fix timeout, if fix is acquired or timeout, the sleep will be broken and process resumed
-    long sensor_timeout = ((gps_hot_fix==true)?settings_packet.data.gps_hot_fix_timeout:settings_packet.data.gps_cold_fix_timeout)*1000;
+    long sensor_timeout = 0;
+    // Hot fix timeout only if enabled hot fix, last fix time is not 0 and no more then 4 since last fix
+    unsigned long elapsed = millis()-sensor_gps_last_fix_time;
+    if(gps_hot_fix==true & sensor_gps_last_fix_time!=0 & elapsed<=14400000){
+        sensor_timeout = settings_packet.data.gps_hot_fix_timeout*1000;
+      }
+    else{
+        sensor_timeout = settings_packet.data.gps_cold_fix_timeout*1000;
+    }
+
     sensor_gps_timeout.start(sensor_gps_stop,sensor_timeout);
     #ifdef debug
       serial_debug.print("gps(started, timeout: ");
@@ -297,8 +296,9 @@ void sensor_gps_acquiring_callback(void){
           serial_debug.println(")");
         #endif*/
         sensor_gps_stop();
+        sensor_gps_last_fix_time = millis(); // store time of last successful fix
       }
-  }
+    }
   }
 }
 
@@ -307,14 +307,20 @@ void sensor_gps_stop(void){
   // Calculate fix duration
   time_to_fix = (millis()-sensor_gps_fix_time); //in seconds
   sensor_gps_busy_timeout(100);
+
+  // Accoridng to UBLOX the ephemeris data is valid for maximally 4 hours, if fix interval is greater then that, backup may not be efficient and disablign it automatically in this case.
+  // See https://portal.u-blox.com/s/question/0D52p00008HKCT7CAP/time-to-fix-first
   if(gps_hot_fix==true){
     GNSS.suspend();
+    sensor_gps_backup(true);
   }
   else{
     GNSS.end();
+    sensor_gps_backup(false);
   }
   // Power off GPS
   sensor_gps_power(false);
+  
   // flag gps is inactive
   sensor_gps_active = false;
 
@@ -373,7 +379,7 @@ void sensor_init(void){
   sensor_system_functions_load();
 
 
-  Wire.begin();
+  /*Wire.begin();
   Wire.beginTransmission(LIS2DH12_ADDR);
   Wire.write(LIS2DW12_WHO_AM_I);
   Wire.endTransmission();
@@ -396,6 +402,7 @@ void sensor_init(void){
   Wire.write(LIS2DW12_CTRL1);
   Wire.write(0x00);
   Wire.endTransmission();
+  */
   // Accelerometer
   if(accelerometer_enabled==true){
     // check if present

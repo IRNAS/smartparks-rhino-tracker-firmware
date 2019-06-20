@@ -45,7 +45,7 @@ boolean lorawan_init(void){
   #ifdef LORAWAN_OTAA
   //Get the device ID
   LoRaWAN.getDevEui(devEui, 18);
-  LoRaWAN.setSaveSession(true); // this will save the session for reboot, useful if reoot happens with in poor signal conditons
+  LoRaWAN.setSaveSession(true); // this will save the session for reboot, useful if reboot happens with in poor signal conditons
   LoRaWAN.setLinkCheckLimit(48); // number of uplinks link check is sent, 5 for experimenting, 48 otherwise
   LoRaWAN.setLinkCheckDelay(4); // number of uplinks waiting for an answer, 2 for experimenting, 4 otherwise
   LoRaWAN.setLinkCheckThreshold(4); // number of times link check fails to assert link failed, 1 for experimenting, 4 otherwise

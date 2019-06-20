@@ -30,6 +30,8 @@ extern boolean settings_updated;
  * mode_slow_voltage_threshold - in % of the charge, range 1 - 100
  * gps_settings - enable/disable certain features
  *    bit 0 - gps 3d fix required
+ * sensor_interval_active_threshold -  threshold value for acclelerometer to consider device to be active
+ * sensor_interval_active -  send interval in minutes, range 1 - 1440, default 60
  */
 struct settingsData_t{
   uint16_t  system_status_interval;
@@ -41,6 +43,8 @@ struct settingsData_t{
   uint8_t   gps_minimal_ehpe;
   uint8_t   mode_slow_voltage_threshold;
   uint8_t   gps_settings;
+  uint8_t   sensor_interval_active_threshold;
+  uint16_t  sensor_interval_active;
 }__attribute__((packed));
 
 union settingsPacket_t{
@@ -53,7 +57,6 @@ extern settingsPacket_t settings_packet;
 extern settingsPacket_t settings_packet_downlink;
 
 uint8_t settings_get_packet_port(void);
-void settings_timer_callback(void);
 void settings_init(void);
 void settings_from_downlink(void);
 boolean settings_send(void);

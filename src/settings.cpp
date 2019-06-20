@@ -18,18 +18,6 @@ uint8_t settings_get_packet_port(void){
 }
 
 /**
- * @brief Settings timer callback - generally not used
- * 
- */
-void settings_timer_callback(void)
-{
-  #ifdef debug
-    serial_debug.println("settings_timer_callback()");
-  #endif
-  settings_send_flag = true;
-}
-
-/**
  * @brief Settings init - read and configure settings upon boot or update
  * 
  * @details The settings are read from eeprom if implemented or hardcoded defaults are used here. See .h file for packet contents description.
@@ -45,7 +33,9 @@ void settings_init(void){
     settings_packet.data.gps_hot_fix_timeout=200;
     settings_packet.data.gps_minimal_ehpe=50;
     settings_packet.data.mode_slow_voltage_threshold=1;
-    settings_packet.data.gps_settings=0x00;
+    settings_packet.data.gps_settings=0x01;
+    settings_packet.data.sensor_interval_active_threshold=q00;
+    settings_packet.data.sensor_interval_active=1;
 
     // here implement reading from eeprom
 
@@ -71,7 +61,9 @@ void settings_from_downlink(void)
     settings_packet.data.gps_minimal_ehpe=constrain(settings_packet_downlink.data.gps_minimal_ehpe, 0, 100);
     settings_packet.data.mode_slow_voltage_threshold=constrain(settings_packet_downlink.data.mode_slow_voltage_threshold, 1, 100);
     settings_packet.data.gps_settings=constrain(settings_packet_downlink.data.gps_settings, 0, 0xff);
-    //store to eeprom when implemented
+    settings_packet.data.sensor_interval_active_threshold=constrain(settings_packet_downlink.data.sensor_interval_active_threshold, 0, 0xff);
+    settings_packet.data.sensor_interval_active=constrain(settings_packet_downlink.data.sensor_interval_active, 1, 24*60);
+    // TODO: store to eeprom when implemented
 
     settings_updated = true;
 }
