@@ -6,19 +6,19 @@ uint8_t resetCause = 0xff;
 //#define serial_debug  Serial
 
 boolean status_send_flag = false;
+unsigned long event_status_last = 0;
 statusPacket_t status_packet;
 
-void status_timer_callback(void)
-{
-  #ifdef debug
-    serial_debug.println("status_timer_callback()");
-  #endif
-  status_send_flag = true;
+void status_scheduler(void){
+  unsigned long elapsed = millis()-event_status_last;
+  if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
+    event_status_last=millis();
+    status_send_flag = true;
+  }
 }
 
 void status_init(void){ 
-    //status_timer.stop();
-    //status_timer.start(status_timer_callback, 0, settings_packet.data.system_status_interval*60*1000);
+    event_status_last=millis();
     #ifdef debug
         serial_debug.print("status_init - status_timer_callback( ");
         serial_debug.print("interval: ");
@@ -32,9 +32,10 @@ boolean status_send(void){
   float voltage=100;//impelment reading voltage
   float stm32l0_vdd = STM32L0.getVBUS();
   float stm32l0_temp = STM32L0.getTemperature();
+  float stm32l0_battery = STM32L0.getVBAT();
 
   status_packet.data.resetCause=STM32L0.resetCause();
-  status_packet.data.battery=(uint8_t)get_bits(voltage,0,100,8);
+  status_packet.data.battery=(uint8_t)get_bits(stm32l0_battery,0,4096,8);
   status_packet.data.temperature=(uint8_t)get_bits(stm32l0_temp,-20,80,8);
   status_packet.data.vbus=(uint8_t)get_bits(stm32l0_vdd,0,3.6,8);
 

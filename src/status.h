@@ -46,7 +46,7 @@ union statusPacket_t{
 static const uint8_t status_packet_port = 2;
 extern statusPacket_t status_packet;
 
-void status_timer_callback(void);
+void status_scheduler(void);
 void status_init(void);
 boolean status_send(void);
 

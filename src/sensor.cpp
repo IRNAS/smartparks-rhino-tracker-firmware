@@ -8,6 +8,8 @@ TimerMillis sensor_gps_timeout;
 sensorPacket_t sensor_packet;
 boolean sensor_send_flag = false;
 boolean sensor_gps_active = false;
+boolean sensor_gps_done = false;
+unsigned long event_sensor_last = 0;
 
 boolean gps_periodic = false;
 boolean gps_triggered = false;
@@ -18,11 +20,14 @@ boolean temperature_enabled = false;
 boolean humidity_enabled = false;
 boolean pressure_enabled = false;
 boolean gps_settings_d3 = false;
+boolean gps_settings_fail_backoff = false;
 
 GNSSLocation sensor_gps_location;
 unsigned long sensor_gps_fix_time;
 unsigned long sensor_gps_reply_time;
 unsigned long sensor_gps_last_fix_time;
+unsigned long sensor_gps_fail_fix_count;
+boolean sensor_gps_successful_fix = false;
 float time_to_fix;
 
 /**
@@ -74,6 +79,16 @@ void sensor_system_functions_load(void){
 
   uint8_t gps_settings = settings_packet.data.gps_settings;
   gps_settings_d3=bitRead(gps_settings,0);
+  gps_settings_fail_backoff=bitRead(gps_settings,1);
+}
+
+void sensor_scheduler(void){
+  unsigned long elapsed = millis()-event_sensor_last;
+  uint8_t backoff= gps_settings_fail_backoff ? sensor_gps_fail_fix_count+1 : 1;
+  if(elapsed>=(settings_packet.data.system_status_interval*60*1000*backoff)){
+    event_sensor_last=millis();
+    sensor_send_flag = true;
+  }
 }
 
 boolean sensor_gps_busy_timeout(uint16_t timeout){
@@ -102,12 +117,12 @@ void sensor_gps_power(boolean enable){
 
 void sensor_gps_backup(boolean enable){
   if(enable){
-    pinMode(GPS_BCK,OUTPUT);
-    digitalWrite(GPS_BCK,HIGH);
+    //pinMode(GPS_BCK,OUTPUT);
+    //digitalWrite(GPS_BCK,HIGH);
   }
   else{
-    digitalWrite(GPS_BCK,LOW);
-    pinMode(GPS_BCK,INPUT_PULLDOWN);
+    //digitalWrite(GPS_BCK,LOW);
+    //pinMode(GPS_BCK,INPUT_PULLDOWN);
   }
 }
 
@@ -181,7 +196,7 @@ boolean sensor_gps_init(void){
     // Enable Assist Now Autonomous mode
     error=sensor_gps_busy_timeout(1000);
     GNSS.setAutonomous(true);
-    // Enable Internall antenna - TODO: validate
+    // Enable Internall antenna - configured to use external LNA via enable pin
     error=sensor_gps_busy_timeout(1000);
     GNSS.setAntenna(GNSS.ANTENNA_INTERNAL);
     /// Set platform to portable as default
@@ -195,10 +210,15 @@ boolean sensor_gps_init(void){
     // initialize lat fix time
     sensor_gps_last_fix_time=0;
     time_to_fix=0;
+    sensor_gps_fail_fix_count=1;
+    sensor_gps_successful_fix = false;
     sensor_gps_busy_timeout(1000);// TODO: remove delay belof if above works
     delay(3000); // must be here otherwise baudrate and other commands are not saved
     // Disable GPS power
     sensor_gps_power(false);
+    if(gps_hot_fix==false){
+      sensor_gps_backup(false);
+    }
 
     #ifdef debug
       serial_debug.print("gps(initialized");
@@ -224,6 +244,8 @@ boolean sensor_gps_init(void){
 boolean sensor_gps_start(void){
   boolean response = false;
   sensor_gps_active = false;
+  sensor_gps_done = false;
+  sensor_gps_successful_fix = false;
     // check if GPS is enabled and then proceed
   if((gps_periodic==true)|(gps_triggered==true)){
     // make sure GPS is reset, note backup power is still on
@@ -297,6 +319,7 @@ void sensor_gps_acquiring_callback(void){
         #endif*/
         sensor_gps_stop();
         sensor_gps_last_fix_time = millis(); // store time of last successful fix
+        sensor_gps_successful_fix = true;
       }
     }
   }
@@ -308,6 +331,18 @@ void sensor_gps_stop(void){
   time_to_fix = (millis()-sensor_gps_fix_time); //in seconds
   sensor_gps_busy_timeout(100);
 
+  // evaluate errors if the fix has not been acquired but a timeout occurred
+  if(sensor_gps_successful_fix==false){
+    //increment by one if timeout occurred
+    sensor_gps_fail_fix_count++;
+    //if no satellites have been heard, then increment again
+    if(sensor_gps_location.satellites()==0){
+      sensor_gps_fail_fix_count++;
+    }
+  }
+  else{
+    sensor_gps_fail_fix_count=0;
+  }
   // Accoridng to UBLOX the ephemeris data is valid for maximally 4 hours, if fix interval is greater then that, backup may not be efficient and disablign it automatically in this case.
   // See https://portal.u-blox.com/s/question/0D52p00008HKCT7CAP/time-to-fix-first
   if(gps_hot_fix==true){
@@ -321,8 +356,9 @@ void sensor_gps_stop(void){
   // Power off GPS
   sensor_gps_power(false);
   
-  // flag gps is inactive
+  // flag gps is inactive and done
   sensor_gps_active = false;
+  sensor_gps_done = true;
 
   /*#ifdef debug
     serial_debug.print("gps(stopped");
@@ -379,7 +415,7 @@ void sensor_init(void){
   sensor_system_functions_load();
 
 
-  /*Wire.begin();
+  Wire.begin();
   Wire.beginTransmission(LIS2DH12_ADDR);
   Wire.write(LIS2DW12_WHO_AM_I);
   Wire.endTransmission();
@@ -402,7 +438,7 @@ void sensor_init(void){
   Wire.write(LIS2DW12_CTRL1);
   Wire.write(0x00);
   Wire.endTransmission();
-  */
+  
   // Accelerometer
   if(accelerometer_enabled==true){
     // check if present

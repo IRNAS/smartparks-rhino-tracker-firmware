@@ -26,15 +26,15 @@ uint8_t settings_get_packet_port(void){
 void settings_init(void){
     //hardcoded defaults
     settings_packet.data.system_status_interval=5;
-    settings_packet.data.system_functions=0xff;
+    settings_packet.data.system_functions=0x01;
     settings_packet.data.lorawan_datarate_adr=3;
     settings_packet.data.sensor_interval=2;
     settings_packet.data.gps_cold_fix_timeout=200;
-    settings_packet.data.gps_hot_fix_timeout=200;
-    settings_packet.data.gps_minimal_ehpe=50;
+    settings_packet.data.gps_hot_fix_timeout=30;
+    settings_packet.data.gps_minimal_ehpe=40;
     settings_packet.data.mode_slow_voltage_threshold=1;
     settings_packet.data.gps_settings=0x01;
-    settings_packet.data.sensor_interval_active_threshold=q00;
+    settings_packet.data.sensor_interval_active_threshold=100;
     settings_packet.data.sensor_interval_active=1;
 
     // here implement reading from eeprom

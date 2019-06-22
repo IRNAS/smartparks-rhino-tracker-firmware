@@ -32,6 +32,7 @@ data['mode_slow_voltage_threshold'] = 1
 
 gps_settings = {}
 gps_settings['d3_fix'] = True
+gps_settings['fail_backoff'] = True
 data['gps_settings'] = gps_settings
 data['sensor_interval_active_threshold'] =100
 data['sensor_active_interval'] = 1

@@ -11,7 +11,7 @@
 #include "board.h"
 #include "Wire.h"
 
-#define LIS2DH12_ADDR 0x18
+#define LIS2DH12_ADDR 0x19
 #define LIS2DW12_WHO_AM_I                    0x0FU
 #define LIS2DW12_CTRL1                       0x20U
 
@@ -44,8 +44,10 @@ union sensorPacket_t{
 static const uint8_t sensor_packet_port = 1;
 extern sensorPacket_t sensor_packet;
 extern boolean sensor_gps_active;
+extern boolean sensor_gps_done;
 
 void sensor_timer_callback(void);
+void sensor_scheduler(void);
 void sensor_system_functions_load(void);
 boolean sensor_gps_busy_timeout(uint16_t timeout);
 boolean sensor_gps_init(void);

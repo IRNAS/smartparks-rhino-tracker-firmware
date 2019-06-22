@@ -14,9 +14,7 @@
 // Initialize timer for periodic callback
 TimerMillis periodic;
 
-long event_status_last = 0;
-long event_sensor_last = 0;
-long event_loop_start = 0;
+unsigned long event_loop_start = 0;
 
 bool reed_switch = false;
 
@@ -76,16 +74,8 @@ void callbackPeriodic(void){
 
   // determine which events need to be scheduled, except in hibernation
   if(state!=HIBERNATION){
-    elapsed = millis()-event_status_last;
-    if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
-      event_status_last=millis();
-      status_send_flag = true;
-    }
-    elapsed = millis()-event_sensor_last;
-    if(elapsed>=(settings_packet.data.sensor_interval*60*1000)){
-      event_sensor_last=millis();
-      sensor_send_flag = true;
-    }
+    status_scheduler();
+    sensor_scheduler();
   }
 
   // if the main loop is running and not sleeping
@@ -229,12 +219,10 @@ void loop() {
     state_goto_timeout=IDLE;
     // setup default settings
     status_init(); // currently does not report a fail, should not be possible anyhow
-    event_status_last=millis();
     sensor_init(); // currently does not report a fail, TODO
     sensor_send_flag = true;
     status_send_flag = true;
     sensor_send_flag = true;
-    event_sensor_last=millis();
     sensor_gps_init(); // self disables if fail present
     // transition
     if(true){
@@ -339,11 +327,11 @@ void loop() {
     break;
   case GPS_READ:
     // defaults for timing out
-    state_timeout_duration=10*60*1000;
+    state_timeout_duration=20*60*1000;
     state_goto_timeout=IDLE;
     // action
     // transition
-    if(sensor_gps_active==false){
+    if(sensor_gps_done==true){
       state_transition(SENSOR_READ);
     }
     else{

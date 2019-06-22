@@ -56,6 +56,7 @@ function Decoder(bytes) {
         decoded.mode_slow_voltage_threshold = bytes[11];
         decoded.gps_settings = {};//bytes[2];
         decoded.gps_settings.d3_fix =  ((bytes[12] >> 0)&0x01)? 1 : 0;
+        decoded.gps_settings.fail_backoff =  ((bytes[12] >> 1)&0x01)? 1 : 0;
         decoded.sensor_interval_active_threshold = bytes[13];
         decoded.sensor_interval = (bytes[15] << 8) | bytes[14];
     }

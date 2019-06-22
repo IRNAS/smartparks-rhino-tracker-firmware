@@ -31,7 +31,8 @@ function Encoder(object, port) {
 
         bytes[11] = (object.mode_slow_voltage_threshold) & 0xFF;
 
-        bytes[12] |= object.gps_settings.d3_fix ? 1<<0 : 0;
+        bytes[12] = object.gps_settings.d3_fix ? 1<<0 : 0;
+        bytes[12] |= object.gps_settings.fail_backoff ? 1<<1 : 0;
 
         bytes[13] = (object.sensor_interval_active_threshold) & 0xFF;
 
