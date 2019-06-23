@@ -2,7 +2,6 @@
 #define COMMAND_H_
 
 #include "Arduino.h"
-#include "TimerMillis.h"
 #include <STM32L0.h>
 #include "lorawan.h"
 #include <EEPROM.h>

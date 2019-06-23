@@ -7,6 +7,7 @@ TimerMillis sensor_gps_timeout;
 
 sensorPacket_t sensor_packet;
 boolean sensor_send_flag = false;
+boolean sensor_gps_initialized = false;
 boolean sensor_gps_active = false;
 boolean sensor_gps_done = false;
 unsigned long event_sensor_last = 0;
@@ -105,24 +106,24 @@ boolean sensor_gps_busy_timeout(uint16_t timeout){
 
 void sensor_gps_power(boolean enable){
   if(enable){
-    //pinMode(GPS_EN,OUTPUT);
-    //digitalWrite(GPS_EN,HIGH);
+    pinMode(GPS_EN,OUTPUT);
+    digitalWrite(GPS_EN,HIGH);
   }
   else{
-    //digitalWrite(GPS_EN,LOW);
+    digitalWrite(GPS_EN,LOW);
     delay(100);
-    //pinMode(GPS_EN,INPUT_PULLDOWN);
+    pinMode(GPS_EN,INPUT_PULLDOWN);
   }
 }
 
 void sensor_gps_backup(boolean enable){
   if(enable){
-    //pinMode(GPS_BCK,OUTPUT);
-    //digitalWrite(GPS_BCK,HIGH);
+    pinMode(GPS_BCK,OUTPUT);
+    digitalWrite(GPS_BCK,HIGH);
   }
   else{
-    //digitalWrite(GPS_BCK,LOW);
-    //pinMode(GPS_BCK,INPUT_PULLDOWN);
+    digitalWrite(GPS_BCK,LOW);
+    pinMode(GPS_BCK,INPUT_PULLDOWN);
   }
 }
 
@@ -134,12 +135,9 @@ boolean sensor_gps_init(void){
       serial_debug.println(")");
     #endif
     boolean error=true;
-    sensor_gps_power(false);
-    GNSS.suspend();
-    delay(500);
     sensor_gps_power(true);
     sensor_gps_backup(true);
-    delay(1000); // wait for ublox to boot
+    delay(500); // wait for ublox to boot
     for(int i=0;i<3;i++){
       //https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/issues/86
       // workaround for the above issue implemented in library
@@ -158,6 +156,7 @@ boolean sensor_gps_init(void){
     }
     //set error bits if GPS is not present and self-disable
     if(error){
+      sensor_gps_initialized = false;
       GNSS.end();
       // GPS periodic error
       bitSet(status_packet.data.system_functions_errors,0);
@@ -205,25 +204,34 @@ boolean sensor_gps_init(void){
     // This function will be called upon receiving a new GPS location
     GNSS.onLocation(sensor_gps_acquiring_callback);
     // GPS to sleep
-    error=sensor_gps_busy_timeout(1000);
-    GNSS.suspend();
+    //error=sensor_gps_busy_timeout(1000);
+    /*if(gps_hot_fix==true){
+      sensor_gps_backup(true);
+      GNSS.suspend();
+      delay(300);
+      // Disable GPS power
+      sensor_gps_power(false);
+    }
+    else{
+      sensor_gps_backup(false);
+      GNSS.end();
+      sensor_gps_busy_timeout(1000);
+      // Disable GPS power
+      sensor_gps_power(false);
+    }*/
     // initialize lat fix time
     sensor_gps_last_fix_time=0;
     time_to_fix=0;
     sensor_gps_fail_fix_count=1;
     sensor_gps_successful_fix = false;
-    sensor_gps_busy_timeout(1000);// TODO: remove delay belof if above works
-    delay(3000); // must be here otherwise baudrate and other commands are not saved
-    // Disable GPS power
-    sensor_gps_power(false);
-    if(gps_hot_fix==false){
-      sensor_gps_backup(false);
-    }
+    sensor_gps_initialized = true;
+
 
     #ifdef debug
       serial_debug.print("gps(initialized");
       serial_debug.println(")");
     #endif
+    return true;
   }
   else{
     // Disable GPS power
@@ -237,8 +245,8 @@ boolean sensor_gps_init(void){
       serial_debug.print("gps(disabled");
       serial_debug.println(")");
     #endif
+    return false;
   }
-  return true;
 }
 
 boolean sensor_gps_start(void){
@@ -249,8 +257,9 @@ boolean sensor_gps_start(void){
     // check if GPS is enabled and then proceed
   if((gps_periodic==true)|(gps_triggered==true)){
     // make sure GPS is reset, note backup power is still on
-    if(gps_hot_fix==true){
+    if(sensor_gps_initialized == true){
       sensor_gps_power(true);
+      delay(100);
       sensor_gps_busy_timeout(1000);
       response=GNSS.resume();
     }
@@ -288,8 +297,9 @@ boolean sensor_gps_start(void){
       serial_debug.print(settings_packet.data.gps_minimal_ehpe);
       serial_debug.println(")");
     #endif
+    return true;
   }
-  return true;
+  return false;
 }
 
 void sensor_gps_acquiring_callback(void){
@@ -350,6 +360,7 @@ void sensor_gps_stop(void){
     sensor_gps_backup(true);
   }
   else{
+    sensor_gps_initialized = false;
     GNSS.end();
     sensor_gps_backup(false);
   }

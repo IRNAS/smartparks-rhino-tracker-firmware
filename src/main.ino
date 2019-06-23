@@ -47,16 +47,36 @@ void callbackReed(void);
 void state_transition(state_e next);
 bool state_check_timeout(void);
 
-/*
- *  Function:     void callbackReedvoid)
- *  Description:  function called when reed gpio has changed
- */
-
-void callbackReed(void){
-    reed_switch=~digitalRead(PIN_REED);
-    STM32L0.wakeup();
+void checkReed(void){
+    // Reed switch
+  /*pinMode(PIN_REED,INPUT_PULLUP);
+  // debounce
+  int counter_high = 0;
+  int counter_low = 0;
+  for(int i=0;i<10;i++){
+    if(digitalRead(PIN_REED)==false){
+      counter_low++;
+    }
+    else{
+      counter_high++;
+    }
+    STM32L0.stop(1);
+  }
+  if(counter_low>=9){
+    if(reed_switch!=true){
+      STM32L0.wakeup();
+    }
+    reed_switch = true;
+  }
+  else if(counter_high>=9){
+    if(reed_switch!=false){
+      STM32L0.wakeup();
+    }
+    reed_switch = false;
+  }
+  // Reed switch
+  pinMode(PIN_REED,INPUT_PULLDOWN);*/
 }
-
 /*
  *  Function:     void callbackPeriodic(void)
  *  Description:  function called with timer to kick the watchdog
@@ -65,12 +85,12 @@ void callbackReed(void){
 void callbackPeriodic(void){
   STM32L0.wdtReset();
   
-  /*#ifdef debug
+  #ifdef debug
     serial_debug.print("wdt(): ");
     serial_debug.println(millis());
-  #endif*/
+  #endif
 
-  unsigned long elapsed;
+  checkReed();
 
   // determine which events need to be scheduled, except in hibernation
   if(state!=HIBERNATION){
@@ -80,7 +100,7 @@ void callbackPeriodic(void){
 
   // if the main loop is running and not sleeping
   if(event_loop_start!=0){
-    elapsed = millis()-event_loop_start;
+    unsigned long elapsed = millis()-event_loop_start;
     // if loop has been running for more then 60s, then reboot system
     if(elapsed>=60*1000){
       STM32L0.reset();
@@ -129,18 +149,16 @@ bool state_check_timeout(void){
 void setup() {
   // Watchdog
   STM32L0.wdtEnable(18000);
-  periodic.start(callbackPeriodic, 0, 5000);
-
-  // Reed switch
-  pinMode(PIN_REED,INPUT_PULLUP);
-  attachInterrupt(PIN_REED,callbackReed,CHANGE);
+  periodic.start(callbackPeriodic, 00, 5000);
 
   // Serial port debug setup
   #ifdef serial_debug
     serial_debug.begin(115200);
   #endif
   #ifdef debug
-    serial_debug.println("setup(serial debug begin)");
+    serial_debug.print("setup(serial debug begin): ");
+    serial_debug.print("resetCause: ");
+    serial_debug.println(STM32L0.resetCause(),HEX);
   #endif
 
   // start the FSM with LoraWAN init
@@ -223,7 +241,7 @@ void loop() {
     sensor_send_flag = true;
     status_send_flag = true;
     sensor_send_flag = true;
-    sensor_gps_init(); // self disables if fail present
+    //sensor_gps_init(); // self disables if fail present
     // transition
     if(true){
       state_transition(SETTINGS_SEND);
@@ -238,9 +256,6 @@ void loop() {
     
     if(reed_switch){
       state_transition(HIBERNATION);
-      // LED diode
-      delay(100);
-      digitalWrite(LED_RED,HIGH);
     }
     // transition based on triggers
     else if(settings_updated|status_send_flag|sensor_send_flag){
@@ -306,8 +321,7 @@ void loop() {
       state_transition(GPS_RUN);
     }
     else{
-      // sleep for 1 second and check
-      sleep=1000;
+      state_transition(SENSOR_READ);
     }
     break;
   case GPS_RUN:
@@ -383,20 +397,14 @@ void loop() {
     // defaults for timing out
     state_timeout_duration=24*60*60*1000; // 24h maximum
     state_goto_timeout=IDLE;
-    // LED diode
-    digitalWrite(LED_RED,LOW);
-    //TODO - bypass for testing
-    state_transition(IDLE);
     // action
-    if(digitalRead(PIN_REED==HIGH)){
+    if(reed_switch==false){
       state_transition(IDLE);
-      // LED diode
-      digitalWrite(LED_RED,HIGH);
       // Send status immediately
       status_send_flag=HIGH;
     }
     else{
-      sleep=600000;
+      sleep=0; // until an event
     }
     break;
   default:
