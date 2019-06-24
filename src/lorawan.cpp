@@ -20,8 +20,13 @@ const char *appKey  = "003FF34E9F1C8864953D78DCFBBC84F8";
 char devEui[32]; // read from the processor
 #endif
 
-boolean lorawan_send_successful = false;
+boolean lorawan_send_successful = false; // flags sending has been successful to the FSM
 
+/**
+ * @brief Initialize LoraWAN communication, returns fales if fails
+ * 
+ * @return boolean 
+ */
 boolean lorawan_init(void){
   if(LoRaWAN.begin(EU868)==0){
     return false;
@@ -46,9 +51,9 @@ boolean lorawan_init(void){
   //Get the device ID
   LoRaWAN.getDevEui(devEui, 18);
   LoRaWAN.setSaveSession(true); // this will save the session for reboot, useful if reboot happens with in poor signal conditons
-  LoRaWAN.setLinkCheckLimit(48); // number of uplinks link check is sent, 5 for experimenting, 48 otherwise
-  LoRaWAN.setLinkCheckDelay(4); // number of uplinks waiting for an answer, 2 for experimenting, 4 otherwise
-  LoRaWAN.setLinkCheckThreshold(4); // number of times link check fails to assert link failed, 1 for experimenting, 4 otherwise
+  //LoRaWAN.setLinkCheckLimit(48); // number of uplinks link check is sent, 5 for experimenting, 48 otherwise
+  //LoRaWAN.setLinkCheckDelay(4); // number of uplinks waiting for an answer, 2 for experimenting, 4 otherwise
+  //LoRaWAN.setLinkCheckThreshold(4); // number of times link check fails to assert link failed, 1 for experimenting, 4 otherwise
   LoRaWAN.joinOTAA(appEui, appKey, devEui);
   #endif
 
@@ -60,6 +65,14 @@ boolean lorawan_init(void){
   return true;
 }
 
+/**
+ * @brief Sends the provided data buffer on the given port, returns false if failed
+ * 
+ * @param port 
+ * @param buffer 
+ * @param size 
+ * @return boolean 
+ */
 boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
   #ifdef debug
     serial_debug.println("lorawan_send() init");
@@ -115,7 +128,10 @@ boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
   return false;
 }
 
-// Callback on Join failed/success
+/**
+ * @brief Callback ocurring when join has been successful
+ * 
+ */
 void lorawan_joinCallback(void)
 {
     if (LoRaWAN.joined())
@@ -134,13 +150,20 @@ void lorawan_joinCallback(void)
     }
 }
 
-// report Join status
+/**
+ * @brief returns the boolean status of the LoraWAN join
+ * 
+ * @return boolean 
+ */
 boolean lorawan_joined(void)
 {
   return LoRaWAN.joined();
 }
 
-// Link check callback, useful for ADR debugging
+/**
+ * @brief Callback occurs when link check packet has been received
+ * 
+ */
 void lorawan_checkCallback(void)
 {
   #ifdef debug
@@ -157,7 +180,10 @@ void lorawan_checkCallback(void)
   #endif
 }
 
-// callback upon receiving data
+/**
+ * @brief Callback when the data is received via LoraWAN - procecssing various content
+ * 
+ */
 void lorawan_receiveCallback(void)
 {
   #ifdef debug
@@ -207,7 +233,10 @@ void lorawan_receiveCallback(void)
   }
 }
 
-//callback on link lost, handle rejoining schedule here
+/**
+ * @brief Callback on transmission done - signals successful TX with a flag
+ * 
+ */
 void lorawan_doneCallback(void)
 {
   #ifdef debug

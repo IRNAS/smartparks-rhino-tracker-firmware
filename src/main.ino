@@ -14,8 +14,7 @@
 // Initialize timer for periodic callback
 TimerMillis periodic;
 
-unsigned long event_loop_start = 0;
-
+// Variable to track the reed switch status
 bool reed_switch = false;
 
 enum state_e{
@@ -40,6 +39,8 @@ state_e state_goto_timeout;
 state_e state_prev = INIT;
 unsigned long state_timeout_start;
 unsigned long state_timeout_duration;
+// Variable to monitor when the loop has been started
+unsigned long event_loop_start = 0;
 
 // function prototypes because Arduino failes if using enum otherwise
 void callbackPeriodic(void);
@@ -47,9 +48,12 @@ void callbackReed(void);
 void state_transition(state_e next);
 bool state_check_timeout(void);
 
+/**
+ * @brief Check reed switch status
+ * 
+ */
 void checkReed(void){
-    // Reed switch
-  /*pinMode(PIN_REED,INPUT_PULLUP);
+  pinMode(PIN_REED,INPUT_PULLUP);
   // debounce
   int counter_high = 0;
   int counter_low = 0;
@@ -60,42 +64,40 @@ void checkReed(void){
     else{
       counter_high++;
     }
-    STM32L0.stop(1);
+    delay(1);
   }
   if(counter_low>=9){
-    if(reed_switch!=true){
-      STM32L0.wakeup();
-    }
     reed_switch = true;
   }
   else if(counter_high>=9){
-    if(reed_switch!=false){
-      STM32L0.wakeup();
-    }
     reed_switch = false;
   }
   // Reed switch
-  pinMode(PIN_REED,INPUT_PULLDOWN);*/
+  pinMode(PIN_REED,INPUT_PULLDOWN);
 }
-/*
- *  Function:     void callbackPeriodic(void)
- *  Description:  function called with timer to kick the watchdog
- */
 
+/**
+ * @brief Callback ocurring periodically for triggering events and wdt
+ * 
+ */
 void callbackPeriodic(void){
+  periodic.start(callbackPeriodic, 5000);
   STM32L0.wdtReset();
   
-  #ifdef debug
+  /*#ifdef debug
     serial_debug.print("wdt(): ");
     serial_debug.println(millis());
-  #endif
-
-  checkReed();
+  #endif*/
 
   // determine which events need to be scheduled, except in hibernation
   if(state!=HIBERNATION){
     status_scheduler();
     sensor_scheduler();
+  }
+  else{
+    sensor_send_flag = false;
+    status_send_flag = false;
+    sensor_send_flag = false;
   }
 
   // if the main loop is running and not sleeping
@@ -146,10 +148,15 @@ bool state_check_timeout(void){
   return false;
 }
 
+/**
+ * @brief Setup function called on boot
+ * 
+ */
 void setup() {
+  //STM32L0.stop(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
   // Watchdog
   STM32L0.wdtEnable(18000);
-  periodic.start(callbackPeriodic, 00, 5000);
+  periodic.start(callbackPeriodic, 5000);
 
   // Serial port debug setup
   #ifdef serial_debug
@@ -165,10 +172,13 @@ void setup() {
   state = INIT;
 }
 
-
+/**
+ * @brief Main system loop running the FSM
+ * 
+ */
 void loop() {
-  long sleep = -1;
-  event_loop_start = millis();
+  long sleep = -1; // reset the sleep after loop, set in every state if required
+  event_loop_start = millis(); // start the timer of the loop
   #ifdef debug
     serial_debug.print("fsm(");
     serial_debug.print(state_prev);
@@ -196,7 +206,11 @@ void loop() {
     settings_init();
     // load settings, currently can not return an error, thus proceed directly
     // transition
-    if(true){
+    checkReed();
+    if(reed_switch){
+      state_transition(HIBERNATION);
+    }
+    else{
       state_transition(LORAWAN_INIT);
     }
     break;
@@ -254,8 +268,10 @@ void loop() {
     // LED diode
     digitalWrite(LED_RED,LOW);
     
+    checkReed();
     if(reed_switch){
-      state_transition(HIBERNATION);
+      // Resets the system, expect goign straight to Hiberantion
+      STM32L0.reset();
     }
     // transition based on triggers
     else if(settings_updated|status_send_flag|sensor_send_flag){
@@ -396,15 +412,18 @@ void loop() {
   case HIBERNATION:
     // defaults for timing out
     state_timeout_duration=24*60*60*1000; // 24h maximum
-    state_goto_timeout=IDLE;
+    state_goto_timeout=INIT;
     // action
+    checkReed();
     if(reed_switch==false){
-      state_transition(IDLE);
-      // Send status immediately
-      status_send_flag=HIGH;
+      state_transition(INIT);
+      // Trigger all events
+      sensor_send_flag = true;
+      status_send_flag = true;
+      sensor_send_flag = true;
     }
     else{
-      sleep=0; // until an event
+      sleep=60000; // until an event
     }
     break;
   default:

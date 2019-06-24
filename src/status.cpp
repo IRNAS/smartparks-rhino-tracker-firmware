@@ -9,6 +9,10 @@ boolean status_send_flag = false;
 unsigned long event_status_last = 0;
 statusPacket_t status_packet;
 
+/**
+ * @brief Schedule status events
+ * 
+ */
 void status_scheduler(void){
   unsigned long elapsed = millis()-event_status_last;
   if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
@@ -17,6 +21,10 @@ void status_scheduler(void){
   }
 }
 
+/**
+ * @brief Initialize the staus logic
+ * 
+ */
 void status_init(void){ 
     event_status_last=millis();
     #ifdef debug
@@ -27,15 +35,32 @@ void status_init(void){
     #endif
 }
 
+/**
+ * @brief Send stauts values
+ * 
+ * @return boolean 
+ */
 boolean status_send(void){
   //assemble information
   float voltage=100;//impelment reading voltage
   float stm32l0_vdd = STM32L0.getVBUS();
   float stm32l0_temp = STM32L0.getTemperature();
-  float stm32l0_battery = STM32L0.getVBAT();
+
+  pinMode(BAN_MON_EN, OUTPUT);
+  digitalWrite(BAN_MON_EN, HIGH);
+  delay(10);
+  float value = 0;
+  for(int i=0; i<256; i++){
+    value+=analogRead(BAN_MON);
+    delay(1);
+  }
+  float stm32l0_battery = value*4000/256/4095; // TODO: calibrate
+  digitalWrite(BAN_MON_EN, LOW);
+  pinMode(BAN_MON_EN, INPUT_PULLDOWN);
+
 
   status_packet.data.resetCause=STM32L0.resetCause();
-  status_packet.data.battery=(uint8_t)get_bits(stm32l0_battery,0,4096,8);
+  status_packet.data.battery=(uint8_t)get_bits(stm32l0_battery,0,4,8);
   status_packet.data.temperature=(uint8_t)get_bits(stm32l0_temp,-20,80,8);
   status_packet.data.vbus=(uint8_t)get_bits(stm32l0_vdd,0,3.6,8);
 

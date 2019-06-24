@@ -30,6 +30,7 @@ extern boolean settings_updated;
  * gps_settings - enable/disable certain features
  *    bit 0 - gps 3d fix required
  *    bit 1 - fix backoff -  if enabled, every time the GPS fix fails a counter is incremented. The time between fixes is increased proportional to the counter. If 0 satellites have been found, then the counter is incremented by two.
+ *    bits 4-7 - gps minimum fix time - enforces the fix to take at least this much time
  * sensor_interval_active_threshold -  threshold value for acclelerometer to consider device to be active
  * sensor_interval_active -  send interval in minutes, range 1 - 1440, default 60
  */

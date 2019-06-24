@@ -18,6 +18,17 @@ This device is a power-efficeint GPS tracker sending data via LoraWAN. There are
    * `sensor_interval_active_threshold` - accelerometer based reporting if motion activity is detected
    * `sensor_interval_active` - the interval when the device is active
 
+## Reed switch
+The magnetic REED switch is put in place to put the device in hibernation for transport purposes or prior to installation. Removing the magnet will initialize the operation in 60s of removing it. Note that putting the device in hibernation performs a system reset, including the provisioned settings. Provide settings via the network.
+
+## GPS acquisition logic
+The GPS system is configured by defining the `sensor_interval` for reporting with additional modifications as explained above. There are two key parameters that specify the duration of the fixes:
+ * `gps_cold_fix_timeout` - timeout for cold fix
+ * `gps_hot_fix_timeout` - timeout for hot fix - 10 hot fix fails will fall back to cold-fix or 5 hot-fixes with 0 satellites observed.
+ * `gps_settings_fail_backoff` - backoff of the `sensor_interval` upon GPS fix failures
+ * `d3_fix` - enable 3D fix
+ * `minimum_fix_time` - enforce a minimum fix time to get a better fix/ephemeris, range 0-7, time in seconds is `minimum_fix_time*2`
+
 ## LoraWAN data
 See `decoder.js` which is rather human-readable for description of values being sent.
 
@@ -27,7 +38,7 @@ There are a number of single-byte commands specified for critical device control
 Implemented commands to be sent as single byte to port 99:
  * 0xaa - Sent the current settings
  * 0xab - Triggers system reset
- * 0xde - Erases EEPROM and triggers system reset
+ * 0xde - Resets LoraWAN stored settings in EEPROM and forces a re-join
 
 ## Tools
 There are a few tools available to make using this solution easier, namely:
@@ -50,27 +61,22 @@ Measured consumption 30uA on average, excludes sending Lora messages, expecting 
 1. Reports GPS position in defined intervals - DONE
 1. Reports GPS position on motion activity (define send interval for this)
 1. GPS acquisition time is sub 10s at 1h interval
-1. Accepts new configuration via network
-1. Remote reset command can be sent
-1. OTAA parameters can be adjusted or reset
+1. Accepts new configuration via network - DONE
+1. Remote reset command can be sent - DONE
+1. OTAA parameters can be adjusted or reset - DONE
 1. Lora signal suitable and working well
-1. Survives gracefully the failure of all external componets (GPS, accelerometer, light)
-1. Correctly re-joins if link fails
-1. LoraWAN join fail backoff/retry period
-1. GPS cold-fix check
+1. Survives gracefully the failure of all external componets (GPS, accelerometer, light) - DONE
+1. Correctly re-joins if link fails - NOT REQUIRED
+1. LoraWAN join fail backoff/retry period - NOT REQUIRED
+1. GPS cold-fix check -DONE
  * Tested GPS cold-fix timeout and hot-fix timeout - DONE
  * Evaluating when to switch to cold-fix - DONE
- * 
-1. GPS delay before shitdown check
-1. Does not polute the spectrum when voltage is low
+1. GPS delay before shutdown check - DONE
+1. Does not polute the spectrum when voltage is low - DONE
 
 # TODO
 1. Implement settings for everything required
 1. Implement and test battery voltage measurement
-1. Implement hibernation mode
-1. Hot / cold fix configuration
 1. Evaluate power
-1. Implement timeout for a series of unsuccessful hot-fixes and cold-fixes
-1. Implement GPS toumeout if no satellites have been found in some time
 1. Clean-up
 
