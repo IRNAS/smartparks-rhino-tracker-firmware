@@ -44,7 +44,6 @@ unsigned long event_loop_start = 0;
 
 // function prototypes because Arduino failes if using enum otherwise
 void callbackPeriodic(void);
-void callbackReed(void);
 void state_transition(state_e next);
 bool state_check_timeout(void);
 
@@ -324,7 +323,7 @@ void loop() {
   case GPS_START:
     // defaults for timing out
     state_timeout_duration=3000;
-    state_goto_timeout=GENERAL_INIT;
+    state_goto_timeout=SENSOR_READ;
     // action
 
     // transition
@@ -343,7 +342,7 @@ void loop() {
   case GPS_RUN:
     // defaults for timing out
     state_timeout_duration=3000;
-    state_goto_timeout=GENERAL_INIT;
+    state_goto_timeout=SENSOR_READ;
     // action
     // this state is here if gps does not send data and should reinit
     // transition
@@ -358,7 +357,7 @@ void loop() {
   case GPS_READ:
     // defaults for timing out
     state_timeout_duration=20*60*1000;
-    state_goto_timeout=IDLE;
+    state_goto_timeout=SENSOR_READ;
     // action
     // transition
     if(sensor_gps_done==true){

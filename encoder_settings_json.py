@@ -20,7 +20,7 @@ lorawan_datarate_adr["confirmed_uplink"]=False
 lorawan_datarate_adr["adr"]=False
 data['lorawan_datarate_adr'] = lorawan_datarate_adr
 
-data['sensor_interval'] =1
+data['sensor_interval'] =60
 
 data['gps_cold_fix_timeout'] = 300
 
@@ -32,8 +32,8 @@ data['mode_slow_voltage_threshold'] = 1
 
 gps_settings = {}
 gps_settings['d3_fix'] = True
-gps_settings['fail_backoff'] = True
-gps_settings['minimum_fix_time'] = 2
+gps_settings['fail_backoff'] = False
+gps_settings['minimum_fix_time'] = 4
 
 data['gps_settings'] = gps_settings
 data['sensor_interval_active_threshold'] =100

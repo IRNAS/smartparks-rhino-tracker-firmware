@@ -43,7 +43,7 @@ void status_init(void){
 boolean status_send(void){
   //assemble information
   float voltage=100;//impelment reading voltage
-  float stm32l0_vdd = STM32L0.getVBUS();
+  float stm32l0_vdd = STM32L0.getVDDA();
   float stm32l0_temp = STM32L0.getTemperature();
 
   pinMode(BAN_MON_EN, OUTPUT);

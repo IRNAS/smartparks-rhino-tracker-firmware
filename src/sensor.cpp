@@ -11,6 +11,7 @@ boolean sensor_gps_initialized = false;
 boolean sensor_gps_active = false;
 boolean sensor_gps_done = false;
 unsigned long event_sensor_last = 0;
+unsigned long event_accelerometer_last = 0;
 
 // Decoded settings for easy use in the code
 boolean gps_periodic = false;
@@ -45,6 +46,14 @@ check UBX-NAV-AOPSTATUS and hten disable GPS
 check if manually disabling backup does loose gps moduel settings, consider using the provided library to do this and test correct operation
 
 */
+
+/**
+ * @brief updates last motion activity detected time upon interrup from acelerometer
+ * 
+ */
+void sensor_accelerometer_callback(){
+  event_accelerometer_last=millis();
+}
 
 /**
  * @brief load system functions form settings to variables
@@ -86,7 +95,18 @@ void sensor_system_functions_load(void){
 void sensor_scheduler(void){
   unsigned long elapsed = millis()-event_sensor_last;
   uint8_t backoff= gps_settings_fail_backoff ? sensor_gps_fail_fix_count+1 : 1;
-  if(elapsed>=(settings_packet.data.sensor_interval*60*1000*backoff)){
+  unsigned long event_accelerometer_last = 0;
+  unsigned long interval=0;
+
+  // if activity has been detected within the specified interval, use this interval
+  if((millis()-event_accelerometer_last)<settings_packet.data.sensor_interval_active){
+    interval=settings_packet.data.sensor_interval_active;
+  }
+  else{
+    interval=settings_packet.data.sensor_interval;
+  }
+
+  if(elapsed>=(interval*60*1000*backoff)){
     event_sensor_last=millis();
     sensor_send_flag = true;
     #ifdef debug
@@ -200,15 +220,6 @@ boolean sensor_gps_init(void){
         serial_debug.println(")");
       #endif
       return false;
-    }
-    // TODO initialize accelerometer and setup triggered mode enabled
-    if(gps_triggered==true){
-      boolean error=true;
-      //initialize accelerometer and set up the triggers
-      if(error){
-        //self-disable if triggered mode is unavailable
-        gps_triggered=false;
-      }
     }
     
     // see default config https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/blob/18fb1cc81c6bc91b25e3346595f820985f2267e5/libraries/GNSS/src/utility/gnss_core.c#L2904
@@ -472,6 +483,7 @@ void sensor_init(void){
   sensor_system_functions_load();
 
 
+  //initialize sensor even if not enabled to put it in low poewr
   Wire.begin();
   Wire.beginTransmission(LIS2DH12_ADDR);
   Wire.write(LIS2DW12_WHO_AM_I);
@@ -480,29 +492,57 @@ void sensor_init(void){
   uint8_t dummy = Wire.read(); 
 
   if(dummy!=0x44){
+      //set accelerometer error
+      bitSet(status_packet.data.system_functions_errors,3);
+      //self-disable if not present
+      accelerometer_enabled=false;
       #ifdef debug
         serial_debug.print("LIS not found: 0x");
         serial_debug.println(dummy,HEX);
       #endif
   }
+  else{
+    #ifdef debug
+        serial_debug.print("LIS present: 0x");
+        serial_debug.println(dummy,HEX);
+    #endif
+  }
 
-  #ifdef debug
-      serial_debug.print("LIS present: 0x");
-      serial_debug.println(dummy,HEX);
-  #endif
 
-  Wire.beginTransmission(LIS2DH12_ADDR);
-  Wire.write(LIS2DW12_CTRL1);
-  Wire.write(0x00);
-  Wire.endTransmission();
   
   // Accelerometer
-  if(accelerometer_enabled==true){
-    // check if present
-    // configure 
+  if((accelerometer_enabled==true)|(gps_triggered==true)){
+    //Enable BDU
+    //Set full scale +- 2g 
+    //Enable activity detection interrupt
+    writeReg(LIS2DW12_CTRL2, 0x08);    
+    writeReg(LIS2DW12_CTRL6, 0x00);
+
+    if(gps_triggered==true){
+      writeReg(LIS2DW12_CTRL4_INT1_PAD_CTRL, 0x20);    
+
+      /**The wake-up can be personalized by two key parameters � threshold and duration. 
+        * With threshold, the application can set the value which at least one of the axes 
+        * has to exceed in order to generate an interrupt. The duration is the number of 
+        * consecutive samples for which the measured acceleration exceeds the threshold.
+        */    
+      uint8_t thr = settings_packet.data.sensor_interval_active_threshold&0x3f;
+      writeReg(LIS2DW12_WAKE_UP_THS, thr);//6bit value    
+      writeReg(LIS2DW12_WAKE_UP_DUR, 0xff);    
+
+      //Start sensor with ODR 100Hz and in low-power mode 1 
+      writeReg(LIS2DW12_CTRL1, 0x10);
+
+      attachInterrupt(A_INT1,sensor_accelerometer_callback,RISING);
+
+      delay(100);
+
+      //Enable interrupt  function
+      writeReg(LIS2DW12_CTRL7, 0x20);
+    }
   }
   else{
-    // put into low power
+    writeReg(LIS2DW12_CTRL1, 0x00);  
   }
 
   // Light sensor
@@ -532,4 +572,18 @@ boolean sensor_read(void){
  */
 boolean sensor_send(void){
   return lorawan_send(sensor_packet_port, &sensor_packet.bytes[0], sizeof(sensorData_t));
+}
+
+/**
+ * @brief I2C write register
+ * 
+ * @param reg - register
+ * @param val - value
+ */
+void writeReg(uint8_t reg, uint8_t val)
+{
+    Wire.beginTransmission(LIS2DH12_ADDR);
+    Wire.write(reg);
+    Wire.write(val);
+    Wire.endTransmission();
 }

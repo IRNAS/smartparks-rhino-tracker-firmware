@@ -14,6 +14,12 @@
 #define LIS2DH12_ADDR 0x19
 #define LIS2DW12_WHO_AM_I                    0x0FU
 #define LIS2DW12_CTRL1                       0x20U
+#define LIS2DW12_CTRL2                       0x21U
+#define LIS2DW12_CTRL4_INT1_PAD_CTRL         0x23U
+#define LIS2DW12_CTRL6                       0x25U
+#define LIS2DW12_WAKE_UP_THS                 0x34U   
+#define LIS2DW12_WAKE_UP_DUR                 0x35U
+#define LIS2DW12_CTRL7                       0x3FU
 
 extern boolean sensor_send_flag;
 
@@ -46,6 +52,7 @@ extern sensorPacket_t sensor_packet;
 extern boolean sensor_gps_active;
 extern boolean sensor_gps_done;
 
+void sensor_accelerometer_callback(void);
 void sensor_timer_callback(void);
 void sensor_scheduler(void);
 void sensor_system_functions_load(void);
@@ -58,5 +65,6 @@ void sensor_gps_stop(void);
 void sensor_init(void);
 boolean sensor_read(void);
 boolean sensor_send(void);
+void writeReg(uint8_t reg, uint8_t val);
 
 #endif
