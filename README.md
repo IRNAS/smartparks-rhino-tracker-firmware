@@ -13,21 +13,14 @@ This code is being actively developed and is not yet suitable for use.
 This device is a power-efficeint GPS tracker sending data via LoraWAN. There are three key messages being sent by the device:
  * `settings` - current device settings - only upon boot, change or request
  * `status` - device status message being sent with the specified `status_interval` in minutes - recommended to do this every 24h
- * `sensor` - device sensor data including GPS position with the specified `sensor_interval` in minutes, however there are several other settings that affect this, such as:
-   * `mode_slow_voltage_threshold` - where the sensor data may be slowed down or disabled
-   * `sensor_interval_active_threshold` - accelerometer based reporting if motion activity is detected
-   * `sensor_interval_active` - the interval when the device is active
+ * `gps` - gps location
 
 ## Reed switch
 The magnetic REED switch is put in place to put the device in hibernation for transport purposes or prior to installation. Removing the magnet will initialize the operation in 60s of removing it. Note that putting the device in hibernation performs a system reset, including the provisioned settings. Provide settings via the network.
 
 ## GPS acquisition logic
-The GPS system is configured by defining the `sensor_interval` for reporting with additional modifications as explained above. There are two key parameters that specify the duration of the fixes:
- * `gps_cold_fix_timeout` - timeout for cold fix
- * `gps_hot_fix_timeout` - timeout for hot fix - 10 hot fix fails will fall back to cold-fix or 5 hot-fixes with 0 satellites observed.
- * `gps_settings_fail_backoff` - backoff of the `sensor_interval` upon GPS fix failures
- * `d3_fix` - enable 3D fix
- * `minimum_fix_time` - enforce a minimum fix time to get a better fix/ephemeris, range 0-7, time in seconds is `minimum_fix_time*2`
+The GPS system is configured by defining the `gps_periodic_interval` and other variables.
+
 
 ## LoraWAN data
 See `decoder.js` which is rather human-readable for description of values being sent.

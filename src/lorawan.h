@@ -6,8 +6,6 @@
 #include <STM32L0.h>
 #include "settings.h"
 #include "command.h"
-#include "status.h"
-#include "sensor.h"
 
 extern boolean lorawan_send_successful;
 

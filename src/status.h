@@ -6,6 +6,7 @@
 #include "lorawan.h"
 #include "project_utils.h"
 #include "settings.h"
+#include "board.h"
 
 extern boolean status_send_flag;
 

@@ -28,14 +28,18 @@ void settings_init(void){
     settings_packet.data.system_status_interval=1;
     settings_packet.data.system_functions=0xff;
     settings_packet.data.lorawan_datarate_adr=3;
-    settings_packet.data.sensor_interval=1;
+    settings_packet.data.gps_periodic_interval=1;
+    settings_packet.data.gps_triggered_interval=0;
+    settings_packet.data.gps_triggered_threshold=0x0f;
+    settings_packet.data.gps_triggered_duration=0xff;
     settings_packet.data.gps_cold_fix_timeout=200;
-    settings_packet.data.gps_hot_fix_timeout=45;
-    settings_packet.data.gps_minimal_ehpe=50;
-    settings_packet.data.mode_slow_voltage_threshold=1;
-    settings_packet.data.gps_settings=0x5f;
-    settings_packet.data.sensor_interval_active_threshold=100;
-    settings_packet.data.sensor_interval_active=1;
+    settings_packet.data.gps_hot_fix_timeout=30;
+    settings_packet.data.gps_min_fix_time=5;
+    settings_packet.data.gps_min_ehpe=50;
+    settings_packet.data.gps_hot_fix_retry=5;
+    settings_packet.data.gps_cold_fix_retry=2;
+    settings_packet.data.gps_fail_retry=1; //must be 1 due to bug in GPS core
+    settings_packet.data.gps_settings=0x01;
 
     // here implement reading from eeprom
 
@@ -53,16 +57,21 @@ void settings_from_downlink(void)
     // perform validation
     // copy to main settings
     settings_packet.data.system_status_interval=constrain(settings_packet_downlink.data.system_status_interval, 1, 24*60);
-    settings_packet.data.system_functions=constrain(settings_packet_downlink.data.system_functions, 0, 0xff);
-    settings_packet.data.lorawan_datarate_adr=constrain(settings_packet_downlink.data.lorawan_datarate_adr, 0, 5);
-    settings_packet.data.sensor_interval=constrain(settings_packet_downlink.data.sensor_interval, 1, 24*60);
-    settings_packet.data.gps_cold_fix_timeout=constrain(settings_packet_downlink.data.gps_cold_fix_timeout, 0, 600);
-    settings_packet.data.gps_hot_fix_timeout=constrain(settings_packet_downlink.data.gps_hot_fix_timeout, 0, 600);
-    settings_packet.data.gps_minimal_ehpe=constrain(settings_packet_downlink.data.gps_minimal_ehpe, 0, 100);
-    settings_packet.data.mode_slow_voltage_threshold=constrain(settings_packet_downlink.data.mode_slow_voltage_threshold, 1, 100);
-    settings_packet.data.gps_settings=constrain(settings_packet_downlink.data.gps_settings, 0, 0xff);
-    settings_packet.data.sensor_interval_active_threshold=constrain(settings_packet_downlink.data.sensor_interval_active_threshold, 0, 0xff);
-    settings_packet.data.sensor_interval_active=constrain(settings_packet_downlink.data.sensor_interval_active, 1, 24*60);
+    settings_packet.data.system_functions=constrain(settings_packet_downlink.data.system_functions, 0,0xff);
+    settings_packet.data.lorawan_datarate_adr=constrain(settings_packet_downlink.data.lorawan_datarate_adr, 0, 0xff);
+    settings_packet.data.gps_periodic_interval=constrain(settings_packet_downlink.data.gps_periodic_interval, 0, 24*60);
+    settings_packet.data.gps_triggered_interval=constrain(settings_packet_downlink.data.gps_triggered_interval, 0, 24*60);
+    settings_packet.data.gps_triggered_threshold=constrain(settings_packet_downlink.data.gps_triggered_threshold, 0,0x3f);
+    settings_packet.data.gps_triggered_duration=constrain(settings_packet_downlink.data.gps_triggered_duration, 0,0xff);
+    settings_packet.data.gps_cold_fix_timeout=constrain(settings_packet_downlink.data.gps_cold_fix_timeout, 0,600);
+    settings_packet.data.gps_hot_fix_timeout=constrain(settings_packet_downlink.data.gps_hot_fix_timeout, 0,600);
+    settings_packet.data.gps_min_fix_time=constrain(settings_packet_downlink.data.gps_min_fix_time, 0,60);
+    settings_packet.data.gps_min_ehpe=constrain(settings_packet_downlink.data.gps_min_ehpe, 0,100);
+    settings_packet.data.gps_hot_fix_retry=constrain(settings_packet_downlink.data.gps_hot_fix_retry, 0,0xff);
+    settings_packet.data.gps_cold_fix_retry=constrain(settings_packet_downlink.data.gps_cold_fix_retry, 0,0xff);
+    settings_packet.data.gps_fail_retry=constrain(settings_packet_downlink.data.gps_fail_retry, 0,0xff); //must be 1 due to bug in GPS core
+    settings_packet.data.gps_settings=constrain(settings_packet_downlink.data.gps_settings, 0,0xff);
+
     // TODO: store to eeprom when implemented
 
     settings_updated = true;

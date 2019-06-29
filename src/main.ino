@@ -3,7 +3,7 @@
 #include "board.h"
 #include "command.h"
 #include "lorawan.h"
-#include "sensor.h"
+#include "gps_tracker.h"
 #include "settings.h"
 #include "status.h"
 #include "project_utils.h"
@@ -26,13 +26,11 @@ enum state_e{
   SETTINGS_SEND,
   STATUS_SEND,
   GPS_START,
-  GPS_RUN,
   GPS_READ,
-  SENSOR_READ,
-  SENSOR_SEND,
+  GPS_SEND,
   LORAWAN_TRANSMIT,
   HIBERNATION
-} ;
+};
 
 state_e state = INIT;
 state_e state_goto_timeout;
@@ -91,12 +89,11 @@ void callbackPeriodic(void){
   // determine which events need to be scheduled, except in hibernation
   if(state!=HIBERNATION){
     status_scheduler();
-    sensor_scheduler();
+    gps_scheduler();
   }
   else{
-    sensor_send_flag = false;
+    gps_send_flag = false;
     status_send_flag = false;
-    sensor_send_flag = false;
   }
 
   // if the main loop is running and not sleeping
@@ -109,7 +106,7 @@ void callbackPeriodic(void){
   }
 
   // if any of the flags are high, wake up
-  if(settings_updated|status_send_flag|sensor_send_flag){
+  if(settings_updated|status_send_flag|gps_send_flag){
     STM32L0.wakeup();
     /*#ifdef debug
       serial_debug.print("wakeup(");
@@ -250,10 +247,9 @@ void loop() {
     state_goto_timeout=IDLE;
     // setup default settings
     status_init(); // currently does not report a fail, should not be possible anyhow
-    sensor_init(); // currently does not report a fail, TODO
-    sensor_send_flag = true;
+    gps_send_flag = true;
     status_send_flag = true;
-    sensor_send_flag = true;
+    gps_send_flag = true;
     //sensor_gps_init(); // self disables if fail present
     // transition
     if(true){
@@ -273,7 +269,7 @@ void loop() {
       STM32L0.reset();
     }
     // transition based on triggers
-    else if(settings_updated|status_send_flag|sensor_send_flag){
+    else if(settings_updated|status_send_flag|gps_send_flag){
       if(settings_updated==true){
         state_transition(GENERAL_INIT);
         settings_updated=false;
@@ -282,9 +278,9 @@ void loop() {
         state_transition(STATUS_SEND);
         status_send_flag=false;
       }
-      else if(sensor_send_flag==true){
+      else if(gps_send_flag==true){
         state_transition(GPS_START);
-        sensor_send_flag=false;
+        gps_send_flag=false;
       }
       else{
         // This should never happen
@@ -322,71 +318,40 @@ void loop() {
     break;
   case GPS_START:
     // defaults for timing out
-    state_timeout_duration=3000;
-    state_goto_timeout=SENSOR_READ;
-    // action
-
-    // transition
-    // if GPS error, skip reading
-    if(status_packet.data.system_functions_errors&0x03){
-      state_transition(SENSOR_READ);
-    }
+    state_timeout_duration=0;
+    state_goto_timeout=GPS_SEND;
     //if gps started continue
-    else if(sensor_gps_start()){
-      state_transition(GPS_RUN);
-    }
-    else{
-      state_transition(SENSOR_READ);
-    }
-    break;
-  case GPS_RUN:
-    // defaults for timing out
-    state_timeout_duration=3000;
-    state_goto_timeout=SENSOR_READ;
-    // action
-    // this state is here if gps does not send data and should reinit
-    // transition
-    if(sensor_gps_active==true){
+    if(gps_start()){
       state_transition(GPS_READ);
     }
     else{
-      // sleep for 1 second and check
-      sleep=1000;
+      state_transition(GPS_SEND);
     }
     break;
   case GPS_READ:
     // defaults for timing out
-    state_timeout_duration=20*60*1000;
-    state_goto_timeout=SENSOR_READ;
-    // action
-    // transition
-    if(sensor_gps_done==true){
-      state_transition(SENSOR_READ);
+    state_timeout_duration=610*1000;
+    state_goto_timeout=GPS_SEND;
+    //if gps started continue
+    if(gps_done==true){
+      //if GPS error, send status
+      if(status_packet.data.system_functions_errors&0x03){
+        state_transition(STATUS_SEND);
+      }
+      else{
+        state_transition(GPS_SEND);
+      }
     }
     else{
-      // sleep for 1 second and check
       sleep=4000;
     }
     break;
-  case SENSOR_READ:
-    // defaults for timing out
-    state_timeout_duration=0;
-    state_goto_timeout=SENSOR_SEND;
-    // transition
-    if(sensor_read()){
-      state_transition(SENSOR_SEND);
-    }
-    else{
-      // sleep for 1 second and check
-      sleep=1000;
-    }
-    break;
-  case SENSOR_SEND:
+  case GPS_SEND:
     // defaults for timing out
     state_timeout_duration=2000;
     state_goto_timeout=IDLE;
     // transition
-    if(sensor_send()){
+    if(gps_send()){
       state_transition(LORAWAN_TRANSMIT);
     }
     else{
@@ -417,9 +382,9 @@ void loop() {
     if(reed_switch==false){
       state_transition(INIT);
       // Trigger all events
-      sensor_send_flag = true;
+      gps_send_flag = true;
       status_send_flag = true;
-      sensor_send_flag = true;
+      gps_send_flag = true;
     }
     else{
       sleep=60000; // until an event

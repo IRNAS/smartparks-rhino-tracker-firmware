@@ -33,7 +33,6 @@ function Decoder(bytes) {
     // settings
     if (port === 3){
         decoded.system_status_interval = (bytes[1] << 8) | bytes[0];
-
         decoded.system_functions = {};//bytes[2];
         decoded.system_functions.gps_periodic =  ((bytes[2] >> 0)&0x01)? 1 : 0;
         decoded.system_functions.gps_triggered =  ((bytes[2] >> 1)&0x01)? 1 : 0;
@@ -49,17 +48,21 @@ function Decoder(bytes) {
         decoded.lorawan_datarate_adr.confirmed_uplink =  ((bytes[3] >> 6)&0x01)? 1 : 0;
         decoded.lorawan_datarate_adr.adr =  ((bytes[3] >> 7)&0x01)? 1 : 0;
 
-        decoded.sensor_interval = (bytes[5] << 8) | bytes[4];
-        decoded.gps_cold_fix_timeout = (bytes[7] << 8) | bytes[6];
-        decoded.gps_hot_fix_timeout = (bytes[9] << 8) | bytes[8];
-        decoded.gps_minimal_ehpe = bytes[10];
-        decoded.mode_slow_voltage_threshold = bytes[11];
-        decoded.gps_settings = {};//bytes[2];
-        decoded.gps_settings.d3_fix =  ((bytes[12] >> 0)&0x01)? 1 : 0;
-        decoded.gps_settings.fail_backoff =  ((bytes[12] >> 1)&0x01)? 1 : 0;
-        decoded.gps_settings.minimum_fix_time =  ((bytes[12] >> 4)&0x0f);
-        decoded.sensor_interval_active_threshold = bytes[13];
-        decoded.sensor_interval = (bytes[15] << 8) | bytes[14];
+        decoded.gps_periodic_interval = (bytes[5] << 8) | bytes[4];
+        decoded.gps_triggered_interval = (bytes[7] << 8) | bytes[6];
+        decoded.gps_triggered_threshold = bytes[8];
+        decoded.gps_triggered_duration = bytes[9];
+        decoded.gps_cold_fix_timeout = (bytes[11] << 8) | bytes[10];
+        decoded.gps_hot_fix_timeout = (bytes[13] << 8) | bytes[12];
+        decoded.gps_min_fix_time = bytes[14];
+        decoded.gps_min_ehpe = bytes[15];
+        decoded.gps_hot_fix_retry = bytes[16];
+        decoded.gps_cold_fix_retry = bytes[17];
+        decoded.gps_fail_retry = bytes[18];
+        decoded.gps_settings = {};//bytes[19];
+        decoded.gps_settings.d3_fix =  ((bytes[19] >> 0)&0x01)? 1 : 0;
+        decoded.gps_settings.fail_backoff =  ((bytes[19] >> 1)&0x01)? 1 : 0;
+        decoded.gps_settings.hot_fix =  ((bytes[19] >> 1)&0x01)? 1 : 0;
     }
     else if (port === 2){
         decoded.resetCause = resetCause_dict[bytes[0]];
