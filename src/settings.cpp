@@ -1,7 +1,7 @@
 #include "settings.h"
 
-#define debug
-#define serial_debug  Serial
+//#define debug
+//#define serial_debug  Serial
 
 boolean settings_send_flag = false;
 boolean settings_updated = false;
