@@ -325,7 +325,7 @@ void loop() {
       state_transition(GPS_READ);
     }
     else{
-      state_transition(GPS_SEND);
+      state_transition(STATUS_SEND);
     }
     break;
   case GPS_READ:

@@ -4,6 +4,9 @@
 #include "Arduino.h"
 #include <STM32L0.h>
 #include "lorawan.h"
+#include "stm32l0_eeprom.h"
+
+#define EEPROM_DATA_START_SETTINGS 0
 
 extern boolean settings_updated;
 

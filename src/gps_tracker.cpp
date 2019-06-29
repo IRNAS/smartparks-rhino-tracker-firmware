@@ -8,7 +8,8 @@ gpsPacket_t gps_packet;
 boolean gps_send_flag = false; // extern
 boolean gps_done = false; // extern
 
-uint8_t gps_fail_count = 1;
+boolean gps_begin_happened = false;
+uint8_t gps_fail_count = 0;
 uint8_t gps_fail_fix_count = 0;
 boolean gps_hot_fix = false;
 unsigned long gps_event_last = 0;
@@ -49,6 +50,14 @@ void gps_accelerometer_callback(void){
  */
 void gps_scheduler(void){
   unsigned long interval=0;
+  /*#ifdef debug
+    serial_debug.print("gps_scheduler(");
+    serial_debug.print("fail: ");
+    serial_debug.print(gps_fail_count);
+    serial_debug.print(" accel last: ");
+    serial_debug.print(gps_accelerometer_last);
+    serial_debug.println(")");
+  #endif*/
 
   // do not schedule a GPS event if it has failed mroe then the specified amount of times
   if(gps_fail_count>settings_packet.data.gps_fail_retry){
@@ -68,7 +77,7 @@ void gps_scheduler(void){
   }
 
   // linear backoff upon fail
-  if(bitRead(settings_packet.data.gps_settings,2)){
+  if(bitRead(settings_packet.data.gps_settings,1)){
     interval=interval*(gps_fail_count+1);
   }
 
@@ -145,6 +154,7 @@ boolean gps_begin(void){
   // Note: https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/issues/86
   // Note: https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/issues/90
   GNSS.begin(Serial1, GNSS.MODE_UBLOX, GNSS.RATE_1HZ);
+  gps_begin_happened=true;
   if(gps_busy_timeout(1000)){
     gps_end();
     gps_fail_count++;
@@ -205,7 +215,7 @@ boolean gps_begin(void){
 boolean gps_start(void){
   bitSet(status_packet.data.system_functions_errors,2);
   // Step 0: Initialize GPS
-  if(gps_fail_count>0){
+  if(gps_fail_count>0|gps_begin_happened==false){
     if(gps_begin()==false){
       return false;
     }

@@ -26,4 +26,13 @@ void command_receive(uint8_t command){
     else if(command==0xaa){
         boolean settings_send_flag = true;
     }
+    else if(command==0xac){
+        uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
+        EEPROM.write(eeprom_settings_address,0x00);
+        for(int i=0;i<sizeof(settingsData_t);i++){
+            EEPROM.write(eeprom_settings_address+1+i,0x00);
+        }
+        //reset received
+        STM32L0.reset();
+    }
 }
