@@ -13,7 +13,16 @@ This code is being actively developed and is not yet suitable for use.
 This device is a power-efficeint GPS tracker sending data via LoraWAN. There are three key messages being sent by the device:
  * `settings` - current device settings - only upon boot, change or request
  * `status` - device status message being sent with the specified `status_interval` in minutes - recommended to do this every 24h
- * `gps` - gps location
+   * `system_function_erros` - indicate error of different sub-systems
+     * bit 0 - gps periodic error - sent when there is an issue comunicating with the GPS
+     * bit 1 - gps triggered error
+     * bit 2 - gps fix error - set if no fix has been acquired at all - note if 3D fix or target epe is not acquired we still consider this a valid fix
+     * bit 3 - accelerometer error
+     * bit 4 - light sensor error
+     * bit 5 - temperature error
+     * bit 6 - humidity sensor error
+     * bit 7 - pressure sensor error
+ * `gps` - gps location - gps packet is set based on the `settings` and various intervals defined there.
 
 ## Reed switch
 The magnetic REED switch is put in place to put the device in hibernation for transport purposes or prior to installation. Removing the magnet will initialize the operation in 60s of removing it. Note that putting the device in hibernation performs a system reset, including the provisioned settings. Provide settings via the network.

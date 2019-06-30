@@ -336,7 +336,9 @@ void loop() {
     if(gps_done==true){
       //if GPS error, send status
       if(status_packet.data.system_functions_errors&0x03){
-        state_transition(STATUS_SEND);
+        // send status instead of GPS
+        status_send_flag=true;
+        state_transition(IDLE);
       }
       else{
         state_transition(GPS_SEND);
