@@ -250,7 +250,6 @@ void loop() {
     gps_send_flag = true;
     status_send_flag = true;
     gps_send_flag = true;
-    //sensor_gps_init(); // self disables if fail present
     // transition
     if(true){
       state_transition(SETTINGS_SEND);

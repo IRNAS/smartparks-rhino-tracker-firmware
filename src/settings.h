@@ -40,6 +40,7 @@ extern boolean settings_updated;
  *  bit 0 - 3d fix enabled
  *  bit 1 - linear backoff upon fail (based on interval time)
  *  bit 2 - hot fix enabled
+ *  bit 3 - fully resolved required
  */
 struct settingsData_t{
   uint16_t  system_status_interval;

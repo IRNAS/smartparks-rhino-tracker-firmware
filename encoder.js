@@ -44,6 +44,7 @@ function Encoder(object, port) {
         bytes[19] = object.gps_settings.d3_fix ? 1<<0 : 0;
         bytes[19] |= object.gps_settings.fail_backoff ? 1<<1 : 0;
         bytes[19] |= object.gps_settings.hot_fix ? 1<<2 : 0;
+        bytes[19] |= object.gps_settings.fully_resolved ? 1<<3 : 0;
     }
     //command
     else if (port === 99){
