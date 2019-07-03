@@ -31,7 +31,7 @@ extern boolean status_send_flag;
  */
 struct statusData_t{
   uint8_t resetCause;
-  uint8_t mode;
+  uint8_t battery_low;
   uint8_t battery;
   uint8_t temperature;
   uint8_t vbus;

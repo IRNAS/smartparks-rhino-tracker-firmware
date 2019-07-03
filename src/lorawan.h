@@ -6,9 +6,13 @@
 #include <STM32L0.h>
 #include "settings.h"
 #include "command.h"
+#include "TimerMillis.h"
+#include "board.h"
+#include "status.h"
 
 extern boolean lorawan_send_successful;
 
+void callbackPeriodicADC(void);
 boolean lorawan_init(void);
 boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size);
 boolean lorawan_joined(void);

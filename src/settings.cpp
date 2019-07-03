@@ -33,14 +33,14 @@ void settings_init(void){
     settings_packet.data.gps_triggered_interval=0;
     settings_packet.data.gps_triggered_threshold=0x0f;
     settings_packet.data.gps_triggered_duration=0xff;
-    settings_packet.data.gps_cold_fix_timeout=10;
-    settings_packet.data.gps_hot_fix_timeout=5;
+    settings_packet.data.gps_cold_fix_timeout=200;
+    settings_packet.data.gps_hot_fix_timeout=30;
     settings_packet.data.gps_min_fix_time=5;
     settings_packet.data.gps_min_ehpe=50;
     settings_packet.data.gps_hot_fix_retry=5;
     settings_packet.data.gps_cold_fix_retry=2;
     settings_packet.data.gps_fail_retry=0; //must be 0 due to bug in GPS core
-    settings_packet.data.gps_settings=0b00001001;
+    settings_packet.data.gps_settings=0b00001101;
     //check if valid settings present in eeprom 
     uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
     #ifndef FORCE_DEFAULT_SETTINGS

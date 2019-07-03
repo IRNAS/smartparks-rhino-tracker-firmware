@@ -50,17 +50,17 @@ boolean status_send(void){
   digitalWrite(BAN_MON_EN, HIGH);
   delay(10);
   float value = 0;
-  for(int i=0; i<256; i++){
+  for(int i=0; i<16; i++){
     value+=analogRead(BAN_MON);
     delay(1);
   }
-  float stm32l0_battery = value*4000/256/4095; // TODO: calibrate
+  float stm32l0_battery = value/16; // TODO: calibrate
   digitalWrite(BAN_MON_EN, LOW);
   pinMode(BAN_MON_EN, INPUT_PULLDOWN);
 
 
   status_packet.data.resetCause=STM32L0.resetCause();
-  status_packet.data.battery=(uint8_t)get_bits(stm32l0_battery,0,4,8);
+  status_packet.data.battery=(uint8_t)get_bits(stm32l0_battery,400,800,8);
   status_packet.data.temperature=(uint8_t)get_bits(stm32l0_temp,-20,80,8);
   status_packet.data.vbus=(uint8_t)get_bits(stm32l0_vdd,0,3.6,8);
 
@@ -69,9 +69,9 @@ boolean status_send(void){
     serial_debug.print("resetCause: ");
     serial_debug.print(STM32L0.resetCause(),HEX);
     serial_debug.print(", battery: ");
-    serial_debug.print(voltage);
-    serial_debug.print(" ");
     serial_debug.print(status_packet.data.battery);
+    serial_debug.print(" raw ");
+    serial_debug.print(status_packet.data.battery_low);
     serial_debug.print(", temperature: ");
     serial_debug.print(stm32l0_temp);
     serial_debug.print(" ");

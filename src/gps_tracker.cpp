@@ -82,7 +82,7 @@ void gps_scheduler(void){
     interval=interval*(gps_fail_count+1);
   }
 
-  if(millis()-gps_event_last>=(interval*60*1000)){
+  if((interval!=0) & (millis()-gps_event_last>=interval*60*1000|gps_event_last==0)){
     gps_event_last=millis();
     gps_send_flag=true;
   }
@@ -257,7 +257,7 @@ boolean gps_start(void){
   // Schedule automatic stop after timeout
   gps_timer_timeout.start(gps_stop,gps_timeout);
   // Schedule automatic stop after timeout if no messages received
-  // gps_timer_response_timeout.start(gps_acquiring_callback,1000);
+  gps_timer_response_timeout.start(gps_acquiring_callback,1000);
   gps_response_fail_count = 0;
   gps_done = false;
   return true;
@@ -335,7 +335,7 @@ void gps_acquiring_callback(void){
  */
 void gps_stop(void){
   gps_timer_timeout.stop();
-  //gps_timer_response_timeout.stop();
+  gps_timer_response_timeout.stop();
   gps_time_to_fix = (millis()-gps_fix_start_time);
   // Power off GPS
   gps_power(false);
@@ -406,7 +406,8 @@ void gps_stop(void){
 
 void gps_end(void){
   // Note: https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/issues/90
-  GNSS.end();
+  //GNSS.end();
+  Serial1.end();
   gps_begin_happened==false;
   gps_power(false);
   gps_backup(false);

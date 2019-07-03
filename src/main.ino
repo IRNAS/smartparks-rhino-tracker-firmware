@@ -39,6 +39,7 @@ unsigned long state_timeout_start;
 unsigned long state_timeout_duration;
 // Variable to monitor when the loop has been started
 unsigned long event_loop_start = 0;
+long sleep = -1; // reset the sleep after loop, set in every state if required
 
 // function prototypes because Arduino failes if using enum otherwise
 void callbackPeriodic(void);
@@ -153,6 +154,7 @@ void setup() {
   // Watchdog
   STM32L0.wdtEnable(18000);
   periodic.start(callbackPeriodic, 5000);
+  analogReadResolution(12);
 
   // Serial port debug setup
   #ifdef serial_debug
@@ -173,8 +175,6 @@ void setup() {
  * 
  */
 void loop() {
-  long sleep = -1; // reset the sleep after loop, set in every state if required
-  event_loop_start = millis(); // start the timer of the loop
   #ifdef debug
     serial_debug.print("fsm(");
     serial_debug.print(state_prev);
@@ -187,6 +187,8 @@ void loop() {
     serial_debug.println(")");
     serial_debug.flush();
   #endif
+  sleep = -1; // reset the sleep after loop, set in every state if required
+  event_loop_start = millis(); // start the timer of the loop
 
   // update prevous state
   state_prev=state;
@@ -247,9 +249,7 @@ void loop() {
     state_goto_timeout=IDLE;
     // setup default settings
     status_init(); // currently does not report a fail, should not be possible anyhow
-    gps_send_flag = true;
     status_send_flag = true;
-    gps_send_flag = true;
     // transition
     if(true){
       state_transition(SETTINGS_SEND);

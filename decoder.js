@@ -66,8 +66,8 @@ function Decoder(bytes) {
     }
     else if (port === 2){
         decoded.resetCause = resetCause_dict[bytes[0]];
-        decoded.mode = bytes[1];
-        decoded.battery = get_num(bytes[2],0,100,8,1);
+        decoded.battery_low = get_num(bytes[1],0,1000,8,1);
+        decoded.battery = get_num(bytes[2],0,1000,8,1);
         decoded.temperature = get_num(bytes[3],-20,80,8,1);
         decoded.vbus = get_num(bytes[4],0,3.6,8,2);
         decoded.system_functions_errors = {};//bytes[5];
