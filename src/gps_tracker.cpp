@@ -17,10 +17,11 @@ unsigned long gps_event_last = 0;
 unsigned long gps_accelerometer_last = 0;
 
 unsigned long gps_fix_start_time = 0;
+unsigned long gps_timeout = 0;
 unsigned long gps_time_to_fix;
 
-TimerMillis gps_timer_timeout;
-TimerMillis gps_timer_response_timeout;
+//TimerMillis gps_timer_timeout;
+//TimerMillis gps_timer_response_timeout;
 
 GNSSLocation gps_location;
 
@@ -42,6 +43,10 @@ check if manually disabling backup does loose gps moduel settings, consider usin
  * 
  */
 void gps_accelerometer_callback(void){
+  #ifdef debug
+    serial_debug.print("gps_accelerometer_callback(");
+    serial_debug.println(")");
+  #endif
   gps_accelerometer_last=millis();
 }
 
@@ -147,6 +152,12 @@ boolean gps_begin(void){
     serial_debug.print("gps_begin(");
     serial_debug.println(")");
   #endif
+
+  // check if more fails have occured then allowed
+  if(gps_fail_count>settings_packet.data.gps_fail_retry){
+    return false;
+  }
+
   // Step 1: power up the GPS and backup power
   gps_power(true);
   gps_backup(true);
@@ -187,11 +198,6 @@ boolean gps_begin(void){
 
   GNSS.onLocation(gps_acquiring_callback);
   error|=gps_busy_timeout(1000);
-
-  // Step 4: initialize variables and periphery
-  if(settings_packet.data.gps_triggered_interval>0){
-    accelerometer_init();
-  }
   
   if(error){
     gps_end();
@@ -206,7 +212,6 @@ boolean gps_begin(void){
   bitClear(status_packet.data.system_functions_errors,0);
   bitClear(status_packet.data.system_functions_errors,1);
   bitSet(status_packet.data.system_functions_errors,2);
-  gps_fail_count=0;
 
   #ifdef debug
     serial_debug.print("gps_begin(");
@@ -224,7 +229,14 @@ boolean gps_begin(void){
 boolean gps_start(void){
   bitSet(status_packet.data.system_functions_errors,2);
   // Step 0: Initialize GPS
-  if(gps_fail_count>0|gps_begin_happened==false){
+  if(gps_begin_happened==false){
+    if(gps_begin()==false){
+      return false;
+    }
+  }
+  //re-initialize upon fail
+  else if(gps_fail_count>0){
+    // This does not work currently due to a bug
     if(gps_begin()==false){
       return false;
     }
@@ -245,8 +257,6 @@ boolean gps_start(void){
 
   // Step 3: Start acquiring location
   gps_fix_start_time=millis();
-  unsigned long gps_timeout = 0;
-
   if(gps_hot_fix){
     gps_timeout = settings_packet.data.gps_hot_fix_timeout*1000;
   }
@@ -255,9 +265,9 @@ boolean gps_start(void){
   }
 
   // Schedule automatic stop after timeout
-  gps_timer_timeout.start(gps_stop,gps_timeout);
+  //gps_timer_timeout.start(gps_stop,gps_timeout+1000);
   // Schedule automatic stop after timeout if no messages received
-  gps_timer_response_timeout.start(gps_acquiring_callback,1000);
+  //gps_timer_response_timeout.start(gps_acquiring_callback,1000);
   gps_response_fail_count = 0;
   gps_done = false;
   return true;
@@ -269,8 +279,11 @@ boolean gps_start(void){
  */
 void gps_acquiring_callback(void){
   // Restart automatic stop after timeout if no messages received
-  // gps_timer_response_timeout.start(gps_acquiring_callback,1000);
-  if(GNSS.location(gps_location)){
+  //gps_timer_response_timeout.start(gps_acquiring_callback,1000);
+  if(millis()-gps_fix_start_time>gps_timeout){
+    gps_stop();
+  }
+  else if(GNSS.location(gps_location)){
     float ehpe = gps_location.ehpe();
     boolean gps_3D_fix_required = bitRead(settings_packet.data.gps_settings,0);
     boolean gps_fully_resolved_required = bitRead(settings_packet.data.gps_settings,3);
@@ -315,6 +328,7 @@ void gps_acquiring_callback(void){
           gps_hot_fix=true;
         }
         gps_stop();
+        //gps_timer_timeout.start(gps_stop,1);
       }
     }
   }
@@ -324,6 +338,7 @@ void gps_acquiring_callback(void){
       //raise error and stop
       gps_fail_count++;
       gps_stop();
+      //gps_timer_timeout.start(gps_stop,1);
     }
   }
 }
@@ -334,14 +349,13 @@ void gps_acquiring_callback(void){
  * @param good_fix - to indicate stopping with good fix acquired
  */
 void gps_stop(void){
-  gps_timer_timeout.stop();
-  gps_timer_response_timeout.stop();
+  //gps_timer_timeout.stop();
+  //gps_timer_response_timeout.stop();
   gps_time_to_fix = (millis()-gps_fix_start_time);
   // Power off GPS
   gps_power(false);
   if(!bitRead(settings_packet.data.gps_settings,2)){
-    // Disable GPS if hot-fix mechanism is nto used
-    gps_end();
+    // Disable GPS if hot-fix mechanism is not used
     gps_hot_fix=false;
   }
 
@@ -357,10 +371,16 @@ void gps_stop(void){
       gps_fail_count++;
     }
   }
+  else{
+    gps_fail_fix_count=0;
+    gps_fail_count=0;
+  }
+  gps_done = true;
 
   if(gps_fail_count>0){
     gps_hot_fix=false;
     gps_end();
+    return; // continuing fails otherwise by reading invalid data locaitons
   }
 
   float latitude, longitude, hdop, epe, satellites, altitude = 0;
@@ -401,13 +421,11 @@ void gps_stop(void){
     serial_debug.println(")");
     serial_debug.flush();
   #endif
-  gps_done = true;
 }
 
 void gps_end(void){
   // Note: https://github.com/GrumpyOldPizza/ArduinoCore-stm32l0/issues/90
   //GNSS.end();
-  Serial1.end();
   gps_begin_happened==false;
   gps_power(false);
   gps_backup(false);
@@ -471,7 +489,7 @@ void accelerometer_init(void){
     //Start sensor with ODR 100Hz and in low-power mode 1 
     writeReg(LIS2DW12_CTRL1, 0x10);
 
-    attachInterrupt(A_INT1,gps_accelerometer_callback,RISING);
+    attachInterrupt(A_INT2,gps_accelerometer_callback,RISING);
 
     delay(100);
 

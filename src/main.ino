@@ -12,7 +12,7 @@
 #define serial_debug  Serial
 
 // Initialize timer for periodic callback
-TimerMillis periodic;
+// TimerMillis periodic;
 
 // Variable to track the reed switch status
 bool reed_switch = false;
@@ -42,7 +42,7 @@ unsigned long event_loop_start = 0;
 long sleep = -1; // reset the sleep after loop, set in every state if required
 
 // function prototypes because Arduino failes if using enum otherwise
-void callbackPeriodic(void);
+boolean callbackPeriodic(void);
 void state_transition(state_e next);
 bool state_check_timeout(void);
 
@@ -78,8 +78,8 @@ void checkReed(void){
  * @brief Callback ocurring periodically for triggering events and wdt
  * 
  */
-void callbackPeriodic(void){
-  periodic.start(callbackPeriodic, 5000);
+boolean callbackPeriodic(void){
+  //periodic.start(callbackPeriodic, 5000);
   STM32L0.wdtReset();
   
   /*#ifdef debug
@@ -108,13 +108,15 @@ void callbackPeriodic(void){
 
   // if any of the flags are high, wake up
   if(settings_updated|status_send_flag|gps_send_flag){
-    STM32L0.wakeup();
+    //STM32L0.wakeup();
+    return true;
     /*#ifdef debug
       serial_debug.print("wakeup(");
       serial_debug.print(millis());
       serial_debug.println(")");
     #endif*/
   }
+  return false;
 }
 
 /**
@@ -153,7 +155,7 @@ void setup() {
   //STM32L0.stop(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
   // Watchdog
   STM32L0.wdtEnable(18000);
-  periodic.start(callbackPeriodic, 5000);
+  //periodic.start(callbackPeriodic, 5000);
   analogReadResolution(12);
 
   // Serial port debug setup
@@ -189,6 +191,7 @@ void loop() {
   #endif
   sleep = -1; // reset the sleep after loop, set in every state if required
   event_loop_start = millis(); // start the timer of the loop
+  callbackPeriodic();
 
   // update prevous state
   state_prev=state;
@@ -249,6 +252,8 @@ void loop() {
     state_goto_timeout=IDLE;
     // setup default settings
     status_init(); // currently does not report a fail, should not be possible anyhow
+    // Accelerometer
+    accelerometer_init();
     status_send_flag = true;
     // transition
     if(true){
@@ -409,15 +414,33 @@ void loop() {
   // reset the event loop start to show the loop has finished
   event_loop_start = 0;
   if(sleep>0){
-    unsigned long sleep_temp=sleep;
+    system_sleep(sleep);
     sleep=0;
-    STM32L0.stop(sleep_temp);
   }
   else if(sleep==0){
     sleep=-1;
-    STM32L0.stop();
+    system_sleep(25*3600*1000); // max 25h
   }
   else{
     sleep=-1;
+  }
+}
+
+void system_sleep(unsigned long sleep){
+  unsigned long remaining_sleep = sleep;
+  callbackPeriodic();
+  while(remaining_sleep>0){
+    if(remaining_sleep>5000){
+      remaining_sleep=remaining_sleep-5000;
+      STM32L0.stop(5000);
+    }
+    else{
+      STM32L0.stop(remaining_sleep);
+      remaining_sleep=0;
+    }
+    //wake-up
+    if(callbackPeriodic()){
+      return;
+    }
   }
 }

@@ -62,12 +62,13 @@ function Decoder(bytes) {
         decoded.gps_settings = {};//bytes[19];
         decoded.gps_settings.d3_fix =  ((bytes[19] >> 0)&0x01)? 1 : 0;
         decoded.gps_settings.fail_backoff =  ((bytes[19] >> 1)&0x01)? 1 : 0;
-        decoded.gps_settings.hot_fix =  ((bytes[19] >> 1)&0x01)? 1 : 0;
+        decoded.gps_settings.hot_fix =  ((bytes[19] >> 2)&0x01)? 1 : 0;
+        decoded.gps_settings.fully_resolved =  ((bytes[19] >> 3)&0x01)? 1 : 0;
     }
     else if (port === 2){
         decoded.resetCause = resetCause_dict[bytes[0]];
-        decoded.battery_low = get_num(bytes[1],0,1000,8,1);
-        decoded.battery = get_num(bytes[2],0,1000,8,1);
+        decoded.battery_low = get_num(bytes[1],400,1400,8,1);
+        decoded.battery = get_num(bytes[2],400,1400,8,1);
         decoded.temperature = get_num(bytes[3],-20,80,8,1);
         decoded.vbus = get_num(bytes[4],0,3.6,8,2);
         decoded.system_functions_errors = {};//bytes[5];

@@ -268,7 +268,7 @@ void lorawan_doneCallback(void)
   digitalWrite(BAN_MON_EN, LOW);
   pinMode(BAN_MON_EN, INPUT_PULLDOWN);
   float stm32l0_battery_low = adc_battery_sum/adc_battery_count; // TODO: calibrate
-  status_packet.data.battery_low=(uint8_t)get_bits(stm32l0_battery_low,400,800,8);
+  status_packet.data.battery_low=(uint8_t)get_bits(stm32l0_battery_low,400,1400,8);
 
   if (!LoRaWAN.linkGateways())
   {
