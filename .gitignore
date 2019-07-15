@@ -5,3 +5,4 @@
 !.vscode/extensions.json
 /src/test/build/*
 scatter-mode.html
+build

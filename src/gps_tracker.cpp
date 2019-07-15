@@ -42,9 +42,9 @@ check if manually disabling backup does loose gps moduel settings, consider usin
  * @brief updates last motion activity detected time upon interrup from acelerometer
  * 
  */
-void gps_accelerometer_callback(void){
+void gps_accelerometer_interrupt(void){
   #ifdef debug
-    serial_debug.print("gps_accelerometer_callback(");
+    serial_debug.print("gps_accelerometer_interrupt(");
     serial_debug.println(")");
   #endif
   gps_accelerometer_last=millis();
@@ -453,6 +453,12 @@ void accelerometer_init(void){
     serial_debug.println(")");
   #endif
 
+  if(digitalRead(PIN_WIRE_SCL)==LOW){
+    //no I2C pull-up detected
+    bitSet(status_packet.data.system_functions_errors,3);
+    return;
+  }
+
   //initialize sensor even if not enabled to put it in low poewr
   Wire.begin();
   Wire.beginTransmission(LIS2DH12_ADDR);
@@ -464,6 +470,7 @@ void accelerometer_init(void){
   if(dummy!=0x44){
       //set accelerometer error
       bitSet(status_packet.data.system_functions_errors,3);
+      return;
   }
   
   // Accelerometer
@@ -488,8 +495,6 @@ void accelerometer_init(void){
 
     //Start sensor with ODR 100Hz and in low-power mode 1 
     writeReg(LIS2DW12_CTRL1, 0x10);
-
-    attachInterrupt(A_INT2,gps_accelerometer_callback,RISING);
 
     delay(100);
 

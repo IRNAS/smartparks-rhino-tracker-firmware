@@ -51,7 +51,7 @@ extern gpsPacket_t gps_packet;
 extern boolean gps_send_flag;
 extern boolean gps_done;
 
-void gps_accelerometer_callback(void);
+void gps_accelerometer_interrupt(void);
 void gps_scheduler(void);
 boolean gps_busy_timeout(uint16_t timeout);
 void gps_power(boolean enable);

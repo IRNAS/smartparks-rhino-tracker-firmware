@@ -12,7 +12,19 @@
 #define serial_debug  Serial
 
 // Initialize timer for periodic callback
-// TimerMillis periodic;
+TimerMillis periodic;
+
+/**
+ * @brief called upon pin change
+ * 
+ */
+void accelerometer_callback(void){
+  /*#ifdef debug
+    serial_debug.print("gps_accelerometer_callback(");
+    serial_debug.println(")");
+  #endif */
+  gps_accelerometer_interrupt();
+}
 
 // Variable to track the reed switch status
 bool reed_switch = false;
@@ -80,7 +92,7 @@ void checkReed(void){
  */
 boolean callbackPeriodic(void){
   //periodic.start(callbackPeriodic, 5000);
-  STM32L0.wdtReset();
+  //STM32L0.wdtReset();
   
   /*#ifdef debug
     serial_debug.print("wdt(): ");
@@ -155,8 +167,11 @@ void setup() {
   //STM32L0.stop(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
   // Watchdog
   STM32L0.wdtEnable(18000);
-  //periodic.start(callbackPeriodic, 5000);
+  periodic.start(callbackPeriodicWDT,0, 5000);
   analogReadResolution(12);
+
+  pinMode(A_INT2, INPUT);
+  attachInterrupt(digitalPinToInterrupt(A_INT2),accelerometer_callback,RISING);
 
   // Serial port debug setup
   #ifdef serial_debug
