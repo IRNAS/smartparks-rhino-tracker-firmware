@@ -167,7 +167,6 @@ void setup() {
   //STM32L0.stop(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
   // Watchdog
   STM32L0.wdtEnable(18000);
-  periodic.start(callbackPeriodicWDT,0, 5000);
   analogReadResolution(12);
 
   pinMode(A_INT2, INPUT);
