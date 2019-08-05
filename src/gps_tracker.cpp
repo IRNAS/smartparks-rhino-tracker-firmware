@@ -23,7 +23,7 @@ unsigned long gps_time_to_fix;
 //TimerMillis gps_timer_timeout;
 //TimerMillis gps_timer_response_timeout;
 
-GNSSLocation gps_location;
+extern GNSSLocation gps_location;
 
 /**
 GPS links:

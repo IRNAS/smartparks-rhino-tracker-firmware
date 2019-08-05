@@ -12,7 +12,6 @@
 
 extern boolean lorawan_send_successful;
 
-void callbackPeriodicADC(void);
 boolean lorawan_init(void);
 boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size);
 boolean lorawan_joined(void);

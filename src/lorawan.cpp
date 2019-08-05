@@ -20,21 +20,7 @@ const char *appKey  = "003FF34E9F1C8864953D78DCFBBC84F8";
 char devEui[32]; // read from the processor
 #endif
 
-// Initialize timer for periodic callback
-TimerMillis periodic_adc;
-unsigned long adc_battery_sum = 0;
-unsigned long adc_battery_count = 0; 
 boolean lorawan_send_successful = false; // flags sending has been successful to the FSM
-
-/**
- * @brief Callback ocurring periodically for triggering events and wdt
- * 
- */
-void callbackPeriodicADC(void){
-  periodic_adc.start(callbackPeriodicADC, 10);
-  adc_battery_sum+=analogRead(BAN_MON);
-  adc_battery_count++;
-}
 
 /**
  * @brief Initialize LoraWAN communication, returns fales if fails
@@ -138,11 +124,6 @@ boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
       serial_debug.println("lorawan_send() sendPacket");
     #endif
     lorawan_send_successful = false;
-    pinMode(BAN_MON_EN, OUTPUT);
-    digitalWrite(BAN_MON_EN, HIGH);
-    adc_battery_count = 0; 
-    adc_battery_sum = 0;
-    //periodic_adc.start(callbackPeriodicADC, 10); // TODO: bug in timers
     return true;
   }
   return false;
@@ -262,13 +243,6 @@ void lorawan_doneCallback(void)
   #ifdef debug
     serial_debug.println("DONE()");
   #endif
-
-  callbackPeriodicADC();
-  periodic_adc.stop();
-  digitalWrite(BAN_MON_EN, LOW);
-  pinMode(BAN_MON_EN, INPUT_PULLDOWN);
-  float stm32l0_battery_low = adc_battery_sum/adc_battery_count; // TODO: calibrate
-  status_packet.data.battery_low=(uint8_t)get_bits(stm32l0_battery_low,400,1400,8);
 
   if (!LoRaWAN.linkGateways())
   {

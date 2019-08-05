@@ -12,7 +12,8 @@
 #define serial_debug  Serial
 
 // Initialize timer for periodic callback
-TimerMillis periodic;
+// TimerMillis periodic;
+GNSSLocation gps_location;
 
 /**
  * @brief called upon pin change
