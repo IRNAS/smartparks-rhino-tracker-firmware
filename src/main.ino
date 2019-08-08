@@ -93,7 +93,7 @@ void checkReed(void){
  */
 boolean callbackPeriodic(void){
   //periodic.start(callbackPeriodic, 5000);
-  //STM32L0.wdtReset();
+  STM32L0.wdtReset();
   
   /*#ifdef debug
     serial_debug.print("wdt(): ");
