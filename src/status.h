@@ -2,11 +2,11 @@
 #define STATUS_H_
 
 #include "Arduino.h"
-#include "TimerMillis.h"
 #include <STM32L0.h>
 #include "lorawan.h"
 #include "project_utils.h"
 #include "settings.h"
+#include "board.h"
 
 extern boolean status_send_flag;
 
@@ -31,7 +31,7 @@ extern boolean status_send_flag;
  */
 struct statusData_t{
   uint8_t resetCause;
-  uint8_t mode;
+  uint8_t battery_low;
   uint8_t battery;
   uint8_t temperature;
   uint8_t vbus;
@@ -46,8 +46,8 @@ union statusPacket_t{
 static const uint8_t status_packet_port = 2;
 extern statusPacket_t status_packet;
 
-void status_timer_callback(void);
+void status_scheduler(void);
 void status_init(void);
-void status_send(void);
+boolean status_send(void);
 
 #endif
