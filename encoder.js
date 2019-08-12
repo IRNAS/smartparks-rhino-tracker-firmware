@@ -46,6 +46,31 @@ function Encoder(object, port) {
         bytes[19] |= object.gps_settings.hot_fix ? 1<<2 : 0;
         bytes[19] |= object.gps_settings.fully_resolved ? 1<<3 : 0;
     }
+    else if (port === 30){
+        bytes[0] = (object.freq_start) & 0xFF;
+        bytes[1] = (object.freq_start)>>8 & 0xFF;
+        bytes[2] = (object.freq_start)>>16 & 0xFF;
+        bytes[3] = (object.freq_start)>>24 & 0xFF;
+
+        bytes[4] = (object.freq_stop) & 0xFF;
+        bytes[5] = (object.freq_stop)>>8 & 0xFF;
+        bytes[6] = (object.freq_stop)>>16 & 0xFF;
+        bytes[7] = (object.freq_stop)>>24 & 0xFF;
+
+        bytes[8] = (object.samples) & 0xFF;
+        bytes[9] = (object.samples)>>8 & 0xFF;
+        bytes[10] = (object.samples)>>16 & 0xFF;
+        bytes[11] = (object.samples)>>24 & 0xFF;
+
+        bytes[12] = (object.power) & 0xFF;
+        bytes[13] = (object.power)>>8 & 0xFF;
+
+        bytes[14] = (object.time) & 0xFF;
+        bytes[15] = (object.time)>>8 & 0xFF;
+
+        bytes[16] = (object.type) & 0xFF;
+        bytes[17] = (object.type)>>8 & 0xFF;
+    }
     //command
     else if (port === 99){
         if(object.command.reset){

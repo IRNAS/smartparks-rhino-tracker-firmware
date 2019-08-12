@@ -290,7 +290,7 @@ void loop() {
       STM32L0.reset();
     }
     // transition based on triggers
-    else if(settings_updated|status_send_flag|gps_send_flag){
+    else if(settings_updated|status_send_flag|gps_send_flag|rf_send_flag){
       if(settings_updated==true){
         state_transition(GENERAL_INIT);
         settings_updated=false;

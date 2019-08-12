@@ -223,7 +223,7 @@ void lorawan_receiveCallback(void)
             }
         }
         //handle rf testing
-        if(LoRaWAN.remotePort()==rf_spectral_port){
+        if(LoRaWAN.remotePort()==rf_vswr_port){
             //check if length is correct
             if(size==sizeof(rf_settingsData_t)){
                 // now the settings can be copied into the structure

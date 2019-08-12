@@ -6,6 +6,7 @@
 #include "lorawan.h"
 #include "project_utils.h"
 #include "board.h"
+#include <math.h>
 
 extern boolean rf_send_flag;
 

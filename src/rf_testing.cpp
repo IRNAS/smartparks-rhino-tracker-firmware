@@ -50,30 +50,39 @@ boolean scan_vswr(uint32_t start, uint32_t stop, int8_t power, uint16_t samples,
     }
 
     for(uint16_t i;i<samples;i++){
-        Serial.print("Scan( "); Serial.print(freq); Serial.print(" Hz ");
+        #ifdef debug
+            serial_debug.print("Scan( "); serial_debug.print(freq); serial_debug.print(" Hz ");
+        #endif
         // limit time to maximal value
         if(time>4000){
             time=4000;
         }
         // set-up the continuous mode
-        LoRaWAN.setTxContinuousWave(freq,power,time);
+        for(uint16_t i=0;i<5000;i++){
+            if(LoRaWAN.setTxContinuousWave(freq,power,time)==false){
+                break;
+            }
+            delay(100);
+        }
         // acquire measurements for the specified duration
         unsigned long start_time = millis();
         //wait for stabilization
         delay(10);
         while((millis()-start_time)<time){
-            measurement_sum=+analogRead(VSWR_ADC);
+            measurement_sum+=analogRead(VSWR_ADC);
             measurement_count++;
             delay(10);
         }
 
         double value = measurement_sum/measurement_count*vcc/4096; // calculate average and convert to volts
-        double dbm=-30; // covnert to dBm
+        double dbm=-31; // covnert to dBm
         // secure against division by zero
         if(value!=0){
             dbm = log10(value)-27;
         }
-        Serial.print(dbm); Serial.println(" dBm) ");
+        #ifdef debug
+            serial_debug.print(dbm); serial_debug.println(" dBm) ");
+        #endif
         // create an 8 bit datapoint use dBm=result/10-30 on the server side
         uint8_t result = (dbm+30)*10;
         *output=result;
@@ -95,16 +104,17 @@ boolean scan_vswr(uint32_t start, uint32_t stop, int8_t power, uint16_t samples,
 boolean rf_send(void){
 
     #ifdef debug
-    serial_debug.print("rf_send( ");
-    serial_debug.println(" )");
+        serial_debug.print("rf_send( ");
+        serial_debug.println(" )");
     #endif
+    digitalWrite(VSWR_EN,HIGH);
     delay(3000);
     // guard against overflow
     if(rf_settings_packet.data.samples>sizeof(message)){
         rf_settings_packet.data.samples=sizeof(message);
     }
     scan_vswr(rf_settings_packet.data.freq_start, rf_settings_packet.data.freq_stop, rf_settings_packet.data.power, rf_settings_packet.data.samples, rf_settings_packet.data.time, &message[0]);
-
+    digitalWrite(VSWR_EN,LOW);
     delay(5000); // required
     // truncate if payload is longer
     uint16_t length=rf_settings_packet.data.samples;
