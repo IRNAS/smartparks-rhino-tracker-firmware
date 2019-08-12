@@ -293,10 +293,10 @@ void gps_acquiring_callback(void){
       serial_debug.print(ehpe);
       serial_debug.print(" sat ");
       serial_debug.print(gps_location.satellites());
-      serial_debug.print(" aopcfg ");
-      serial_debug.print(gps_location.aopCfgStatus());
-      serial_debug.print(" aop ");
-      serial_debug.print(gps_location.aopStatus());
+      //serial_debug.print(" aopcfg ");
+      //serial_debug.print(gps_location.aopCfgStatus());
+      //serial_debug.print(" aop ");
+      //serial_debug.print(gps_location.aopStatus());
       serial_debug.print(" d ");
       serial_debug.print(gps_location.fixType());
       serial_debug.print(" res ");
