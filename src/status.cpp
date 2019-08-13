@@ -60,7 +60,7 @@ boolean status_send(void){
 
 
   status_packet.data.resetCause=STM32L0.resetCause();
-  status_packet.data.battery=(uint8_t)get_bits(stm32l0_battery,400,1400,8);
+  status_packet.data.battery=(uint8_t)get_bits(stm32l0_battery,400,4000,8);
   status_packet.data.temperature=(uint8_t)get_bits(stm32l0_temp,-20,80,8);
   status_packet.data.vbus=(uint8_t)get_bits(stm32l0_vdd,0,3.6,8);
 

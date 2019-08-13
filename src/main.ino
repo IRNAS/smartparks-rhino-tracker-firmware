@@ -7,6 +7,7 @@
 #include "settings.h"
 #include "status.h"
 #include "project_utils.h"
+#include "rf_testing.h"
 
 #define debug
 #define serial_debug  Serial
@@ -38,6 +39,7 @@ enum state_e{
   IDLE,
   SETTINGS_SEND,
   STATUS_SEND,
+  RF_SEND,
   GPS_START,
   GPS_READ,
   GPS_SEND,
@@ -288,7 +290,7 @@ void loop() {
       STM32L0.reset();
     }
     // transition based on triggers
-    else if(settings_updated|status_send_flag|gps_send_flag){
+    else if(settings_updated|status_send_flag|gps_send_flag|rf_send_flag){
       if(settings_updated==true){
         state_transition(GENERAL_INIT);
         settings_updated=false;
@@ -300,6 +302,10 @@ void loop() {
       else if(gps_send_flag==true){
         state_transition(GPS_START);
         gps_send_flag=false;
+      }
+      else if(rf_send_flag==true){
+        state_transition(RF_SEND);
+        rf_send_flag=false;
       }
       else{
         // This should never happen
@@ -329,6 +335,18 @@ void loop() {
     state_goto_timeout=IDLE;
     // transition
     if(status_send()){
+      state_transition(LORAWAN_TRANSMIT);
+    }
+    else{
+      sleep=1000;
+    }
+    break;
+  case RF_SEND:
+    // defaults for timing out
+    state_timeout_duration=1000;
+    state_goto_timeout=IDLE;
+    // transition
+    if(rf_send()){
       state_transition(LORAWAN_TRANSMIT);
     }
     else{
