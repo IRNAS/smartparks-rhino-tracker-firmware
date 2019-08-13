@@ -84,7 +84,7 @@ boolean scan_vswr(uint32_t start, uint32_t stop, int8_t power, uint16_t samples,
             serial_debug.print(dbm); serial_debug.println(" dBm) ");
         #endif
         // create an 8 bit datapoint use dBm=result/10-30 on the server side
-        uint8_t result = (dbm+30)*10;
+        uint8_t result = (dbm+31)*10;
         *output=result;
         output++;
         //increment frequency
