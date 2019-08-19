@@ -15,6 +15,7 @@
 // Initialize timer for periodic callback
 // TimerMillis periodic;
 GNSSLocation gps_location;
+GNSSSatellites gps_satellites;
 
 /**
  * @brief called upon pin change
@@ -24,7 +25,7 @@ void accelerometer_callback(void){
   /*#ifdef debug
     serial_debug.print("gps_accelerometer_callback(");
     serial_debug.println(")");
-  #endif */
+  #endif*/
   gps_accelerometer_interrupt();
 }
 
@@ -173,7 +174,7 @@ void setup() {
   analogReadResolution(12);
 
   pinMode(A_INT2, INPUT);
-  attachInterrupt(digitalPinToInterrupt(A_INT2),accelerometer_callback,RISING);
+  attachInterrupt(digitalPinToInterrupt(A_INT2),accelerometer_callback,CHANGE);
 
   // Serial port debug setup
   #ifdef serial_debug
