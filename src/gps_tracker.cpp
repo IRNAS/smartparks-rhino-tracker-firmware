@@ -44,10 +44,10 @@ check if manually disabling backup does loose gps moduel settings, consider usin
  * 
  */
 void gps_accelerometer_interrupt(void){
-  #ifdef debug
+  /*#ifdef debug
     serial_debug.print("gps_accelerometer_interrupt(");
     serial_debug.println(")");
-  #endif
+  #endif*/
   gps_accelerometer_last=millis();
 }
 
@@ -78,8 +78,12 @@ void gps_scheduler(void){
 
   // if triggered gps is enabled and accelerometer trigger has ocurred - overrides periodic interval
   if(settings_packet.data.gps_triggered_interval>0){
-    if((millis()-gps_accelerometer_last)<settings_packet.data.gps_triggered_interval){
+    if(((millis()-gps_accelerometer_last)/1000)<settings_packet.data.gps_triggered_interval){
       interval=settings_packet.data.gps_triggered_interval;
+      #ifdef debug
+        serial_debug.print("gps_triggered(");
+        serial_debug.println(")");
+      #endif
     }
   }
 
@@ -500,6 +504,10 @@ void accelerometer_init(void){
       serial_debug.print("accelerometer_init(");
       serial_debug.println("enabling trigger)");
     #endif
+    // Restore default configuration with soft reset
+    //writeReg(LIS2DW12_CTRL2, 0b01000100);    
+
+    //delay(1000);
     //Enable BDU
     //Set full scale +- 2g 
     //Enable activity detection interrupt
