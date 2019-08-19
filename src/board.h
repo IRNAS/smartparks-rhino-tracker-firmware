@@ -1,7 +1,7 @@
 #ifndef BOARD_H_
 #define BOARD_H_
 
-#define VER2_2
+#define VER2_1
 
 #ifdef VER2_2
     #define PIN_REED PH0
@@ -29,6 +29,8 @@
     #define LED_RED PA0
     #define A_INT1 PB5
     #define A_INT2 PB6
+    #define VSWR_EN -1
+    #define VSWR_ADC -1
 #endif
 
 #endif
