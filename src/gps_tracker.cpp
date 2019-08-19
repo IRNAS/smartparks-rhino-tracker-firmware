@@ -24,6 +24,7 @@ unsigned long gps_time_to_fix;
 //TimerMillis gps_timer_response_timeout;
 
 extern GNSSLocation gps_location;
+extern GNSSSatellites gps_satellites;
 
 /**
 GPS links:
@@ -383,6 +384,14 @@ void gps_stop(void){
     return; // continuing fails otherwise by reading invalid data locaitons
   }
 
+  GNSS.satellites(gps_satellites);
+  uint8_t max_snr = 0;
+  for (unsigned int index = 0; index < gps_satellites.count(); index++){
+    if(max_snr<gps_satellites.snr(index)){
+      max_snr=gps_satellites.snr(index);
+    }
+  }
+
   float latitude, longitude, hdop, epe, satellites, altitude = 0;
   latitude = gps_location.latitude();
   longitude = gps_location.longitude();
@@ -403,7 +412,9 @@ void gps_stop(void){
   gps_packet.data.alt = (uint16_t)altitude;
   gps_packet.data.satellites_hdop = (((uint8_t)satellites)<<4)|(((uint8_t)hdop)&0x0f);
   gps_packet.data.time_to_fix = (uint8_t)(gps_time_to_fix/1000);
-  gps_packet.data.epe = (uint16_t)epe;
+  gps_packet.data.epe = (uint8_t)epe;
+  gps_packet.data.snr = (uint8_t)max_snr;
+  gps_packet.data.lux = 0;
     
   #ifdef debug
     serial_debug.print("gps(");
@@ -453,9 +464,15 @@ void accelerometer_init(void){
     serial_debug.println(")");
   #endif
 
+  pinMode(PIN_WIRE_SCL,INPUT);
+  delay(100);
   if(digitalRead(PIN_WIRE_SCL)==LOW){
     //no I2C pull-up detected
     bitSet(status_packet.data.system_functions_errors,3);
+    #ifdef debug
+      serial_debug.print("accelerometer_init(");
+      serial_debug.println("i2c error)");
+    #endif
     return;
   }
 
@@ -470,11 +487,19 @@ void accelerometer_init(void){
   if(dummy!=0x44){
       //set accelerometer error
       bitSet(status_packet.data.system_functions_errors,3);
+      #ifdef debug
+        serial_debug.print("accelerometer_init(");
+        serial_debug.println("accel error)");
+      #endif
       return;
   }
   
   // Accelerometer
   if(settings_packet.data.gps_triggered_interval>0){
+    #ifdef debug
+      serial_debug.print("accelerometer_init(");
+      serial_debug.println("enabling trigger)");
+    #endif
     //Enable BDU
     //Set full scale +- 2g 
     //Enable activity detection interrupt

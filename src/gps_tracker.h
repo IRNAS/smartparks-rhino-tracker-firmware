@@ -35,7 +35,8 @@ struct gpsData_t{
   uint16_t alt;
   uint8_t satellites_hdop;
   uint8_t time_to_fix;
-  uint16_t epe;
+  uint8_t epe;
+  uint8_t snr;
   uint8_t lux;
   uint8_t motion;
 }__attribute__((packed));

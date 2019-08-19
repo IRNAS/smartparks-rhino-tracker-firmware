@@ -90,7 +90,8 @@ function Decoder(bytes) {
         decoded.satellites = (bytes[8] >> 4);
         decoded.hdop = (bytes[8] & 0x0f);
         decoded.time_to_fix = bytes[9];
-        decoded.epe = (bytes[11] << 8) | bytes[10];
+        decoded.epe = bytes[10];
+        decoded.snr = bytes[11];
         decoded.lux = bytes[12];
         decoded.motion = bytes[13];
       }
