@@ -10,6 +10,7 @@
 #include "GNSS.h"
 #include "board.h"
 #include "Wire.h"
+#include <AsyncAPDS9306.h>
 
 #define LIS2DH12_ADDR 0x19
 #define LIS2DW12_WHO_AM_I                    0x0FU
@@ -63,6 +64,8 @@ void gps_acquiring_callback(void);
 void gps_stop(void);
 void gps_end(void);
 void accelerometer_init(void);
+void lux_init(void);
+float lux_read(void);
 boolean gps_send(void);
 void writeReg(uint8_t reg, uint8_t val);
 

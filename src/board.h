@@ -1,7 +1,7 @@
 #ifndef BOARD_H_
 #define BOARD_H_
 
-#define VER2_1
+#define VER2_2
 
 #ifdef VER2_2
     #define PIN_REED PH0
