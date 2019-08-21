@@ -35,6 +35,7 @@ bool reed_switch = false;
 enum state_e{
   INIT,
   LORAWAN_INIT,
+  LORAWAN_JOIN_START,
   LORAWAN_JOIN,
   GENERAL_INIT,
   IDLE,
@@ -56,6 +57,7 @@ unsigned long state_timeout_duration;
 // Variable to monitor when the loop has been started
 unsigned long event_loop_start = 0;
 long sleep = -1; // reset the sleep after loop, set in every state if required
+long lora_join_fail_count=0;
 
 // function prototypes because Arduino failes if using enum otherwise
 boolean callbackPeriodic(void);
@@ -240,7 +242,7 @@ void loop() {
     // transition
     // if initialization successful, move forward
     if(lorawan_init()){
-      state_transition(LORAWAN_JOIN);
+      state_transition(LORAWAN_JOIN_START);
     }
     else{
       // TODO: decide what to do if LoraWAN fails
@@ -248,20 +250,38 @@ void loop() {
       STM32L0.reset();
     }
     break;
+  case LORAWAN_JOIN_START:
+    // defaults for timing out
+    state_timeout_duration=0;
+    state_goto_timeout=LORAWAN_JOIN;
+    lorawan_joinCallback(); // call join again
+    lora_join_fail_count++;
+    state_transition(LORAWAN_JOIN);
+    break;
   case LORAWAN_JOIN:
     // defaults for timing out
-    state_timeout_duration=60000;
-    state_goto_timeout=INIT;
+    // join once every 20s for the first 10 tries 
+    // join once an hour for the first day 
+    // join once every day until successful
+    if(lora_join_fail_count<10){
+      state_timeout_duration=20000;
+    }
+    else if(lora_join_fail_count<24){
+      state_timeout_duration=60*60*1000;
+    }
+    else{
+      state_timeout_duration=24*60*60*1000;
+    }
+    state_goto_timeout=LORAWAN_JOIN_START;
     // transition
     if(lorawan_joined()){
       state_transition(GENERAL_INIT);
+      lora_join_fail_count=0;
       // LED diode
       digitalWrite(LED_RED,LOW);
     }
     else{
-      // TODO: create a more elaborate timeout mechanism
-      // For now retry for 60s until timeout, which goes back to init
-      sleep=1000;
+      sleep=5000;
     }
     break;
   case GENERAL_INIT:
