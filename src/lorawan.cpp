@@ -62,7 +62,8 @@ boolean lorawan_init(void){
   LoRaWAN.joinABP(devAddr, nwkSKey, appSKey);
   #endif
 
-  lorawan_joinCallback(); // call join callback manually to execute all the steps, necessary for ABP or OTAA with saved session
+  //moving to main loop
+  //lorawan_joinCallback(); // call join callback manually to execute all the steps, necessary for ABP or OTAA with saved session
   return true;
 }
 
