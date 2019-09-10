@@ -10,7 +10,8 @@ function manual_decode(filename) {
     json_obj.rows.forEach(function (element) {
         // console.log(element);
         port = element.PORT
-        decoded_data = decoder(element.data)
+        hex = Buffer.from(element.data, 'hex');
+        decoded_data = decoder(hex)
         // console.log(decoded_data);
         element.decoded_data = decoded_data
         out_array.push(element)
@@ -21,17 +22,17 @@ function manual_decode(filename) {
     return json_obj
 }
 
-/*
+
 
 // example
-file = "tracker20.json"
+file = "tracker21.json"
 arr = manual_decode(file)
 console.log(arr)
 
 // save to file
 var jsonData = JSON.stringify(arr, null, 2);
 
-fs.writeFile("output.json", jsonData, function (err) {
+fs.writeFile("tracker21_decoded.json", jsonData, function (err) {
     if (err) {
         return console.log(err);
     }
@@ -39,4 +40,3 @@ fs.writeFile("output.json", jsonData, function (err) {
     console.log("The file was saved!");
 });
 
-*/
