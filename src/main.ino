@@ -292,6 +292,16 @@ void loop() {
     status_init(); // currently does not report a fail, should not be possible anyhow
     // Accelerometer
     accelerometer_init();
+    // Disable charging upon request
+    #ifdef CHG_DISABLE
+    if(bitRead(settings_packet_downlink.data.system_functions,7)){
+      pinMode(CHG_DISABLE, OUTPUT);
+      digitalWrite(CHG_DISABLE, LOW);
+    }
+    else{
+      pinMode(CHG_DISABLE, INPUT_PULLUP);
+    }
+    #endif
     status_send_flag = true;
     // transition
     if(true){

@@ -46,28 +46,32 @@ boolean status_send(void){
   float stm32l0_vdd = STM32L0.getVDDA();
   float stm32l0_temp = STM32L0.getTemperature();
 
-  pinMode(BAN_MON_EN, OUTPUT);
-  digitalWrite(BAN_MON_EN, HIGH);
+  pinMode(BAT_MON_EN, OUTPUT);
+  digitalWrite(BAT_MON_EN, HIGH);
   delay(10);
   float value = 0;
   for(int i=0; i<16; i++){
-    value+=analogRead(BAN_MON);
+    value+=analogRead(BAT_MON);
     delay(1);
   }
   float stm32l0_battery = value/16; // TODO: calibrate
-  digitalWrite(BAN_MON_EN, LOW);
-  pinMode(BAN_MON_EN, INPUT_PULLDOWN);
+  digitalWrite(BAT_MON_EN, LOW);
+  pinMode(BAT_MON_EN, INPUT_PULLDOWN);
 
-  if(BAN_MON_EXT!=0){
+  float stm32l0_battery_low = 0;
+
+  #ifdef INPUT_AN
+  if(INPUT_AN!=0){
     delay(10);
     value = 0;
     for(int i=0; i<16; i++){
-      value+=analogRead(BAN_MON_EXT);
+      value+=analogRead(INPUT_AN);
       delay(1);
     }
-    float stm32l0_battery_low = value/16; // TODO: calibrate
+    stm32l0_battery_low = value/16; // TODO: calibrate
   }
-
+  #endif
+  
   status_packet.data.resetCause=STM32L0.resetCause();
   status_packet.data.battery=(uint8_t)get_bits(stm32l0_battery,400,4000,8);
   status_packet.data.battery_low=(uint8_t)get_bits(stm32l0_battery_low,0,4096,8);
