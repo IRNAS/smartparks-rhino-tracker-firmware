@@ -89,7 +89,7 @@ void checkReed(void){
     reed_switch = false;
   }
   // Reed switch
-  pinMode(PIN_REED,INPUT_PULLDOWN);
+  pinMode(PIN_REED,INPUT_PULLUP);
 }
 
 /**
@@ -291,7 +291,7 @@ void loop() {
     // setup default settings
     status_init(); // currently does not report a fail, should not be possible anyhow
     // Accelerometer
-    accelerometer_init();
+    // accelerometer_init();
     status_send_flag = true;
     // transition
     if(true){

@@ -56,7 +56,7 @@ boolean status_send(void){
   }
   float stm32l0_battery = value/16; // TODO: calibrate
   digitalWrite(BAN_MON_EN, LOW);
-  pinMode(BAN_MON_EN, INPUT_PULLDOWN);
+  //pinMode(BAN_MON_EN, INPUT_PULLDOWN);
 
 
   status_packet.data.resetCause=STM32L0.resetCause();
