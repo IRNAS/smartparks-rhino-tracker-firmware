@@ -14,8 +14,8 @@
     #define CHG_DISABLE PA11
     #define VSWR_EN PB5
     #define GPS_EN PB6
-    #define A_INT2 PB7
-    #define A_INT1 PB2
+    #define A_INT2 PB2
+    #define A_INT1 PB7
     #define SEN PB12
     #define SCLK PB13
     #define LIGHT_EN PB14
