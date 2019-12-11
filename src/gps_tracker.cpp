@@ -470,7 +470,7 @@ void accelerometer_init(void){
     serial_debug.println(")");
   #endif
 
-  pinMode(PIN_WIRE_SCL,INPUT);
+  /*pinMode(PIN_WIRE_SCL,INPUT);
   delay(100);
   if(digitalRead(PIN_WIRE_SCL)==LOW){
     //no I2C pull-up detected
@@ -480,7 +480,7 @@ void accelerometer_init(void){
       serial_debug.println("i2c error)");
     #endif
     return;
-  }
+  }*/
 
   //initialize sensor even if not enabled to put it in low poewr
   Wire.begin();

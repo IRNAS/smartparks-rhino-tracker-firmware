@@ -55,8 +55,8 @@ boolean status_send(void){
     delay(1);
   }
   float stm32l0_battery = value/16; // TODO: calibrate
-  digitalWrite(BAT_MON_EN, LOW);
-  pinMode(BAT_MON_EN, INPUT_PULLDOWN);
+  digitalWrite(BAN_MON_EN, LOW);
+  //pinMode(BAN_MON_EN, INPUT_PULLDOWN);
 
   float stm32l0_battery_low = 0;
 

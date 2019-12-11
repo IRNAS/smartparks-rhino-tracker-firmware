@@ -90,7 +90,7 @@ void checkReed(void){
     reed_switch = false;
   }
   // Reed switch
-  pinMode(PIN_REED,INPUT_PULLDOWN);
+  pinMode(PIN_REED,INPUT_PULLUP);
 }
 
 /**
