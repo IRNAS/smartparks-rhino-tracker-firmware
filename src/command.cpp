@@ -20,8 +20,14 @@ void command_receive(uint8_t command){
         STM32L0.reset();
     }
     else if(command==0xde){
+        // due to a bug is sesion clearing, OTAA must be forced and then device reset
+        const char *appEui  = "0101010101010101";
+        const char *appKey  = "2B7E151628AED2A6ABF7158809CF4F3C";
+        const char *devEui  = "0101010101010101";
         LoRaWAN.setSaveSession(false);
-        LoRaWAN.rejoinOTAA();
+        LoRaWAN.joinOTAA(appEui, appKey, devEui);
+        delay(1000);
+        STM32L0.reset();
     }
     else if(command==0xaa){
         boolean settings_send_flag = true;
