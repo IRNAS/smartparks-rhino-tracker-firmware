@@ -18,6 +18,7 @@
     #define A_INT1 PB7
     #define LIGHT_EN PB14
     #define PIN_REED PH0
+#endif
 
 #ifdef VER2_2_4_RHINO
     #define LED_RED PA0
