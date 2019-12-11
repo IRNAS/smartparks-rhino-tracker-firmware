@@ -4,7 +4,6 @@
 //#define serial_debug  Serial
 //#define FORCE_DEFAULT_SETTINGS // TODO: remove for production
 
-boolean settings_send_flag = false;
 boolean settings_updated = false;
 settingsPacket_t settings_packet;
 settingsPacket_t settings_packet_downlink;

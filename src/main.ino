@@ -58,6 +58,7 @@ unsigned long state_timeout_duration;
 unsigned long event_loop_start = 0;
 long sleep = -1; // reset the sleep after loop, set in every state if required
 long lora_join_fail_count=0;
+boolean settings_send_flag = false;
 
 // function prototypes because Arduino failes if using enum otherwise
 boolean callbackPeriodic(void);
@@ -125,7 +126,7 @@ boolean callbackPeriodic(void){
   }
 
   // if any of the flags are high, wake up
-  if(settings_updated|status_send_flag|gps_send_flag){
+  if(settings_send_flag|settings_updated|status_send_flag|gps_send_flag){
     //STM32L0.wakeup();
     return true;
     /*#ifdef debug
@@ -303,10 +304,9 @@ void loop() {
     }
     #endif
     status_send_flag = true;
+    settings_send_flag = true;
     // transition
-    if(true){
-      state_transition(SETTINGS_SEND);
-    }
+    state_transition(IDLE);
     break;
   case IDLE:
     // defaults for timing out
@@ -314,6 +314,11 @@ void loop() {
     state_goto_timeout=INIT;
     // LED diode
     digitalWrite(LED_RED,LOW);
+    // send settings immediately when requested
+    if(settings_send_flag){
+      state_transition(SETTINGS_SEND);
+      break;
+    }
     
     checkReed();
     if(reed_switch){
@@ -351,6 +356,7 @@ void loop() {
     // defaults for timing out
     state_timeout_duration=2000;
     state_goto_timeout=IDLE;
+    settings_send_flag=false;
     // action
     // transition
     if(settings_send()){

@@ -30,7 +30,7 @@ void command_receive(uint8_t command){
         STM32L0.reset();
     }
     else if(command==0xaa){
-        boolean settings_send_flag = true;
+        settings_send_flag = true;
     }
     else if(command==0xff){
         uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
