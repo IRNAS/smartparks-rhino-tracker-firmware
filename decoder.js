@@ -66,6 +66,33 @@ function Decoder(bytes) {
     decoded.gps_settings.hot_fix = ((bytes[19] >> 2) & 0x01) ? 1 : 0;
     decoded.gps_settings.fully_resolved = ((bytes[19] >> 3) & 0x01) ? 1 : 0;
   }
+  else if (port === 12) {
+    decoded.resetCause = resetCause_dict[bytes[0]];
+    // Lion tracker
+    decoded.battery_low = get_num(bytes[1], 0, 43750, 8, 1);
+    decoded.battery = get_num(bytes[2], 2048, 4096, 8, 1);
+    // Rhino tracker
+    //decoded.battery_low = get_num(bytes[1], 0, 4096, 8, 1);
+    //decoded.battery = get_num(bytes[2], 2048, 4096, 8, 1);
+    decoded.temperature = get_num(bytes[3], -20, 80, 8, 1);
+    decoded.vbus = get_num(bytes[4], 0, 3.6, 8, 2);
+    decoded.system_functions_errors = {};//bytes[5];
+    decoded.system_functions_errors.gps_periodic_error = ((bytes[5] >> 0) & 0x01) ? 1 : 0;
+    decoded.system_functions_errors.gps_triggered_error = ((bytes[5] >> 1) & 0x01) ? 1 : 0;
+    decoded.system_functions_errors.gps_fix_error = ((bytes[5] >> 2) & 0x01) ? 1 : 0;
+    decoded.system_functions_errors.accelerometer_error = ((bytes[5] >> 3) & 0x01) ? 1 : 0;
+    decoded.system_functions_errors.light_error = ((bytes[5] >> 4) & 0x01) ? 1 : 0;
+    decoded.system_functions_errors.temperature_error = ((bytes[5] >> 5) & 0x01) ? 1 : 0;
+    decoded.system_functions_errors.humidity_error = ((bytes[5] >> 6) & 0x01) ? 1 : 0;
+    decoded.system_functions_errors.pressure_error = ((bytes[5] >> 7) & 0x01) ? 1 : 0;
+    decoded.lat = ((bytes[6] << 16) >>> 0) + ((bytes[7] << 8) >>> 0) + bytes[8];
+    decoded.lat = (decoded.lat / 16777215.0 * 180) - 90;
+    decoded.lon = ((bytes[9] << 16) >>> 0) + ((bytes[10] << 8) >>> 0) + bytes[11];
+    decoded.lon = (decoded.lon / 16777215.0 * 360) - 180;
+    decoded.time_to_fix = bytes[12];
+    decoded.gps_resend = bytes[13];
+  }
+  //depreciated - used only for legacy devices
   else if (port === 2) {
     decoded.resetCause = resetCause_dict[bytes[0]];
     // Lion tracker

@@ -26,6 +26,8 @@ unsigned long gps_time_to_fix;
 extern GNSSLocation gps_location;
 extern GNSSSatellites gps_satellites;
 
+extern statusPacket_t status_packet;
+
 AsyncAPDS9306 lux_sensor;
 
 /**
@@ -421,6 +423,15 @@ void gps_stop(void){
   gps_packet.data.epe = (uint8_t)epe;
   gps_packet.data.snr = (uint8_t)max_snr;
   gps_packet.data.lux = (uint8_t)get_bits(lux_read(),0,1000,8);
+
+  status_packet.data.lat1 = gps_packet.data.lat1;
+  status_packet.data.lat2 = gps_packet.data.lat2;
+  status_packet.data.lat3 = gps_packet.data.lat3;
+  status_packet.data.lon1 = gps_packet.data.lon1;
+  status_packet.data.lon2 = gps_packet.data.lon2;
+  status_packet.data.lon3 = gps_packet.data.lon3;
+  status_packet.data.time_to_fix = gps_packet.data.time_to_fix;
+  status_packet.data.gps_resend = 1;
     
   #ifdef debug
     serial_debug.print("gps(");
@@ -470,7 +481,7 @@ void accelerometer_init(void){
     serial_debug.println(")");
   #endif
 
-  /*pinMode(PIN_WIRE_SCL,INPUT);
+  pinMode(PIN_WIRE_SCL,INPUT);
   delay(100);
   if(digitalRead(PIN_WIRE_SCL)==LOW){
     //no I2C pull-up detected
@@ -480,7 +491,7 @@ void accelerometer_init(void){
       serial_debug.println("i2c error)");
     #endif
     return;
-  }*/
+  }
 
   //initialize sensor even if not enabled to put it in low poewr
   Wire.begin();

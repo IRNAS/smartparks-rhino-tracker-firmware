@@ -36,6 +36,14 @@ struct statusData_t{
   uint8_t temperature;
   uint8_t vbus;
   uint8_t system_functions_errors;
+  uint8_t lat1;
+  uint8_t lat2;
+  uint8_t lat3;
+  uint8_t lon1;
+  uint8_t lon2;
+  uint8_t lon3;
+  uint8_t time_to_fix;
+  uint8_t gps_resend;
 }__attribute__((packed));
 
 union statusPacket_t{
@@ -43,7 +51,7 @@ union statusPacket_t{
   byte bytes[sizeof(statusData_t)];
 };
 
-static const uint8_t status_packet_port = 2;
+static const uint8_t status_packet_port = 12;
 extern statusPacket_t status_packet;
 
 void status_scheduler(void);

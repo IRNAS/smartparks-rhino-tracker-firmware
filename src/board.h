@@ -1,7 +1,7 @@
 #ifndef BOARD_H_
 #define BOARD_H_
 
-#define VER2_3_LION
+#define VER2_2_4_RHINO
 
 // lion
 #ifdef VER2_3_LION
@@ -23,8 +23,8 @@
 #ifdef VER2_2_4_RHINO
     #define LED_RED PA0
     #define VSWR_ADC PA3
-    #define BAN_MON PA4
-    #define BAN_MON_EN PH1
+    #define BAT_MON PA4
+    #define BAT_MON_EN PH1
     #define VSWR_EN PA5
     #define GPS_BCK PA8
     #define GPS_EN PB6
@@ -38,8 +38,8 @@
     #define PIN_REED PH0
     #define GPS_EN PB14
     #define LIGHT_EN PB15
-    #define BAN_MON_EN PB12
-    #define BAN_MON PA4
+    #define BAT_MON_EN PB12
+    #define BAT_MON PA4
     #define GPS_BCK PA8
     #define PIN_ADC PA5
     #define LED_RED PA0
@@ -53,8 +53,8 @@
     #define PIN_REED PA11
     #define GPS_EN PB14
     #define LIGHT_EN PB13
-    #define BAN_MON_EN PB12
-    #define BAN_MON PA4
+    #define BAT_MON_EN PB12
+    #define BAT_MON PA4
     #define GPS_BCK PA8
     #define PIN_ADC PA5
     #define LED_RED PA0

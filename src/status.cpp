@@ -55,8 +55,8 @@ boolean status_send(void){
     delay(1);
   }
   float stm32l0_battery = value/16; // TODO: calibrate
-  digitalWrite(BAN_MON_EN, LOW);
-  //pinMode(BAN_MON_EN, INPUT_PULLDOWN);
+  digitalWrite(BAT_MON_EN, LOW);
+  //pinMode(BAT_MON_EN, INPUT_PULLDOWN);
 
   float stm32l0_battery_low = 0;
 
@@ -77,6 +77,8 @@ boolean status_send(void){
   status_packet.data.battery_low=(uint8_t)get_bits(stm32l0_battery_low,0,4096,8);
   status_packet.data.temperature=(uint8_t)get_bits(stm32l0_temp,-20,80,8);
   status_packet.data.vbus=(uint8_t)get_bits(stm32l0_vdd,0,3.6,8);
+  // increment prior to sending
+  status_packet.data.gps_resend++;
 
   #ifdef debug
     serial_debug.print("status_send( ");
