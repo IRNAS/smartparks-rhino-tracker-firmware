@@ -1,3 +1,4 @@
+//note some values need to be tuned to the hardware in here, make sure to do so
 function get_num(x, min, max, precision, round) {
 
   var range = max - min;
@@ -67,8 +68,12 @@ function Decoder(bytes) {
   }
   else if (port === 2) {
     decoded.resetCause = resetCause_dict[bytes[0]];
-    decoded.battery_low = get_num(bytes[1], 400, 4000, 8, 1);
-    decoded.battery = get_num(bytes[2], 400, 4000, 8, 1);
+    // Lion tracker
+    decoded.battery_low = get_num(bytes[1], 0, 43750, 8, 1);
+    decoded.battery = get_num(bytes[2], 2048, 4096, 8, 1);
+    // Rhino tracker
+    //decoded.battery_low = get_num(bytes[1], 400, 4000, 8, 1);
+    //decoded.battery = get_num(bytes[2], 400, 4000, 8, 1);
     decoded.temperature = get_num(bytes[3], -20, 80, 8, 1);
     decoded.vbus = get_num(bytes[4], 0, 3.6, 8, 2);
     decoded.system_functions_errors = {};//bytes[5];

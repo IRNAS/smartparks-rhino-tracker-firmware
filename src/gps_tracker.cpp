@@ -78,10 +78,12 @@ void gps_scheduler(void){
     interval=settings_packet.data.gps_periodic_interval;
   }
 
+  gps_packet.data.motion=0;
   // if triggered gps is enabled and accelerometer trigger has ocurred - overrides periodic interval
   if(settings_packet.data.gps_triggered_interval>0){
     if(((millis()-gps_accelerometer_last)/1000)<settings_packet.data.gps_triggered_interval){
       interval=settings_packet.data.gps_triggered_interval;
+      gps_packet.data.motion=1;
     }
   }
 
