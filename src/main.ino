@@ -295,12 +295,13 @@ void loop() {
     accelerometer_init();
     // Disable charging upon request
     #ifdef CHG_DISABLE
-    if(!bitRead(settings_packet_downlink.data.system_functions,7)==0){
-      pinMode(CHG_DISABLE, OUTPUT);
-      digitalWrite(CHG_DISABLE, LOW);
+    pinMode(CHG_DISABLE, OUTPUT);
+    // charging is disabled when pin is high, pulling the enable low via fet
+    if(bitRead(settings_packet_downlink.data.system_functions,7)==1){
+      digitalWrite(CHG_DISABLE, HIGH);
     }
     else{
-      pinMode(CHG_DISABLE, INPUT_PULLUP);
+      digitalWrite(CHG_DISABLE, LOW);
     }
     #endif
     status_send_flag = true;
