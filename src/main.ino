@@ -295,7 +295,7 @@ void loop() {
     accelerometer_init();
     // Disable charging upon request
     #ifdef CHG_DISABLE
-    if(bitRead(settings_packet_downlink.data.system_functions,7)==0){
+    if(!bitRead(settings_packet_downlink.data.system_functions,7)==0){
       pinMode(CHG_DISABLE, OUTPUT);
       digitalWrite(CHG_DISABLE, LOW);
     }
