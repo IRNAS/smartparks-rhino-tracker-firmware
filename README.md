@@ -70,8 +70,10 @@ There are a few tools available to make using this solution easier, namely:
  * `encoder_settings_json.py` -Python scrip to prepare the json structure for settings to be sent to the device
  * `encoder.js` - TheThingsNetwork V2 payload encoder, accepting the above created json
 
-# Testing
-Various test to validate correct operation
+# Building firwmare
+The firmware needs to be built with two key things configured:
+ * `board.h` - specfying board pinout and functions
+ * `lorawan.h` - selecting ABP or OTAA activation
 
 ## Power consumption
 
