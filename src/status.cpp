@@ -77,8 +77,10 @@ boolean status_send(void){
   status_packet.data.battery_low=(uint8_t)get_bits(stm32l0_battery_low,0,4096,8);
   status_packet.data.temperature=(uint8_t)get_bits(stm32l0_temp,-20,80,8);
   status_packet.data.vbus=(uint8_t)get_bits(stm32l0_vdd,0,3.6,8);
-  // increment prior to sending
-  status_packet.data.gps_resend++;
+  // increment prior to sending if valid data is there
+  if(0!=status_packet.data.lat1){
+    status_packet.data.gps_resend++;
+  }
 
   #ifdef debug
     serial_debug.print("status_send( ");

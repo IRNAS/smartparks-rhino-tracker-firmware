@@ -237,6 +237,13 @@ boolean gps_begin(void){
  */
 boolean gps_start(void){
   bitSet(status_packet.data.system_functions_errors,2);
+  status_packet.data.lat1 = 0;
+  status_packet.data.lat2 = 0;
+  status_packet.data.lat3 = 0;
+  status_packet.data.lon1 = 0;
+  status_packet.data.lon2 = 0;
+  status_packet.data.lon3 = 0;
+  status_packet.data.time_to_fix = 0;
   // Step 0: Initialize GPS
   if(gps_begin_happened==false){
     if(gps_begin()==false){
