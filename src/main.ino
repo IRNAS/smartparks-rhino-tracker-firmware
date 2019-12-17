@@ -189,6 +189,16 @@ void setup() {
     serial_debug.println(STM32L0.resetCause(),HEX);
   #endif
 
+  pinMode(PIN_WIRE_SCL,INPUT);
+  delay(100);
+  if(digitalRead(PIN_WIRE_SCL)==LOW){
+    //no I2C pull-up detected
+    bitSet(status_packet.data.system_functions_errors,3);
+    #ifdef debug
+      serial_debug.println("i2c (error)");
+    #endif
+  }
+
   // start the FSM with LoraWAN init
   state = INIT;
 }
@@ -292,7 +302,7 @@ void loop() {
     // setup default settings
     status_init(); // currently does not report a fail, should not be possible anyhow
     // Accelerometer
-    accelerometer_init();
+    //accelerometer_init();
     // Disable charging upon request
     #ifdef CHG_DISABLE
     pinMode(CHG_DISABLE, OUTPUT);
