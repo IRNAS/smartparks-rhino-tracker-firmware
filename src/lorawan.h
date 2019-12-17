@@ -10,6 +10,7 @@
 #include "board.h"
 #include "status.h"
 #include "rf_testing.h"
+#include "stm32l0_eeprom.h"
 
 extern boolean lorawan_send_successful;
 
@@ -20,5 +21,13 @@ void lorawan_joinCallback(void);
 void lorawan_checkCallback(void);
 void lorawan_receiveCallback(void);
 void lorawan_doneCallback(void);
+
+#if defined(DATA_EEPROM_BANK2_END)
+#define EEPROM_OFFSET_START            ((((DATA_EEPROM_BANK2_END - DATA_EEPROM_BASE) + 1023) & ~1023) - 1024)
+#else
+#define EEPROM_OFFSET_START            ((((DATA_EEPROM_END - DATA_EEPROM_BASE) + 1023) & ~1023) - 1024)
+#endif
+
+#define EEPROM_OFFSET_COMMISSIONING    (EEPROM_OFFSET_START + 0)
 
 #endif
