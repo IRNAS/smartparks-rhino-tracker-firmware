@@ -330,6 +330,8 @@ void loop() {
       state_transition(SETTINGS_SEND);
       break;
     }
+    // force-disable GPS as the safety - this should really not ever be needed
+    gps_power(false);
     
     checkReed();
     if(reed_switch){
