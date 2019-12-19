@@ -61,6 +61,7 @@ void gps_accelerometer_interrupt(void){
  */
 void gps_scheduler(void){
   unsigned long interval=0;
+  uint8_t motion_flag=0;
   /*#ifdef debug
     serial_debug.print("gps_scheduler(");
     serial_debug.print("fail: ");
@@ -78,14 +79,14 @@ void gps_scheduler(void){
   // if triggered gps is enabled and accelerometer trigger has ocurred
   if(settings_packet.data.gps_periodic_interval>0){
     interval=settings_packet.data.gps_periodic_interval;
+    motion_flag=0;
   }
 
-  gps_packet.data.motion=0;
   // if triggered gps is enabled and accelerometer trigger has ocurred - overrides periodic interval
   if(settings_packet.data.gps_triggered_interval>0){
     if(((millis()-gps_accelerometer_last)/1000)<settings_packet.data.gps_triggered_interval){
       interval=settings_packet.data.gps_triggered_interval;
-      gps_packet.data.motion=1;
+      motion_flag=1;
     }
   }
 
@@ -97,6 +98,7 @@ void gps_scheduler(void){
   if((interval!=0) & (millis()-gps_event_last>=interval*60*1000|gps_event_last==0)){
     gps_event_last=millis();
     gps_send_flag=true;
+    gps_packet.data.motion=motion_flag;
   }
 }
 
