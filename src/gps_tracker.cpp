@@ -441,7 +441,7 @@ void gps_stop(void){
     status_packet.data.lon2 = gps_packet.data.lon2;
     status_packet.data.lon3 = gps_packet.data.lon3;
     status_packet.data.time_to_fix = gps_packet.data.time_to_fix;
-    status_packet.data.gps_resend = 1;
+    status_packet.data.gps_resend = 0;
   }
     
   #ifdef debug

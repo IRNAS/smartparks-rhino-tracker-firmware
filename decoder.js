@@ -90,6 +90,8 @@ function Decoder(bytes) {
     if(decoded.lat!==0 && decoded.lon!==0){
       decoded.lat = (decoded.lat / 16777215.0 * 180) - 90;
       decoded.lon = (decoded.lon / 16777215.0 * 360) - 180;
+      decoded.lat = Math.round(decoded.lat*100000)/100000;
+      decoded.lon = Math.round(decoded.lon*100000)/100000;
       decoded.time_to_fix = bytes[12];
     }
     decoded.gps_resend = bytes[13];
@@ -118,10 +120,11 @@ function Decoder(bytes) {
   else if (port === 1) {
     decoded.lat = ((bytes[0] << 16) >>> 0) + ((bytes[1] << 8) >>> 0) + bytes[2];
     decoded.lon = ((bytes[3] << 16) >>> 0) + ((bytes[4] << 8) >>> 0) + bytes[5];
-    console.log(decoded.lat)
     if(decoded.lat!==0 && decoded.lon!==0){
       decoded.lat = (decoded.lat / 16777215.0 * 180) - 90;
       decoded.lon = (decoded.lon / 16777215.0 * 360) - 180;
+      decoded.lat = Math.round(decoded.lat*100000)/100000;
+      decoded.lon = Math.round(decoded.lon*100000)/100000;
     }
     decoded.alt = (bytes[7] << 8) | bytes[6];
     decoded.satellites = (bytes[8] >> 4);
