@@ -86,10 +86,12 @@ function Decoder(bytes) {
     decoded.system_functions_errors.humidity_error = ((bytes[5] >> 6) & 0x01) ? 1 : 0;
     decoded.system_functions_errors.pressure_error = ((bytes[5] >> 7) & 0x01) ? 1 : 0;
     decoded.lat = ((bytes[6] << 16) >>> 0) + ((bytes[7] << 8) >>> 0) + bytes[8];
-    decoded.lat = (decoded.lat / 16777215.0 * 180) - 90;
     decoded.lon = ((bytes[9] << 16) >>> 0) + ((bytes[10] << 8) >>> 0) + bytes[11];
-    decoded.lon = (decoded.lon / 16777215.0 * 360) - 180;
-    decoded.time_to_fix = bytes[12];
+    if(decoded.lat!==0 && decoded.lon!==0){
+      decoded.lat = (decoded.lat / 16777215.0 * 180) - 90;
+      decoded.lon = (decoded.lon / 16777215.0 * 360) - 180;
+      decoded.time_to_fix = bytes[12];
+    }
     decoded.gps_resend = bytes[13];
   }
   //depreciated - used only for legacy devices
@@ -115,9 +117,12 @@ function Decoder(bytes) {
   }
   else if (port === 1) {
     decoded.lat = ((bytes[0] << 16) >>> 0) + ((bytes[1] << 8) >>> 0) + bytes[2];
-    decoded.lat = (decoded.lat / 16777215.0 * 180) - 90;
     decoded.lon = ((bytes[3] << 16) >>> 0) + ((bytes[4] << 8) >>> 0) + bytes[5];
-    decoded.lon = (decoded.lon / 16777215.0 * 360) - 180;
+    console.log(decoded.lat)
+    if(decoded.lat!==0 && decoded.lon!==0){
+      decoded.lat = (decoded.lat / 16777215.0 * 180) - 90;
+      decoded.lon = (decoded.lon / 16777215.0 * 360) - 180;
+    }
     decoded.alt = (bytes[7] << 8) | bytes[6];
     decoded.satellites = (bytes[8] >> 4);
     decoded.hdop = (bytes[8] & 0x0f);
@@ -130,5 +135,3 @@ function Decoder(bytes) {
 
   return decoded;
 }
-
-module.exports = Decoder

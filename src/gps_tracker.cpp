@@ -431,14 +431,16 @@ void gps_stop(void){
   gps_packet.data.snr = (uint8_t)max_snr;
   gps_packet.data.lux = (uint8_t)get_bits(lux_read(),0,1000,8);
 
-  status_packet.data.lat1 = gps_packet.data.lat1;
-  status_packet.data.lat2 = gps_packet.data.lat2;
-  status_packet.data.lat3 = gps_packet.data.lat3;
-  status_packet.data.lon1 = gps_packet.data.lon1;
-  status_packet.data.lon2 = gps_packet.data.lon2;
-  status_packet.data.lon3 = gps_packet.data.lon3;
-  status_packet.data.time_to_fix = gps_packet.data.time_to_fix;
-  status_packet.data.gps_resend = 1;
+  if(bitRead(status_packet.data.system_functions_errors,2)==0){
+    status_packet.data.lat1 = gps_packet.data.lat1;
+    status_packet.data.lat2 = gps_packet.data.lat2;
+    status_packet.data.lat3 = gps_packet.data.lat3;
+    status_packet.data.lon1 = gps_packet.data.lon1;
+    status_packet.data.lon2 = gps_packet.data.lon2;
+    status_packet.data.lon3 = gps_packet.data.lon3;
+    status_packet.data.time_to_fix = gps_packet.data.time_to_fix;
+    status_packet.data.gps_resend = 1;
+  }
     
   #ifdef debug
     serial_debug.print("gps(");
