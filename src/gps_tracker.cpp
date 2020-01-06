@@ -245,7 +245,6 @@ boolean gps_start(void){
   status_packet.data.lon1 = 0;
   status_packet.data.lon2 = 0;
   status_packet.data.lon3 = 0;
-  status_packet.data.time_to_fix = 0;
   // Step 0: Initialize GPS
   if(gps_begin_happened==false){
     if(gps_begin()==false){
@@ -440,7 +439,6 @@ void gps_stop(void){
     status_packet.data.lon1 = gps_packet.data.lon1;
     status_packet.data.lon2 = gps_packet.data.lon2;
     status_packet.data.lon3 = gps_packet.data.lon3;
-    status_packet.data.time_to_fix = gps_packet.data.time_to_fix;
     status_packet.data.gps_resend = 0;
   }
     

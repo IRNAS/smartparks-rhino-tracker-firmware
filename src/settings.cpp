@@ -40,6 +40,12 @@ void settings_init(void){
     settings_packet.data.gps_cold_fix_retry=2;
     settings_packet.data.gps_fail_retry=0; //must be 0 due to bug in GPS core
     settings_packet.data.gps_settings=0b00001101;
+    settings_packet.data.unused=0;
+    settings_packet.data.gps_charge_min=0;
+    settings_packet.data.system_charge_min=0;
+    settings_packet.data.system_charge_max=255;
+    settings_packet.data.system_input_charge_min=0;
+
     //check if valid settings present in eeprom 
     uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
     #ifndef FORCE_DEFAULT_SETTINGS
@@ -79,6 +85,11 @@ void settings_from_downlink(void)
     settings_packet.data.gps_cold_fix_retry=constrain(settings_packet_downlink.data.gps_cold_fix_retry, 0,0xff);
     settings_packet.data.gps_fail_retry=constrain(settings_packet_downlink.data.gps_fail_retry, 0,0xff); //must be 1 due to bug in GPS core
     settings_packet.data.gps_settings=constrain(settings_packet_downlink.data.gps_settings, 0,0xff);
+    settings_packet.data.unused=0;
+    settings_packet.data.gps_charge_min=constrain(settings_packet_downlink.data.gps_charge_min, 0,0xff);
+    settings_packet.data.system_charge_min=constrain(settings_packet_downlink.data.system_charge_min, 0,0xff);
+    settings_packet.data.system_charge_max=constrain(settings_packet_downlink.data.system_charge_max, 0,0xff);
+    settings_packet.data.system_input_charge_min=constrain(settings_packet_downlink.data.system_input_charge_min, 0,0xffff);
 
     // Checks against stupid configurations
 

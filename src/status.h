@@ -31,10 +31,8 @@ extern boolean status_send_flag;
  */
 struct statusData_t{
   uint8_t resetCause;
-  uint8_t battery_low;
   uint8_t battery;
   uint8_t temperature;
-  uint8_t vbus;
   uint8_t system_functions_errors;
   uint8_t lat1;
   uint8_t lat2;
@@ -42,8 +40,11 @@ struct statusData_t{
   uint8_t lon1;
   uint8_t lon2;
   uint8_t lon3;
-  uint8_t time_to_fix;
   uint8_t gps_resend;
+  uint8_t accelx;
+  uint8_t accely;
+  uint8_t accelz;
+  uint16_t input_voltage;
 }__attribute__((packed));
 
 union statusPacket_t{

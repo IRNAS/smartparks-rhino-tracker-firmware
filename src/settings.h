@@ -58,6 +58,11 @@ struct settingsData_t{
   uint8_t   gps_cold_fix_retry;
   uint8_t   gps_fail_retry;
   uint8_t   gps_settings;
+  uint8_t   unused;
+  uint8_t   gps_charge_min;     // gps voltage minimum 2.8V
+  uint8_t   system_charge_min;  // charge voltage minimum 2.8V
+  uint8_t   system_charge_max;  // charge voltage maximum 4.2v
+  uint16_t  system_input_charge_min; // stop charging when input voltage is less then X
 }__attribute__((packed));
 
 union settingsPacket_t{

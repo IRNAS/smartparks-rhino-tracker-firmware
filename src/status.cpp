@@ -46,21 +46,43 @@ boolean status_send(void){
   float stm32l0_vdd = STM32L0.getVDDA();
   float stm32l0_temp = STM32L0.getTemperature();
 
+  // disable charging before measurement
+#ifdef CHG_DISABLE
+    pinMode(CHG_DISABLE, OUTPUT);
+    digitalWrite(CHG_DISABLE, HIGH);
+#endif // CHG_DISABLE
+
+  // measure battery voltage
   pinMode(BAT_MON_EN, OUTPUT);
   digitalWrite(BAT_MON_EN, HIGH);
-  delay(10);
+  delay(1);
   float value = 0;
   for(int i=0; i<16; i++){
     value+=analogRead(BAT_MON);
     delay(1);
   }
-  float stm32l0_battery = value/16; // TODO: calibrate
+  float stm32l0_battery = value/16*BAT_MON_CALIB; // result in mV
   digitalWrite(BAT_MON_EN, LOW);
-  //pinMode(BAT_MON_EN, INPUT_PULLDOWN);
 
-  float stm32l0_battery_low = 0;
-
+  // measure input voltage
+  float input_voltage = 0;
   #ifdef INPUT_AN
+  if(INPUT_AN!=0){
+    delay(1);
+    value = 0;
+    for(int i=0; i<16; i++){
+      value+=analogRead(INPUT_AN);
+      delay(1);
+    }
+    input_voltage = value/16;
+  }
+  uint8_t input_voltage_lookup_index = (uint8_t)input_voltage/100;
+  float input_calib_value=1;
+  if(input_voltage_lookup_index<sizeof(input_calib)){
+      input_calib_value=input_calib[input_voltage_lookup_index];
+  }
+  input_voltage=(input_calib_value * stm32l0_vdd * input_voltage) / 4095.0; // mV
+
 #ifdef CHG_DISABLE
     pinMode(CHG_DISABLE, OUTPUT);
     // charging is disabled when pin is high, pulling the enable low via fet
@@ -70,23 +92,15 @@ boolean status_send(void){
     else{
       digitalWrite(CHG_DISABLE, LOW);
     }
-    #endif
-  if(INPUT_AN!=0){
-    delay(10);
-    value = 0;
-    for(int i=0; i<16; i++){
-      value+=analogRead(INPUT_AN);
-      delay(1);
-    }
-    stm32l0_battery_low = value/16; // TODO: calibrate
-  }
+    // undervoltage lockout
+    // TODO
+#endif // CHG_DISABLE
   #endif
   
   status_packet.data.resetCause=STM32L0.resetCause();
-  status_packet.data.battery=(uint8_t)get_bits(stm32l0_battery,2048,4096,8);
-  status_packet.data.battery_low=(uint8_t)get_bits(stm32l0_battery_low,200,2800,8);
+  status_packet.data.battery=(uint8_t)(stm32l0_battery-2500)/10; // 0-5000 input, assuming 2500mV is minimu that is subtracted and then divided by 10
   status_packet.data.temperature=(uint8_t)get_bits(stm32l0_temp,-20,80,8);
-  status_packet.data.vbus=(uint8_t)get_bits(stm32l0_vdd,0,3.6,8);
+  status_packet.data.input_voltage=input_voltage;
   // increment prior to sending if valid data is there
   if(0!=status_packet.data.lat1){
     status_packet.data.gps_resend++;
