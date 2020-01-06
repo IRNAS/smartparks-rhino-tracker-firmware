@@ -1,7 +1,7 @@
 #ifndef BOARD_H_
 #define BOARD_H_
 
-#define VER2_2_4_RHINO
+#define VER2_3_LION
 
 // lion
 #ifdef VER2_3_LION

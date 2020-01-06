@@ -69,7 +69,8 @@ function Decoder(bytes) {
   else if (port === 12) {
     decoded.resetCause = resetCause_dict[bytes[0]];
     // Lion tracker
-    decoded.battery_low = get_num(bytes[1], 0, 43750, 8, 1);
+    var temp = get_num(bytes[1], 50, 700, 8, 1);
+    decoded.battery_low = 0.996 + temp * 0.04346 + temp^2 * -0.00000083;
     decoded.battery = get_num(bytes[2], 2048, 4096, 8, 1);
     // Rhino tracker
     //decoded.battery_low = get_num(bytes[1], 0, 4096, 8, 1);

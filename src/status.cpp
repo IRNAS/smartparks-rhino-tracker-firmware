@@ -61,6 +61,16 @@ boolean status_send(void){
   float stm32l0_battery_low = 0;
 
   #ifdef INPUT_AN
+#ifdef CHG_DISABLE
+    pinMode(CHG_DISABLE, OUTPUT);
+    // charging is disabled when pin is high, pulling the enable low via fet
+    if(bitRead(settings_packet_downlink.data.system_functions,7)==1){
+      digitalWrite(CHG_DISABLE, HIGH);
+    }
+    else{
+      digitalWrite(CHG_DISABLE, LOW);
+    }
+    #endif
   if(INPUT_AN!=0){
     delay(10);
     value = 0;
@@ -74,7 +84,7 @@ boolean status_send(void){
   
   status_packet.data.resetCause=STM32L0.resetCause();
   status_packet.data.battery=(uint8_t)get_bits(stm32l0_battery,2048,4096,8);
-  status_packet.data.battery_low=(uint8_t)get_bits(stm32l0_battery_low,0,4096,8);
+  status_packet.data.battery_low=(uint8_t)get_bits(stm32l0_battery_low,200,2800,8);
   status_packet.data.temperature=(uint8_t)get_bits(stm32l0_temp,-20,80,8);
   status_packet.data.vbus=(uint8_t)get_bits(stm32l0_vdd,0,3.6,8);
   // increment prior to sending if valid data is there
