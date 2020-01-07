@@ -2,8 +2,8 @@
 
 uint8_t resetCause = 0xff;
 
-//#define debug
-//#define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
 
 boolean status_send_flag = false;
 unsigned long event_status_last = 0;
@@ -79,7 +79,7 @@ boolean status_send(void){
   uint8_t input_voltage_lookup_index = (uint8_t)input_voltage/100;
   float input_calib_value=1;
   if(input_voltage_lookup_index<sizeof(input_calib)){
-      input_calib_value=input_calib[input_voltage_lookup_index];
+      input_calib_value=input_calib[input_voltage_lookup_index]*10;
   }
   input_voltage=(input_calib_value * stm32l0_vdd * input_voltage) / 4095.0; // mV
 
@@ -111,17 +111,15 @@ boolean status_send(void){
     serial_debug.print("resetCause: ");
     serial_debug.print(STM32L0.resetCause(),HEX);
     serial_debug.print(", battery: ");
-    serial_debug.print(status_packet.data.battery);
-    serial_debug.print(" raw ");
-    serial_debug.print(status_packet.data.battery_low);
+    serial_debug.print(status_packet.data.battery*10+2500);
+    serial_debug.print(" input_voltage ");
+    serial_debug.print(status_packet.data.input_voltage);
     serial_debug.print(", temperature: ");
     serial_debug.print(stm32l0_temp);
     serial_debug.print(" ");
     serial_debug.print(status_packet.data.temperature);
     serial_debug.print(", stm32l0_vdd: ");
     serial_debug.print(stm32l0_vdd);
-    serial_debug.print(" ");
-    serial_debug.print(status_packet.data.vbus);
     serial_debug.println(" )");
   #endif
 
