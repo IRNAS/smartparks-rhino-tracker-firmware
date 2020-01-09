@@ -45,7 +45,7 @@ void status_init(void){
  */
 void status_measure_voltage(){
   float stm32l0_temp = STM32L0.getTemperature();
-  float stm32l0_vdd = STM32L0.getVDDA();
+  float stm32l0_vdd = STM32L0.getVDDA()*1000;
   // disable charging before measurement
   boolean charge_disable=LOW;
 #ifdef CHG_DISABLE
@@ -64,8 +64,17 @@ void status_measure_voltage(){
     value+=analogRead(BAT_MON);
     delay(1);
   }
-  float stm32l0_battery = value/16*BAT_MON_CALIB; // result in mV
+  float stm32l0_battery = BAT_MON_CALIB * (value/16) * (2500/stm32l0_vdd);// result in mV
+  stm32l0_battery=(stm32l0_battery-2500)/10;
   digitalWrite(BAT_MON_EN, LOW);
+#ifdef debug
+    serial_debug.print("status_measure_voltage( ");
+    serial_debug.print(", battery: ");
+    serial_debug.print(stm32l0_vdd);
+    serial_debug.print(" ");
+    serial_debug.print(stm32l0_battery);
+    serial_debug.println(" )");
+  #endif
 
   // measure input voltage
   float input_voltage = 0;
@@ -79,19 +88,19 @@ void status_measure_voltage(){
     }
     input_voltage = value/16;
   }
-  uint8_t input_voltage_lookup_index = (uint8_t)input_voltage/100;
-  float input_calib_value=1;
+  uint8_t input_voltage_lookup_index = (uint8_t)(input_voltage/100);
+  float input_calib_value=0;
   if(input_voltage_lookup_index<sizeof(input_calib)){
       input_calib_value=input_calib[input_voltage_lookup_index]*10;
   }
-  input_voltage=(input_calib_value * stm32l0_vdd * input_voltage) / 4095.0; // mV
+input_voltage=input_calib_value * input_voltage * (2500/stm32l0_vdd); // mV
 
 #ifdef CHG_DISABLE
     pinMode(CHG_DISABLE, OUTPUT);
     digitalWrite(CHG_DISABLE, charge_disable);
 #endif // CHG_DISABLE
 #endif
-  status_packet.data.battery=(uint8_t)(stm32l0_battery-2500)/10; // 0-5000 input, assuming 2500mV is minimu that is subtracted and then divided by 10
+  status_packet.data.battery=(uint8_t)stm32l0_battery; // 0-5000 input, assuming 2500mV is minimu that is subtracted and then divided by 10
   status_packet.data.temperature=(uint8_t)get_bits(stm32l0_temp,-20,80,8);
   status_packet.data.input_voltage=input_voltage;
 }
