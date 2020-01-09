@@ -10,6 +10,8 @@ unsigned long event_status_last = 0;
 unsigned long event_status_voltage_last = 0;
 statusPacket_t status_packet;
 
+LIS2DW12CLASS lis;
+
 /**
  * @brief Schedule status events
  * 
@@ -28,6 +30,7 @@ void status_scheduler(void){
  */
 void status_init(void){ 
     event_status_last=millis();
+    status_accelerometer_init();
     #ifdef debug
         serial_debug.print("status_init - status_timer_callback( ");
         serial_debug.print("interval: ");
@@ -101,7 +104,14 @@ void status_measure_voltage(){
 boolean status_send(void){
   //assemble information
   status_measure_voltage();
-  
+
+  accel_data axis;
+  axis = lis.read_accel_values();
+
+  status_packet.data.accelx=(uint8_t)get_bits(axis.x_axis,-2000,2000,8);
+  status_packet.data.accely=(uint8_t)get_bits(axis.y_axis,-2000,2000,8);
+  status_packet.data.accelz=(uint8_t)get_bits(axis.z_axis,-2000,2000,8);
+
   status_packet.data.resetCause=STM32L0.resetCause();
   // increment prior to sending if valid data is there
   if(0!=status_packet.data.lat1){
@@ -122,4 +132,33 @@ boolean status_send(void){
   #endif
 
   return lorawan_send(status_packet_port, &status_packet.bytes[0], sizeof(statusData_t));
+}
+
+/**
+ * @brief initialize sensors upon boot or new settings
+ * 
+ * @details Make sure each sensors is firstlu properly reset and put into sleep and then if enabled in settings, initialize it
+ * 
+ */
+void status_accelerometer_init(void){
+    #ifdef debug
+    serial_debug.print("sensor_accelerometer_init(");
+    serial_debug.println(")");
+  #endif
+
+  if(lis.begin()==false){
+      //set accelerometer error
+      bitSet(status_packet.data.system_functions_errors,3);
+      #ifdef debug
+        serial_debug.print("accelerometer_init(");
+        serial_debug.println("accel error)");
+      #endif
+      return;
+  }
+  else{
+    bitClear(status_packet.data.system_functions_errors,3);
+  }
+
+
+  lis.wake_up_free_fall_setup(settings_packet.data.gps_triggered_threshold, settings_packet.data.gps_triggered_duration, 0xff);
 }

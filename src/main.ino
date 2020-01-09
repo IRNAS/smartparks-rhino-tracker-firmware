@@ -113,12 +113,12 @@ boolean callbackPeriodic(void){
     status_measure_voltage();
 #ifdef CHG_DISABLE
     // cycle charging between two thresholds for battery voltage
-    if(status_packet.data.battery>settings_packet.data.system_charge_max){
+    if(status_packet.data.battery>settings_packet.data.system_charge_max && settings_packet.data.system_charge_max>0){
       // disable charging as voltage is greater then threshold
       digitalWrite(CHG_DISABLE, HIGH);
     }
     // cycle charging between two thresholds for battery voltage
-    if(status_packet.data.battery<settings_packet.data.system_charge_min){
+    if(status_packet.data.battery<settings_packet.data.system_charge_min&& settings_packet.data.system_charge_min>0){
       // enable charging as voltage is smaller then threshold
       digitalWrite(CHG_DISABLE, LOW);
     }
@@ -331,6 +331,8 @@ void loop() {
     status_init(); // currently does not report a fail, should not be possible anyhow
     // Accelerometer
     //accelerometer_init();
+    status_accelerometer_init();
+    
     // Disable charging upon request
     #ifdef CHG_DISABLE
     pinMode(CHG_DISABLE, OUTPUT);

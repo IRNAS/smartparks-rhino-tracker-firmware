@@ -489,7 +489,7 @@ void gps_end(void){
  * @details Make sure each sensors is firstlu properly reset and put into sleep and then if enabled in settings, initialize it
  * 
  */
-void accelerometer_init(void){
+/*void accelerometer_init(void){
   #ifdef debug
     serial_debug.print("accelerometer_init(");
     serial_debug.println(")");
@@ -531,12 +531,7 @@ void accelerometer_init(void){
     writeReg(LIS2DW12_CTRL6, 0x00);
 
     writeReg(LIS2DW12_CTRL4_INT1_PAD_CTRL, 0x20);    
-
-    /**The wake-up can be personalized by two key parameters � threshold and duration. 
-      * With threshold, the application can set the value which at least one of the axes 
-      * has to exceed in order to generate an interrupt. The duration is the number of 
-      * consecutive samples for which the measured acceleration exceeds the threshold.
-      */    
+ 
     uint8_t thr = settings_packet.data.gps_triggered_threshold&0x3f;
     uint8_t dur = settings_packet.data.gps_triggered_duration;
     writeReg(LIS2DW12_WAKE_UP_THS, thr);//6bit value    
@@ -553,7 +548,7 @@ void accelerometer_init(void){
   else{
     writeReg(LIS2DW12_CTRL1, 0x00);  
   }
-}
+}*/
 
 /**
  * @brief initialize sensors upon boot or new settings
@@ -648,10 +643,10 @@ boolean gps_send(void){
  * @param reg - register
  * @param val - value
  */
-void writeReg(uint8_t reg, uint8_t val)
+/*/void writeReg(uint8_t reg, uint8_t val)
 {
     Wire.beginTransmission(LIS2DH12_ADDR);
     Wire.write(reg);
     Wire.write(val);
     Wire.endTransmission();
-}
+}*/

@@ -7,6 +7,7 @@
 #include "project_utils.h"
 #include "settings.h"
 #include "board.h"
+#include "LIS2DW12.h"
 
 extern boolean status_send_flag;
 
@@ -59,5 +60,6 @@ void status_scheduler(void);
 void status_init(void);
 void status_measure_voltage(void);
 boolean status_send(void);
+void status_accelerometer_init(void);
 
 #endif
