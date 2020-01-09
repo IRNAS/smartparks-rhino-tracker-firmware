@@ -76,6 +76,11 @@ void gps_scheduler(void){
     return;
   }
 
+  // do not schedule a GPS event if battery voltage is under the limit
+  if(settings_packet.data.gps_charge_min<status_packet.data.battery){
+    return;
+  }
+
   // if triggered gps is enabled and accelerometer trigger has ocurred
   if(settings_packet.data.gps_periodic_interval>0){
     interval=settings_packet.data.gps_periodic_interval;

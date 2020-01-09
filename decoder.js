@@ -42,7 +42,7 @@ function Decoder(bytes) {
     decoded.system_functions.light_enabled = ((bytes[2] >> 4) & 0x01) ? 1 : 0;
     decoded.system_functions.temperature_enabled = ((bytes[2] >> 5) & 0x01) ? 1 : 0;
     decoded.system_functions.humidity_enabled = ((bytes[2] >> 6) & 0x01) ? 1 : 0;
-    decoded.system_functions.pressure_enabled = ((bytes[2] >> 7) & 0x01) ? 1 : 0;
+    decoded.system_functions.charging_enabled = ((bytes[2] >> 7) & 0x01) ? 1 : 0;
 
     decoded.lorawan_datarate_adr = {};//bytes[3];
     decoded.lorawan_datarate_adr.datarate = bytes[3] & 0x0f;
@@ -65,6 +65,11 @@ function Decoder(bytes) {
     decoded.gps_settings.fail_backoff = ((bytes[19] >> 1) & 0x01) ? 1 : 0;
     decoded.gps_settings.hot_fix = ((bytes[19] >> 2) & 0x01) ? 1 : 0;
     decoded.gps_settings.fully_resolved = ((bytes[19] >> 3) & 0x01) ? 1 : 0;
+    decoded.system_voltage_interval = bytes[20];
+    decoded.gps_charge_min = bytes[21];
+    decoded.system_charge_min = bytes[22];
+    decoded.system_charge_max = bytes[23];
+    decoded.system_input_charge_min = (bytes[25] << 8) | bytes[24];
   }
   else if (port === 12) {
     decoded.resetCause = resetCause_dict[bytes[0]];
@@ -78,7 +83,7 @@ function Decoder(bytes) {
     decoded.system_functions_errors.light_error = ((bytes[3] >> 4) & 0x01) ? 1 : 0;
     decoded.system_functions_errors.temperature_error = ((bytes[3] >> 5) & 0x01) ? 1 : 0;
     decoded.system_functions_errors.humidity_error = ((bytes[3] >> 6) & 0x01) ? 1 : 0;
-    decoded.system_functions_errors.pressure_error = ((bytes[3] >> 7) & 0x01) ? 1 : 0;
+    decoded.system_functions_errors.charging_error = ((bytes[3] >> 7) & 0x01) ? 1 : 0;
     decoded.lat = ((bytes[4] << 16) >>> 0) + ((bytes[5] << 8) >>> 0) + bytes[6];
     decoded.lon = ((bytes[7] << 16) >>> 0) + ((bytes[8] << 8) >>> 0) + bytes[9];
     if(decoded.lat!==0 && decoded.lon!==0){

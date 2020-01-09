@@ -58,6 +58,7 @@ unsigned long state_timeout_duration;
 unsigned long event_loop_start = 0;
 long sleep = -1; // reset the sleep after loop, set in every state if required
 long lora_join_fail_count=0;
+long event_voltage_last =0;
 boolean settings_send_flag = false;
 
 // function prototypes because Arduino failes if using enum otherwise
@@ -106,6 +107,33 @@ boolean callbackPeriodic(void){
     serial_debug.println(millis());
   #endif*/
 
+  // voltage protection
+  long elapsed = millis()-event_voltage_last;
+  if(elapsed>=(settings_packet.data.system_voltage_interval*60*1000)){
+    status_measure_voltage();
+#ifdef CHG_DISABLE
+    // cycle charging between two thresholds for battery voltage
+    if(status_packet.data.battery>settings_packet.data.system_charge_max){
+      // disable charging as voltage is greater then threshold
+      digitalWrite(CHG_DISABLE, HIGH);
+    }
+    // cycle charging between two thresholds for battery voltage
+    if(status_packet.data.battery<settings_packet.data.system_charge_min){
+      // enable charging as voltage is smaller then threshold
+      digitalWrite(CHG_DISABLE, LOW);
+    }
+
+    // undervoltage charging protection
+    if(status_packet.data.input_voltage<settings_packet.data.system_input_charge_min | bitRead(settings_packet_downlink.data.system_functions,7)==1){
+      // voltage too low to charge
+      bitSet(status_packet.data.system_functions_errors,7);
+      digitalWrite(CHG_DISABLE, HIGH);
+    }
+    else{
+      bitClear(status_packet.data.system_functions_errors,7);
+    }
+#endif // CHG_DISABLE
+  }
   // determine which events need to be scheduled, except in hibernation
   if(state!=HIBERNATION){
     status_scheduler();

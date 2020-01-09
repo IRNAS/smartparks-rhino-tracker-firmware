@@ -8,7 +8,7 @@ system_functions['accelerometer_enabled'] = False
 system_functions['light_enabled'] = False
 system_functions['temperature_enabled'] = False
 system_functions['humidity_enabled'] = False
-system_functions['pressure_enabled'] = False
+system_functions['charging_enabled'] = False
 data['system_functions'] = system_functions
 
 lorawan_datarate_adr = {}
@@ -36,6 +36,11 @@ gps_settings['hot_fix'] = True
 gps_settings['fully_resolved'] = False
 
 data['gps_settings'] = gps_settings
+data['system_voltage_interval'] =1
+data['gps_charge_min'] =0
+data['system_charge_min'] =0
+data['system_charge_max'] =0
+data['system_input_charge_min'] =0
 
 json_data = json.dumps(data)
 print(json_data)

@@ -27,7 +27,7 @@ extern boolean status_send_flag;
  *    bit 4 - light sensor error
  *    bit 5 - temperature error
  *    bit 6 - humidity sensor error
- *    bit 7 - pressure sensor error
+ *    bit 7 - charging sensor error
  */
 struct statusData_t{
   uint8_t resetCause;
@@ -57,6 +57,7 @@ extern statusPacket_t status_packet;
 
 void status_scheduler(void);
 void status_init(void);
+void status_measure_voltage(void);
 boolean status_send(void);
 
 #endif

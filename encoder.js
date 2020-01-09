@@ -9,7 +9,7 @@ function Encoder(object, port) {
         bytes[2] |= object.system_functions.light_enabled  ? 1<<4 : 0;
         bytes[2] |= object.system_functions.temperature_enabled  ? 1<<5 : 0;
         bytes[2] |= object.system_functions.humidity_enabled  ? 1<<6 : 0;
-        bytes[2] |= object.system_functions.pressure_enabled  ? 1<<7 : 0;
+        bytes[2] |= object.system_functions.charging_enabled  ? 1<<7 : 0;
 
         bytes[3] |= (object.lorawan_datarate_adr.datarate) & 0x0F;
         bytes[3] |= object.lorawan_datarate_adr.confirmed_uplink ? 1<<6 : 0;
@@ -45,6 +45,12 @@ function Encoder(object, port) {
         bytes[19] |= object.gps_settings.fail_backoff ? 1<<1 : 0;
         bytes[19] |= object.gps_settings.hot_fix ? 1<<2 : 0;
         bytes[19] |= object.gps_settings.fully_resolved ? 1<<3 : 0;
+        bytes[20] = (object.system_voltage_interval) & 0xFF;
+        bytes[21] = ((object.gps_charge_min-2500)/10) & 0xFF;
+        bytes[22] = ((object.system_charge_min-2500)/10) & 0xFF;
+        bytes[23] = ((object.system_charge_max-2500)/10) & 0xFF;
+        bytes[24] = (object.system_input_charge_min) & 0xFF;
+        bytes[25] = (object.system_input_charge_min)>>8 & 0xFF;
     }
     else if (port === 30){
         bytes[0] = (object.freq_start) & 0xFF;

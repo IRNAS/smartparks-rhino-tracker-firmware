@@ -23,7 +23,7 @@ extern boolean settings_updated;
  *    bit 4 - light sensor enabled
  *    bit 5 - temperature sensor enabled
  *    bit 6 - humidity sensor enabled
- *    bit 7 - pressure sensor enabled
+ *    bit 7 - charging sensor enabled
  * lorawan_datarate_adr - lorawan fix reporting datarate, range 0 - 5 (SF7-SF12), upper nibble is adr, lower nibble is datarate
  * gps_periodic_interval - gps periodic fix interval in minutes
  * gps_triggered_interval - gps triggered interval in minutes
@@ -58,7 +58,7 @@ struct settingsData_t{
   uint8_t   gps_cold_fix_retry;
   uint8_t   gps_fail_retry;
   uint8_t   gps_settings;
-  uint8_t   unused;
+  uint8_t   system_voltage_interval; // interval in minutes how often the voltage is measured and checked
   uint8_t   gps_charge_min;     // gps voltage minimum 2.8V
   uint8_t   system_charge_min;  // charge voltage minimum 2.8V
   uint8_t   system_charge_max;  // charge voltage maximum 4.2v
