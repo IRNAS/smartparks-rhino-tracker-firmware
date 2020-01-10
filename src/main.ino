@@ -345,18 +345,10 @@ void loop() {
     if(bitRead(settings_packet_downlink.data.system_functions,7)==0){
       charging_state=DISABLED;
     }
-    
-    // Disable charging upon request
-    #ifdef CHG_DISABLE
-    pinMode(CHG_DISABLE, OUTPUT);
-    // charging is disabled when pin is high, pulling the enable low via fet
-    if(bitRead(settings_packet_downlink.data.system_functions,7)==1){
-      digitalWrite(CHG_DISABLE, HIGH);
+    else {
+      charging_state=CHARGE;
     }
-    else{
-      digitalWrite(CHG_DISABLE, LOW);
-    }
-    #endif
+
     status_send_flag = true;
     settings_send_flag = true;
     // transition
