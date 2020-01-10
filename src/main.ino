@@ -112,26 +112,34 @@ boolean callbackPeriodic(void){
   if(elapsed>=(settings_packet.data.system_voltage_interval*60*1000)){
     status_measure_voltage();
 #ifdef CHG_DISABLE
-    // cycle charging between two thresholds for battery voltage
-    if(status_packet.data.battery>settings_packet.data.system_charge_max && settings_packet.data.system_charge_max>0){
-      // disable charging as voltage is greater then threshold
-      digitalWrite(CHG_DISABLE, HIGH);
-    }
-    // cycle charging between two thresholds for battery voltage
-    if(status_packet.data.battery<settings_packet.data.system_charge_min&& settings_packet.data.system_charge_min>0){
-      // enable charging as voltage is smaller then threshold
-      digitalWrite(CHG_DISABLE, LOW);
-    }
-
     // undervoltage charging protection
-    if(status_packet.data.input_voltage<settings_packet.data.system_input_charge_min | bitRead(settings_packet_downlink.data.system_functions,7)==0){
-      // voltage too low to charge
-      bitSet(status_packet.data.system_functions_errors,7);
-      digitalWrite(CHG_DISABLE, HIGH);
+    if(charging_state==DISABLED){
+      charging_state=DISABLED;
+    }
+    else if(status_packet.data.input_voltage<settings_packet.data.system_input_charge_min){
+      charging_state=UNDERVOLTAGE;
     }
     else{
-      bitClear(status_packet.data.system_functions_errors,7);
+      // cycle charging between two thresholds for battery voltage
+      if(status_packet.data.battery>settings_packet.data.system_charge_max && settings_packet.data.system_charge_max>0){
+        // disable charging as voltage is greater then threshold
+        charging_state=CYCLE_DISCHARGE;
+      }
+      /// cycle charging between two thresholds for battery voltage
+      else if(status_packet.data.battery<settings_packet.data.system_charge_min&& settings_packet.data.system_charge_min>0){
+        // disable charging as voltage is greater then threshold
+        charging_state=CYCLE_CHARGE;
+      }
+      else if((charging_state!=CYCLE_CHARGE) | (charging_state!=CYCLE_DISCHARGE)){
+        charging_state=CHARGE;
+      }
     }
+#ifdef debug
+    serial_debug.print("charging: ");
+    serial_debug.println(charging_state);
+#endif
+
+    switch_charging_state();
 #endif // CHG_DISABLE
   }
   // determine which events need to be scheduled, except in hibernation
@@ -331,7 +339,12 @@ void loop() {
     status_init(); // currently does not report a fail, should not be possible anyhow
     // Accelerometer
     //accelerometer_init();
-    status_accelerometer_init();
+    status_accelerometer_init();          
+
+    // check if charging is enabled at all
+    if(bitRead(settings_packet_downlink.data.system_functions,7)==0){
+      charging_state=DISABLED;
+    }
     
     // Disable charging upon request
     #ifdef CHG_DISABLE

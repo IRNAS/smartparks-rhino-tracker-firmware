@@ -1,5 +1,7 @@
 #include "project_utils.h"
 
+charging_e charging_state = CHARGE;
+
 /**
  * @brief Maps the variable with the given minimum and maximum value to the value with specified min, max
  * 
@@ -37,4 +39,31 @@ uint32_t get_bits(float x, float min, float max, int precision){
   double new_range = (pow(2, precision) - 1) / range;
   uint32_t out_x = x * new_range;
   return out_x;
+}
+
+/**
+ * @brief handler for switching charging state
+ * 
+ */
+void switch_charging_state(){
+  switch (charging_state)
+    {
+    case DISABLED:
+      digitalWrite(CHG_DISABLE, HIGH);
+      break;
+    case UNDERVOLTAGE:
+      digitalWrite(CHG_DISABLE, HIGH);
+      break;
+    case CYCLE_DISCHARGE:
+      digitalWrite(CHG_DISABLE, HIGH);
+      break;
+    case CYCLE_CHARGE:
+      digitalWrite(CHG_DISABLE, LOW);
+      break;
+    case CHARGE:
+      digitalWrite(CHG_DISABLE, LOW);
+      break;
+    default:
+      break;
+    }
 }

@@ -47,9 +47,15 @@ void status_measure_voltage(){
   float stm32l0_temp = STM32L0.getTemperature();
   float stm32l0_vdd = STM32L0.getVDDA()*1000;
   // disable charging before measurement
-  boolean charge_disable=LOW;
+  boolean charge_disabled=LOW;
 #ifdef CHG_DISABLE
-    charge_disable=digitalRead(CHG_DISABLE);
+    charge_disabled=digitalRead(CHG_DISABLE);
+    if(charge_disabled){
+      bitSet(status_packet.data.system_functions_errors,7);
+    }
+    else{
+      bitClear(status_packet.data.system_functions_errors,7);
+    }
     //remember the state of charging
     pinMode(CHG_DISABLE, OUTPUT);
     digitalWrite(CHG_DISABLE, HIGH);
@@ -96,8 +102,7 @@ void status_measure_voltage(){
 input_voltage=input_calib_value * input_voltage * (2500/stm32l0_vdd); // mV
 
 #ifdef CHG_DISABLE
-    pinMode(CHG_DISABLE, OUTPUT);
-    digitalWrite(CHG_DISABLE, charge_disable);
+  switch_charging_state();
 #endif // CHG_DISABLE
 #endif
   status_packet.data.battery=(uint8_t)stm32l0_battery; // 0-5000 input, assuming 2500mV is minimu that is subtracted and then divided by 10
