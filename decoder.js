@@ -66,9 +66,9 @@ function Decoder(bytes) {
     decoded.gps_settings.hot_fix = ((bytes[19] >> 2) & 0x01) ? 1 : 0;
     decoded.gps_settings.fully_resolved = ((bytes[19] >> 3) & 0x01) ? 1 : 0;
     decoded.system_voltage_interval = bytes[20];
-    decoded.gps_charge_min = bytes[21];
-    decoded.system_charge_min = bytes[22];
-    decoded.system_charge_max = bytes[23];
+    decoded.gps_charge_min = bytes[21]*10+2500;
+    decoded.system_charge_min = bytes[22]*10+2500;
+    decoded.system_charge_max = bytes[23]*10+2500;
     decoded.system_input_charge_min = (bytes[25] << 8) | bytes[24];
   }
   else if (port === 12) {
