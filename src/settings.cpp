@@ -39,7 +39,7 @@ void settings_init(void){
     settings_packet.data.gps_hot_fix_retry=5;
     settings_packet.data.gps_cold_fix_retry=2;
     settings_packet.data.gps_fail_retry=0; //must be 0 due to bug in GPS core
-    settings_packet.data.gps_settings=0b00001101;
+    settings_packet.data.gps_settings=0b10001101;
     settings_packet.data.system_voltage_interval=1;
     settings_packet.data.gps_charge_min=0;
     settings_packet.data.system_charge_min=0;

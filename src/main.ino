@@ -124,7 +124,7 @@ boolean callbackPeriodic(void){
     }
 
     // undervoltage charging protection
-    if(status_packet.data.input_voltage<settings_packet.data.system_input_charge_min | bitRead(settings_packet_downlink.data.system_functions,7)==1){
+    if(status_packet.data.input_voltage<settings_packet.data.system_input_charge_min | bitRead(settings_packet_downlink.data.system_functions,7)==0){
       // voltage too low to charge
       bitSet(status_packet.data.system_functions_errors,7);
       digitalWrite(CHG_DISABLE, HIGH);
