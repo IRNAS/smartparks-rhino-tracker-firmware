@@ -110,6 +110,7 @@ boolean callbackPeriodic(void){
   // voltage protection
   long elapsed = millis()-event_voltage_last;
   if(elapsed>=(settings_packet.data.system_voltage_interval*60*1000)){
+    event_voltage_last=millis();
     status_measure_voltage();
 #ifdef CHG_DISABLE
     // undervoltage charging protection
@@ -393,7 +394,7 @@ void loop() {
       }
       else{
         // This should never happen
-      }
+      }      
     }
     else{
       // sleep until an event is generated
