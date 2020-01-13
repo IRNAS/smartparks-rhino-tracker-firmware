@@ -46,6 +46,7 @@ uint32_t get_bits(float x, float min, float max, int precision){
  * 
  */
 void switch_charging_state(){
+#ifdef CHG_DISABLE
   switch (charging_state)
     {
     case DISABLED:
@@ -66,4 +67,5 @@ void switch_charging_state(){
     default:
       break;
     }
+  #endif
 }
