@@ -75,9 +75,9 @@ void gps_scheduler(void){
   if(gps_fail_count>settings_packet.data.gps_fail_retry){
     return;
   }
-
+ 
   // do not schedule a GPS event if battery voltage is under the limit
-  if(settings_packet.data.gps_charge_min<status_packet.data.battery){
+  if(settings_packet.data.gps_charge_min>status_packet.data.battery){
     return;
   }
 
