@@ -211,7 +211,7 @@ void LIS2DW12CLASS::wake_up_free_fall_setup(uint8_t wake_up_thr, uint8_t wake_up
     delay(100); //Settling time
 
     //Start sensor with ODR 100Hz and in low-power mode 1 
-    write_reg(LIS2DW12_CTRL1, 0x50);    
+    write_reg(LIS2DW12_CTRL1, 0x10);    
 
     //Enable interrupt function
     write_reg(LIS2DW12_CTRL7, 0x20);    
