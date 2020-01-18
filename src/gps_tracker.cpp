@@ -4,9 +4,14 @@
 //#define serial_debug  Serial
 
 gpsPacket_t gps_packet;
+gpsLogPacket_t gps_log_packet;
 
 boolean gps_send_flag = false; // extern
+boolean gps_log_flag = false; // extarn
 boolean gps_done = false; // extern
+
+uint8_t gps_log_count=0;
+uint8_t gps_log_send_count=0;
 
 boolean gps_begin_happened = false;
 uint8_t gps_fail_count = 0;
@@ -437,6 +442,33 @@ void gps_stop(void){
   gps_packet.data.snr = (uint8_t)max_snr;
   gps_packet.data.lux = (uint8_t)get_bits(lux_read(),0,1000,8);
 
+  // position logging
+
+  struct tm timeinfo;
+  timeinfo.tm_sec = gps_location.seconds();
+  timeinfo.tm_min = gps_location.minutes();
+  timeinfo.tm_hour = gps_location.hours();
+  timeinfo.tm_mday = gps_location.day();
+  timeinfo.tm_mon  = gps_location.month() - 1;
+  timeinfo.tm_year = gps_location.year() - 1900;
+  time_t time = mktime(&timeinfo);
+
+  // wrap around if log is full
+  if(GPS_LOG_SIZE>=gps_log_count){
+    gps_log_count=0;
+  }
+  else{
+    gps_log_count++;
+  }
+  gps_log_packet.data[gps_log_count].lat1=gps_packet.data.lat1;
+  gps_log_packet.data[gps_log_count].lat2=gps_packet.data.lat2;
+  gps_log_packet.data[gps_log_count].lat3=gps_packet.data.lat3;
+  gps_log_packet.data[gps_log_count].lon1=gps_packet.data.lon1;
+  gps_log_packet.data[gps_log_count].lon2=gps_packet.data.lon2;
+  gps_log_packet.data[gps_log_count].lon3=gps_packet.data.lon3;
+  gps_log_packet.data[gps_log_count].time=(uint32_t)time;
+
+
   if(bitRead(status_packet.data.system_functions_errors,2)==0){
     status_packet.data.lat1 = gps_packet.data.lat1;
     status_packet.data.lat2 = gps_packet.data.lat2;
@@ -635,6 +667,30 @@ float lux_read(void){
  */
 boolean gps_send(void){
   return lorawan_send(gps_packet_port, &gps_packet.bytes[0], sizeof(gpsData_t));
+}
+
+/**
+ * @brief send gps log 
+ *  
+ */
+boolean gps_log_send(void){
+  //send gps log in batches of 5 locations until all data is sent
+  // if there is remaining data to be sent, schedule sending again
+  uint8_t logs_per_packet=5;
+
+  //reset log send count
+  if(gps_log_send_count%logs_per_packet>=gps_log_count%logs_per_packet){
+    gps_log_send_count=0;
+  }
+  else{
+    // indicate there is more to send
+    gps_log_flag=true;
+    gps_log_send_count+=5;
+  }
+
+  // calcualte data offset
+  uint16_t offset=logs_per_packet*gps_log_send_count*sizeof(gpsData_t);
+  return lorawan_send(gps_log_packet_port, &gps_log_packet.bytes[offset], sizeof(gpsData_t)*logs_per_packet);
 }
 
 /**
