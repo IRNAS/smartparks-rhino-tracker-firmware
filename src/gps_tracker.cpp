@@ -426,16 +426,27 @@ void gps_stop(void){
   epe = gps_location.ehpe();
   satellites = gps_location.satellites();
 
-  // 3 of 4 bytes of the variable are populated with data
-  uint32_t lat_packed = (uint32_t)(((latitude + 90) / 180.0) * 16777215);
-  uint32_t lon_packed = (uint32_t)(((longitude + 180) / 360.0) * 16777215);
-  gps_packet.data.lat1 = lat_packed >> 16;
-  gps_packet.data.lat2 = lat_packed >> 8;
-  gps_packet.data.lat3 = lat_packed;
-  gps_packet.data.lon1 = lon_packed >> 16;
-  gps_packet.data.lon2 = lon_packed >> 8;
-  gps_packet.data.lon3 = lon_packed;
-  gps_packet.data.alt = (uint16_t)altitude;
+  if (gps_location.fixType()>= GNSSLocation::TYPE_2D){
+    // 3 of 4 bytes of the variable are populated with data
+    uint32_t lat_packed = (uint32_t)(((latitude + 90) / 180.0) * 16777215);
+    uint32_t lon_packed = (uint32_t)(((longitude + 180) / 360.0) * 16777215);
+    gps_packet.data.lat1 = lat_packed >> 16;
+    gps_packet.data.lat2 = lat_packed >> 8;
+    gps_packet.data.lat3 = lat_packed;
+    gps_packet.data.lon1 = lon_packed >> 16;
+    gps_packet.data.lon2 = lon_packed >> 8;
+    gps_packet.data.lon3 = lon_packed;
+    gps_packet.data.alt = (uint16_t)altitude;
+  }
+  else{
+    gps_packet.data.lat1 = 0;
+    gps_packet.data.lat2 = 0;
+    gps_packet.data.lat3 = 0;
+    gps_packet.data.lon1 = 0;
+    gps_packet.data.lon2 = 0;
+    gps_packet.data.lon3 = 0;
+    gps_packet.data.alt = 0;
+  }
   gps_packet.data.satellites_hdop = (((uint8_t)satellites)<<4)|(((uint8_t)hdop)&0x0f);
   gps_packet.data.time_to_fix = (uint8_t)(gps_time_to_fix/1000);
   gps_packet.data.epe = (uint8_t)epe;
@@ -467,6 +478,8 @@ void gps_stop(void){
   gps_log_packet.data[gps_log_count].lon2=gps_packet.data.lon2;
   gps_log_packet.data[gps_log_count].lon3=gps_packet.data.lon3;
   gps_log_packet.data[gps_log_count].time=(uint32_t)time;
+
+  gps_packet.data.time=(uint32_t)time;
 
 
   if(bitRead(status_packet.data.system_functions_errors,2)==0){
