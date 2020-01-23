@@ -63,6 +63,8 @@ Implemented commands to be sent as single byte to port 99:
  * `0xaa` - Sent the current settings
  * `0xab` - Triggers system reset
  * `0xde` - Resets LoraWAN stored settings in EEPROM and forces a re-join
+ * `0x11` - Request the device GPS position log - last 100 positions if available, 5 per packet send one after the other
+ * `0xf1` - Clear GPS position log - use if necessary, but log simply stores last 100 positions and overwrites itself
 
 ## Tools
 There are a few tools available to make using this solution easier, namely:
