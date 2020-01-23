@@ -44,6 +44,7 @@ struct gpsData_t{
   uint8_t snr;
   uint8_t lux;
   uint8_t motion;
+  uint32_t time;
 }__attribute__((packed));
 
 union gpsPacket_t{
@@ -95,6 +96,7 @@ void lux_init(void);
 float lux_read(void);
 boolean gps_send(void);
 boolean gps_log_send(void);
+void gps_log_clear(void);
 //void writeReg(uint8_t reg, uint8_t val);
 
 #endif

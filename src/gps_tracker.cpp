@@ -1,7 +1,7 @@
 #include "gps_tracker.h"
 
-//#define debug
-//#define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
 
 gpsPacket_t gps_packet;
 gpsLogPacket_t gps_log_packet;
@@ -691,6 +691,19 @@ boolean gps_log_send(void){
   // calcualte data offset
   uint16_t offset=logs_per_packet*gps_log_send_count*sizeof(gpsData_t);
   return lorawan_send(gps_log_packet_port, &gps_log_packet.bytes[offset], sizeof(gpsData_t)*logs_per_packet);
+}
+
+/**
+ * @brief send gps cloear 
+ *  
+ */
+void gps_log_clear(void){
+  gps_log_send_count=0;
+  gps_log_count=0;
+  for (int i = 0; i < sizeof(gpsData_t); i++)
+  {
+    gps_log_packet.bytes[i]=0;
+  }
 }
 
 /**

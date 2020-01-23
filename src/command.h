@@ -6,6 +6,7 @@
 #include "lorawan.h"
 #include <EEPROM.h>
 #include "settings.h"
+#include "gps_tracker.h"
 
 static uint8_t command_packet_port = 99;
 uint8_t command_get_packet_port(void);
