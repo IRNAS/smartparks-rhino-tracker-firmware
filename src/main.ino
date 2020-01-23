@@ -136,11 +136,6 @@ boolean callbackPeriodic(void){
         charging_state=CHARGE;
       }
     }
-#ifdef debug
-    serial_debug.print("charging: ");
-    serial_debug.println(charging_state);
-#endif
-
     switch_charging_state();
 #endif // CHG_DISABLE
   }
