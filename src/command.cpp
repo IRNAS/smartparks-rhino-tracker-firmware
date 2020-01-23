@@ -32,4 +32,10 @@ void command_receive(uint8_t command){
     else if(command==0xaa){
         settings_send_flag = true;
     }
+    else if(command==0x11){
+        gps_log_flag = true;
+    }
+    else if(command==0xf1){
+        gps_log_clear();
+    }
 }

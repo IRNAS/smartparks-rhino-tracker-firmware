@@ -20,7 +20,7 @@ function get_num(x, min, max, precision, round) {
 function Decoder(bytes) {
 
   var decoded = {};
-
+  var cnt = 0;
   var resetCause_dict = {
     0: "POWERON",
     1: "EXTERNAL",
@@ -30,6 +30,7 @@ function Decoder(bytes) {
     5: "OTHER",
     6: "STANDBY"
   };
+
 
   // settings
   if (port === 3) {
@@ -93,28 +94,50 @@ function Decoder(bytes) {
       decoded.lon = Math.round(decoded.lon*100000)/100000;
     }
     decoded.gps_resend = bytes[10];
-    decoded.accelx = bytes[11];
-    decoded.accely = bytes[12];
-    decoded.accelz = bytes[13];
+    decoded.accelx = get_num(bytes[11], -2000, 2000, 8, 1);
+    decoded.accely = get_num(bytes[12], -2000, 2000, 8, 1);
+    decoded.accelz = get_num(bytes[13], -2000, 2000, 8, 1);
     decoded.battery_low = (bytes[15] << 8) | bytes[14];; // result in mV
   }
   else if (port === 1) {
-    decoded.lat = ((bytes[0] << 16) >>> 0) + ((bytes[1] << 8) >>> 0) + bytes[2];
-    decoded.lon = ((bytes[3] << 16) >>> 0) + ((bytes[4] << 8) >>> 0) + bytes[5];
+    decoded.lat = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];
+    decoded.lon = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];
     if(decoded.lat!==0 && decoded.lon!==0){
       decoded.lat = (decoded.lat / 16777215.0 * 180) - 90;
       decoded.lon = (decoded.lon / 16777215.0 * 360) - 180;
       decoded.lat = Math.round(decoded.lat*100000)/100000;
       decoded.lon = Math.round(decoded.lon*100000)/100000;
     }
-    decoded.alt = (bytes[7] << 8) | bytes[6];
-    decoded.satellites = (bytes[8] >> 4);
-    decoded.hdop = (bytes[8] & 0x0f);
-    decoded.time_to_fix = bytes[9];
-    decoded.epe = bytes[10];
-    decoded.snr = bytes[11];
-    decoded.lux = bytes[12];
-    decoded.motion = bytes[13];
+    decoded.alt = bytes[cnt++] | (bytes[cnt++] << 8);
+    decoded.satellites = (bytes[cnt] >> 4);
+    decoded.hdop = (bytes[cnt++] & 0x0f);
+    decoded.time_to_fix = bytes[cnt++];
+    decoded.epe = bytes[cnt++];
+    decoded.snr = bytes[cnt++];
+    decoded.lux = bytes[cnt++];
+    decoded.motion = bytes[cnt++];
+    decoded.time = bytes[cnt++] | (bytes[cnt++] << 8) | (bytes[cnt++] << 16) | (bytes[cnt++] << 24);
+    var d= new Date(decoded.time*1000);
+    decoded.time_decoded = d.toLocaleString();
+  }
+  else if (port === 11) {
+    var locations=[];
+    for(i = 0; i < 5; i++){
+      var location={}
+      location.lat = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];
+      location.lon = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];
+      if(location.lat!==0 && location.lon!==0){
+        location.lat = (location.lat / 16777215.0 * 180) - 90;
+        location.lon = (location.lon / 16777215.0 * 360) - 180;
+        location.lat = Math.round(location.lat*100000)/100000;
+        location.lon = Math.round(location.lon*100000)/100000;
+      }
+      location.time = bytes[cnt++] | (bytes[cnt++] << 8) | (bytes[cnt++] << 16) | (bytes[cnt++] << 24);
+      var d= new Date(location.time*1000);
+      location.time_decoded = d.toLocaleString();
+      locations.push(location);
+    }
+    decoded.locations=JSON.stringify(locations);
   }
 
   return decoded;

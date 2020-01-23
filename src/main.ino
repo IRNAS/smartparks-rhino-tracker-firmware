@@ -45,6 +45,7 @@ enum state_e{
   GPS_START,
   GPS_READ,
   GPS_SEND,
+  GPS_LOG_SEND,
   LORAWAN_TRANSMIT,
   HIBERNATION
 };
@@ -135,11 +136,6 @@ boolean callbackPeriodic(void){
         charging_state=CHARGE;
       }
     }
-#ifdef debug
-    serial_debug.print("charging: ");
-    serial_debug.println(charging_state);
-#endif
-
     switch_charging_state();
 #endif // CHG_DISABLE
   }
@@ -163,7 +159,7 @@ boolean callbackPeriodic(void){
   }
 
   // if any of the flags are high, wake up
-  if(settings_send_flag|settings_updated|status_send_flag|gps_send_flag){
+  if(settings_send_flag|settings_updated|status_send_flag|gps_send_flag|gps_log_flag){
     //STM32L0.wakeup();
     return true;
     /*#ifdef debug
@@ -375,10 +371,14 @@ void loop() {
       STM32L0.reset();
     }
     // transition based on triggers
-    else if(settings_updated|status_send_flag|gps_send_flag|rf_send_flag){
+    else if(settings_updated|status_send_flag|gps_send_flag|rf_send_flag|gps_log_flag){
       if(settings_updated==true){
         state_transition(GENERAL_INIT);
         settings_updated=false;
+      }
+      else if(gps_log_flag==true){
+        state_transition(GPS_LOG_SEND);
+        gps_log_flag=false;
       }
       else if(status_send_flag==true){
         state_transition(STATUS_SEND);
@@ -477,6 +477,19 @@ void loop() {
     state_goto_timeout=IDLE;
     // transition
     if(gps_send()){
+      state_transition(LORAWAN_TRANSMIT);
+    }
+    else{
+      // sleep for 1 second and check
+     sleep=1000;
+    }
+    break;
+  case GPS_LOG_SEND:
+    // defaults for timing out
+    state_timeout_duration=2000;
+    state_goto_timeout=IDLE;
+    // transition
+    if(gps_log_send()){
       state_transition(LORAWAN_TRANSMIT);
     }
     else{

@@ -4,9 +4,14 @@
 //#define serial_debug  Serial
 
 gpsPacket_t gps_packet;
+gpsLogPacket_t gps_log_packet;
 
 boolean gps_send_flag = false; // extern
+boolean gps_log_flag = false; // extarn
 boolean gps_done = false; // extern
+
+uint8_t gps_log_count=0;
+uint8_t gps_log_send_count=0;
 
 boolean gps_begin_happened = false;
 uint8_t gps_fail_count = 0;
@@ -421,21 +426,61 @@ void gps_stop(void){
   epe = gps_location.ehpe();
   satellites = gps_location.satellites();
 
-  // 3 of 4 bytes of the variable are populated with data
-  uint32_t lat_packed = (uint32_t)(((latitude + 90) / 180.0) * 16777215);
-  uint32_t lon_packed = (uint32_t)(((longitude + 180) / 360.0) * 16777215);
-  gps_packet.data.lat1 = lat_packed >> 16;
-  gps_packet.data.lat2 = lat_packed >> 8;
-  gps_packet.data.lat3 = lat_packed;
-  gps_packet.data.lon1 = lon_packed >> 16;
-  gps_packet.data.lon2 = lon_packed >> 8;
-  gps_packet.data.lon3 = lon_packed;
-  gps_packet.data.alt = (uint16_t)altitude;
+  if (gps_location.fixType()>= GNSSLocation::TYPE_2D){
+    // 3 of 4 bytes of the variable are populated with data
+    uint32_t lat_packed = (uint32_t)(((latitude + 90) / 180.0) * 16777215);
+    uint32_t lon_packed = (uint32_t)(((longitude + 180) / 360.0) * 16777215);
+    gps_packet.data.lat1 = lat_packed >> 16;
+    gps_packet.data.lat2 = lat_packed >> 8;
+    gps_packet.data.lat3 = lat_packed;
+    gps_packet.data.lon1 = lon_packed >> 16;
+    gps_packet.data.lon2 = lon_packed >> 8;
+    gps_packet.data.lon3 = lon_packed;
+    gps_packet.data.alt = (uint16_t)altitude;
+  }
+  else{
+    gps_packet.data.lat1 = 0;
+    gps_packet.data.lat2 = 0;
+    gps_packet.data.lat3 = 0;
+    gps_packet.data.lon1 = 0;
+    gps_packet.data.lon2 = 0;
+    gps_packet.data.lon3 = 0;
+    gps_packet.data.alt = 0;
+  }
   gps_packet.data.satellites_hdop = (((uint8_t)satellites)<<4)|(((uint8_t)hdop)&0x0f);
   gps_packet.data.time_to_fix = (uint8_t)(gps_time_to_fix/1000);
   gps_packet.data.epe = (uint8_t)epe;
   gps_packet.data.snr = (uint8_t)max_snr;
   gps_packet.data.lux = (uint8_t)get_bits(lux_read(),0,1000,8);
+
+  // position logging
+
+  struct tm timeinfo;
+  timeinfo.tm_sec = gps_location.seconds();
+  timeinfo.tm_min = gps_location.minutes();
+  timeinfo.tm_hour = gps_location.hours();
+  timeinfo.tm_mday = gps_location.day();
+  timeinfo.tm_mon  = gps_location.month() - 1;
+  timeinfo.tm_year = gps_location.year() - 1900;
+  time_t time = mktime(&timeinfo);
+
+  // wrap around if log is full
+  if(GPS_LOG_SIZE<=gps_log_count){
+    gps_log_count=0;
+  }
+  else{
+    gps_log_count++;
+  }
+  gps_log_packet.data[gps_log_count].lat1=gps_packet.data.lat1;
+  gps_log_packet.data[gps_log_count].lat2=gps_packet.data.lat2;
+  gps_log_packet.data[gps_log_count].lat3=gps_packet.data.lat3;
+  gps_log_packet.data[gps_log_count].lon1=gps_packet.data.lon1;
+  gps_log_packet.data[gps_log_count].lon2=gps_packet.data.lon2;
+  gps_log_packet.data[gps_log_count].lon3=gps_packet.data.lon3;
+  gps_log_packet.data[gps_log_count].time=(uint32_t)time;
+
+  gps_packet.data.time=(uint32_t)time;
+
 
   if(bitRead(status_packet.data.system_functions_errors,2)==0){
     status_packet.data.lat1 = gps_packet.data.lat1;
@@ -605,6 +650,10 @@ float lux_read(void){
   digitalWrite(LIGHT_EN,HIGH);
   delay(100);
 
+  if(bitRead(status_packet.data.system_functions_errors,4)){
+    return 0;
+  }
+
   lux_sensor.startLuminosityMeasurement();
 
   for(uint16_t i=0;i<100;i++){
@@ -635,6 +684,60 @@ float lux_read(void){
  */
 boolean gps_send(void){
   return lorawan_send(gps_packet_port, &gps_packet.bytes[0], sizeof(gpsData_t));
+}
+
+/**
+ * @brief send gps log 
+ *  
+ */
+boolean gps_log_send(void){
+  //send gps log in batches of 5 locations until all data is sent
+  // if there is remaining data to be sent, schedule sending again
+  uint8_t logs_per_packet=5;
+
+  uint16_t offset=logs_per_packet*gps_log_send_count*sizeof(gpsLog_t);
+
+  #ifdef debug
+    serial_debug.print("gps_log_send(");
+    serial_debug.print(gps_log_send_count);
+    serial_debug.print(" ");
+    serial_debug.print(gps_log_send_count/logs_per_packet);
+    serial_debug.print(" ");
+    serial_debug.print(gps_log_count);
+    serial_debug.print(" ");
+    serial_debug.print(gps_log_count/logs_per_packet);
+    serial_debug.print(" ");
+    serial_debug.print(gps_log_flag);
+    serial_debug.print(" ");
+    serial_debug.print(offset);
+    serial_debug.print(" ");
+    serial_debug.println(")");
+  #endif
+
+  //reset log send count
+  if((gps_log_send_count<=gps_log_count/5)&GPS_LOG_SIZE>gps_log_send_count*5){
+    gps_log_send_count++;
+    gps_log_flag=true;
+  }
+  else{
+    gps_log_send_count=0;
+    return true;
+  }
+
+  return lorawan_send(gps_log_packet_port, &gps_log_packet.bytes[offset], sizeof(gpsLog_t)*logs_per_packet);
+}
+
+/**
+ * @brief send gps cloear 
+ *  
+ */
+void gps_log_clear(void){
+  gps_log_send_count=0;
+  gps_log_count=0;
+  for (int i = 0; i < sizeof(gpsLog_t)*GPS_LOG_SIZE; i++)
+  {
+    gps_log_packet.bytes[i]=0;
+  }
 }
 
 /**
