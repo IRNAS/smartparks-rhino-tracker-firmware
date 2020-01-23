@@ -465,7 +465,7 @@ void gps_stop(void){
   time_t time = mktime(&timeinfo);
 
   // wrap around if log is full
-  if(GPS_LOG_SIZE>=gps_log_count){
+  if(GPS_LOG_SIZE=<gps_log_count){
     gps_log_count=0;
   }
   else{

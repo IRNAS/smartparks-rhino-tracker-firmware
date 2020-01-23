@@ -94,9 +94,9 @@ function Decoder(bytes) {
       decoded.lon = Math.round(decoded.lon*100000)/100000;
     }
     decoded.gps_resend = bytes[10];
-    decoded.accelx = bytes[11];
-    decoded.accely = bytes[12];
-    decoded.accelz = bytes[13];
+    decoded.accelx = get_num(bytes[11], -2000, 2000, 8, 1);
+    decoded.accely = get_num(bytes[12], -2000, 2000, 8, 1);
+    decoded.accelz = get_num(bytes[13], -2000, 2000, 8, 1);
     decoded.battery_low = (bytes[15] << 8) | bytes[14];; // result in mV
   }
   else if (port === 1) {
@@ -108,7 +108,7 @@ function Decoder(bytes) {
       decoded.lat = Math.round(decoded.lat*100000)/100000;
       decoded.lon = Math.round(decoded.lon*100000)/100000;
     }
-    decoded.alt =  bytes[cnt++] | (bytes[cnt] << 8);
+    decoded.alt = bytes[cnt++] | (bytes[cnt++] << 8);
     decoded.satellites = (bytes[cnt] >> 4);
     decoded.hdop = (bytes[cnt++] & 0x0f);
     decoded.time_to_fix = bytes[cnt++];
