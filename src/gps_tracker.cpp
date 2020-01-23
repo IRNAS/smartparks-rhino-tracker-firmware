@@ -465,7 +465,7 @@ void gps_stop(void){
   time_t time = mktime(&timeinfo);
 
   // wrap around if log is full
-  if(GPS_LOG_SIZE=<gps_log_count){
+  if(GPS_LOG_SIZE<=gps_log_count){
     gps_log_count=0;
   }
   else{
@@ -692,8 +692,9 @@ boolean gps_log_send(void){
   uint8_t logs_per_packet=5;
 
   //reset log send count
-  if(gps_log_send_count%logs_per_packet>=gps_log_count%logs_per_packet){
+  if((gps_log_send_count%logs_per_packet>=gps_log_count%logs_per_packet)|GPS_LOG_SIZE<=gps_log_send_count){
     gps_log_send_count=0;
+    gps_log_flag=false;
   }
   else{
     // indicate there is more to send
@@ -702,8 +703,8 @@ boolean gps_log_send(void){
   }
 
   // calcualte data offset
-  uint16_t offset=logs_per_packet*gps_log_send_count*sizeof(gpsData_t);
-  return lorawan_send(gps_log_packet_port, &gps_log_packet.bytes[offset], sizeof(gpsData_t)*logs_per_packet);
+  uint16_t offset=logs_per_packet*gps_log_send_count*sizeof(gpsLog_t);
+  return lorawan_send(gps_log_packet_port, &gps_log_packet.bytes[offset], sizeof(gpsLog_t)*logs_per_packet);
 }
 
 /**
@@ -713,7 +714,7 @@ boolean gps_log_send(void){
 void gps_log_clear(void){
   gps_log_send_count=0;
   gps_log_count=0;
-  for (int i = 0; i < sizeof(gpsData_t); i++)
+  for (int i = 0; i < sizeof(gpsLog_t); i++)
   {
     gps_log_packet.bytes[i]=0;
   }
