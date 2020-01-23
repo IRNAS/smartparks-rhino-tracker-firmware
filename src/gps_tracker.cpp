@@ -650,6 +650,10 @@ float lux_read(void){
   digitalWrite(LIGHT_EN,HIGH);
   delay(100);
 
+  if(bitRead(status_packet.data.system_functions_errors,4)){
+    return 0;
+  }
+
   lux_sensor.startLuminosityMeasurement();
 
   for(uint16_t i=0;i<100;i++){
@@ -691,19 +695,35 @@ boolean gps_log_send(void){
   // if there is remaining data to be sent, schedule sending again
   uint8_t logs_per_packet=5;
 
+  uint16_t offset=logs_per_packet*gps_log_send_count*sizeof(gpsLog_t);
+
+  #ifdef debug
+    serial_debug.print("gps_log_send(");
+    serial_debug.print(gps_log_send_count);
+    serial_debug.print(" ");
+    serial_debug.print(gps_log_send_count/logs_per_packet);
+    serial_debug.print(" ");
+    serial_debug.print(gps_log_count);
+    serial_debug.print(" ");
+    serial_debug.print(gps_log_count/logs_per_packet);
+    serial_debug.print(" ");
+    serial_debug.print(gps_log_flag);
+    serial_debug.print(" ");
+    serial_debug.print(offset);
+    serial_debug.print(" ");
+    serial_debug.println(")");
+  #endif
+
   //reset log send count
-  if((gps_log_send_count%logs_per_packet>=gps_log_count%logs_per_packet)|GPS_LOG_SIZE<=gps_log_send_count){
-    gps_log_send_count=0;
-    gps_log_flag=false;
+  if((gps_log_send_count<=gps_log_count/5)&GPS_LOG_SIZE>gps_log_send_count*5){
+    gps_log_send_count++;
+    gps_log_flag=true;
   }
   else{
-    // indicate there is more to send
-    gps_log_flag=true;
-    gps_log_send_count+=5;
+    gps_log_send_count=0;
+    return true;
   }
 
-  // calcualte data offset
-  uint16_t offset=logs_per_packet*gps_log_send_count*sizeof(gpsLog_t);
   return lorawan_send(gps_log_packet_port, &gps_log_packet.bytes[offset], sizeof(gpsLog_t)*logs_per_packet);
 }
 
@@ -714,7 +734,7 @@ boolean gps_log_send(void){
 void gps_log_clear(void){
   gps_log_send_count=0;
   gps_log_count=0;
-  for (int i = 0; i < sizeof(gpsLog_t); i++)
+  for (int i = 0; i < sizeof(gpsLog_t)*GPS_LOG_SIZE; i++)
   {
     gps_log_packet.bytes[i]=0;
   }
