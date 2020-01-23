@@ -1,7 +1,7 @@
 #include "gps_tracker.h"
 
-#define debug
-#define serial_debug  Serial
+//#define debug
+//#define serial_debug  Serial
 
 gpsPacket_t gps_packet;
 gpsLogPacket_t gps_log_packet;
