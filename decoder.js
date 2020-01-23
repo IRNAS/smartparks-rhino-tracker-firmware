@@ -121,22 +121,23 @@ function Decoder(bytes) {
     decoded.time_decoded = d.toLocaleString();
   }
   else if (port === 11) {
-    decoded.locations=[];
-    var location={}
+    var locations=[];
     for(i = 0; i < 5; i++){
+      var location={}
       location.lat = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];
       location.lon = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];
       if(location.lat!==0 && location.lon!==0){
-        location.lat = (decoded.lat / 16777215.0 * 180) - 90;
-        location.lon = (decoded.lon / 16777215.0 * 360) - 180;
+        location.lat = (location.lat / 16777215.0 * 180) - 90;
+        location.lon = (location.lon / 16777215.0 * 360) - 180;
         location.lat = Math.round(location.lat*100000)/100000;
         location.lon = Math.round(location.lon*100000)/100000;
       }
       location.time = bytes[cnt++] | (bytes[cnt++] << 8) | (bytes[cnt++] << 16) | (bytes[cnt++] << 24);
       var d= new Date(location.time*1000);
       location.time_decoded = d.toLocaleString();
+      locations.push(location);
     }
-    decoded.locations.push(location);
+    decoded.locations=JSON.stringify(locations);
   }
 
   return decoded;
