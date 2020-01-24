@@ -8,6 +8,7 @@ gpsLogPacket_t gps_log_packet;
 
 boolean gps_send_flag = false; // extern
 boolean gps_log_flag = false; // extarn
+boolean gps_log_wraparound_flag = false;
 boolean gps_done = false; // extern
 
 uint8_t gps_log_count=0;
@@ -467,6 +468,7 @@ void gps_stop(void){
   // wrap around if log is full
   if(GPS_LOG_SIZE<=gps_log_count){
     gps_log_count=0;
+    gps_log_wraparound_flag = true;
   }
   else{
     gps_log_count++;
@@ -715,7 +717,7 @@ boolean gps_log_send(void){
   #endif
 
   //reset log send count
-  if((gps_log_send_count<=gps_log_count/5)&GPS_LOG_SIZE>gps_log_send_count*5){
+  if(((gps_log_send_count<=gps_log_count/5)|gps_log_wraparound_flag)&GPS_LOG_SIZE>gps_log_send_count*5){
     gps_log_send_count++;
     gps_log_flag=true;
   }
@@ -734,6 +736,7 @@ boolean gps_log_send(void){
 void gps_log_clear(void){
   gps_log_send_count=0;
   gps_log_count=0;
+  gps_log_wraparound_flag = false;
   for (int i = 0; i < sizeof(gpsLog_t)*GPS_LOG_SIZE; i++)
   {
     gps_log_packet.bytes[i]=0;
