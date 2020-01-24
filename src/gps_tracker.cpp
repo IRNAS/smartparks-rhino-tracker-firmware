@@ -717,7 +717,7 @@ boolean gps_log_send(void){
   #endif
 
   //reset log send count
-  if(((gps_log_send_count<=gps_log_count/5)|gps_log_wraparound_flag)&GPS_LOG_SIZE>gps_log_send_count*5){
+  if(GPS_LOG_SIZE>gps_log_send_count*5){
     gps_log_send_count++;
     gps_log_flag=true;
   }
