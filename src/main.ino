@@ -238,6 +238,8 @@ void setup() {
   }
 
   // start the FSM with LoraWAN init
+  // setup default settings
+  settings_init();
   state = INIT;
 }
 
@@ -344,7 +346,7 @@ void loop() {
     status_accelerometer_init();          
 
     // check if charging is enabled at all
-    if(bitRead(settings_packet_downlink.data.system_functions,7)==0){
+    if(bitRead(settings_packet.data.system_functions,7)==0){
       charging_state=DISABLED;
     }
     else {
