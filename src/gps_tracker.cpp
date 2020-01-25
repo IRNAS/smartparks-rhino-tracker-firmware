@@ -8,7 +8,6 @@ gpsLogPacket_t gps_log_packet;
 
 boolean gps_send_flag = false; // extern
 boolean gps_log_flag = false; // extarn
-boolean gps_log_wraparound_flag = false;
 boolean gps_done = false; // extern
 
 uint8_t gps_log_count=0;
@@ -438,6 +437,43 @@ void gps_stop(void){
     gps_packet.data.lon2 = lon_packed >> 8;
     gps_packet.data.lon3 = lon_packed;
     gps_packet.data.alt = (uint16_t)altitude;
+    
+    // position logging
+
+    struct tm timeinfo;
+    timeinfo.tm_sec = gps_location.seconds();
+    timeinfo.tm_min = gps_location.minutes();
+    timeinfo.tm_hour = gps_location.hours();
+    timeinfo.tm_mday = gps_location.day();
+    timeinfo.tm_mon  = gps_location.month() - 1;
+    timeinfo.tm_year = gps_location.year() - 1900;
+    time_t time = mktime(&timeinfo);
+
+    // wrap around if log is full
+    if(GPS_LOG_SIZE<=gps_log_count){
+      gps_log_count=0;
+    }
+    else{
+      gps_log_count++;
+    }
+
+    gps_log_packet.data[gps_log_count].lat1=gps_packet.data.lat1;
+    gps_log_packet.data[gps_log_count].lat2=gps_packet.data.lat2;
+    gps_log_packet.data[gps_log_count].lat3=gps_packet.data.lat3;
+    gps_log_packet.data[gps_log_count].lon1=gps_packet.data.lon1;
+    gps_log_packet.data[gps_log_count].lon2=gps_packet.data.lon2;
+    gps_log_packet.data[gps_log_count].lon3=gps_packet.data.lon3;
+    gps_log_packet.data[gps_log_count].time=(uint32_t)time;
+
+    gps_packet.data.time=(uint32_t)time;
+
+    status_packet.data.lat1 = gps_packet.data.lat1;
+    status_packet.data.lat2 = gps_packet.data.lat2;
+    status_packet.data.lat3 = gps_packet.data.lat3;
+    status_packet.data.lon1 = gps_packet.data.lon1;
+    status_packet.data.lon2 = gps_packet.data.lon2;
+    status_packet.data.lon3 = gps_packet.data.lon3;
+    status_packet.data.gps_resend = 0;
   }
   else{
     gps_packet.data.lat1 = 0;
@@ -454,45 +490,7 @@ void gps_stop(void){
   gps_packet.data.snr = (uint8_t)max_snr;
   gps_packet.data.lux = (uint8_t)get_bits(lux_read(),0,1000,8);
 
-  // position logging
-
-  struct tm timeinfo;
-  timeinfo.tm_sec = gps_location.seconds();
-  timeinfo.tm_min = gps_location.minutes();
-  timeinfo.tm_hour = gps_location.hours();
-  timeinfo.tm_mday = gps_location.day();
-  timeinfo.tm_mon  = gps_location.month() - 1;
-  timeinfo.tm_year = gps_location.year() - 1900;
-  time_t time = mktime(&timeinfo);
-
-  // wrap around if log is full
-  if(GPS_LOG_SIZE<=gps_log_count){
-    gps_log_count=0;
-    gps_log_wraparound_flag = true;
-  }
-  else{
-    gps_log_count++;
-  }
-  gps_log_packet.data[gps_log_count].lat1=gps_packet.data.lat1;
-  gps_log_packet.data[gps_log_count].lat2=gps_packet.data.lat2;
-  gps_log_packet.data[gps_log_count].lat3=gps_packet.data.lat3;
-  gps_log_packet.data[gps_log_count].lon1=gps_packet.data.lon1;
-  gps_log_packet.data[gps_log_count].lon2=gps_packet.data.lon2;
-  gps_log_packet.data[gps_log_count].lon3=gps_packet.data.lon3;
-  gps_log_packet.data[gps_log_count].time=(uint32_t)time;
-
-  gps_packet.data.time=(uint32_t)time;
-
-
-  if(bitRead(status_packet.data.system_functions_errors,2)==0){
-    status_packet.data.lat1 = gps_packet.data.lat1;
-    status_packet.data.lat2 = gps_packet.data.lat2;
-    status_packet.data.lat3 = gps_packet.data.lat3;
-    status_packet.data.lon1 = gps_packet.data.lon1;
-    status_packet.data.lon2 = gps_packet.data.lon2;
-    status_packet.data.lon3 = gps_packet.data.lon3;
-    status_packet.data.gps_resend = 0;
-  }
+  
     
   #ifdef debug
     serial_debug.print("gps(");
@@ -723,7 +721,6 @@ boolean gps_log_send(void){
   }
   else{
     gps_log_send_count=0;
-    return true;
   }
 
   return lorawan_send(gps_log_packet_port, &gps_log_packet.bytes[offset], sizeof(gpsLog_t)*logs_per_packet);
