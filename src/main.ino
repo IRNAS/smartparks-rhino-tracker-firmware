@@ -194,6 +194,11 @@ bool state_check_timeout(void){
   unsigned long elapsed = millis()-state_timeout_start;
   //check if we have been in the existing state too long
   if(elapsed >=state_timeout_duration){
+    #ifdef debug
+      serial_debug.print("timeout(");
+      serial_debug.print(state);
+      serial_debug.println(")");
+    #endif
     return true;
   }
   return false;
