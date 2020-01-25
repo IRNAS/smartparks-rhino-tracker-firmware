@@ -8,7 +8,7 @@ system_functions['accelerometer_enabled'] = False
 system_functions['light_enabled'] = False
 system_functions['temperature_enabled'] = False
 system_functions['humidity_enabled'] = False
-system_functions['charging_enabled'] = False
+system_functions['charging_enabled'] = True
 data['system_functions'] = system_functions
 
 lorawan_datarate_adr = {}

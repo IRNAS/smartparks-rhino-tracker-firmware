@@ -3,6 +3,7 @@
 
 #include "Arduino.h"
 #include "board.h"
+#include "status.h"
 enum charging_e{
   DISABLED,
   UNDERVOLTAGE,

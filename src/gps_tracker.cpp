@@ -94,7 +94,7 @@ void gps_scheduler(void){
 
   // if triggered gps is enabled and accelerometer trigger has ocurred - overrides periodic interval
   if(settings_packet.data.gps_triggered_interval>0){
-    if((((millis()-gps_accelerometer_last)/1000)<settings_packet.data.gps_triggered_interval) & (gps_accelerometer_last!=0){
+    if((((millis()-gps_accelerometer_last)/1000)<settings_packet.data.gps_triggered_interval) & (gps_accelerometer_last!=0)){
       interval=settings_packet.data.gps_triggered_interval;
       motion_flag=1;
     }
@@ -733,7 +733,6 @@ boolean gps_log_send(void){
 void gps_log_clear(void){
   gps_log_send_count=0;
   gps_log_count=0;
-  gps_log_wraparound_flag = false;
   for (int i = 0; i < sizeof(gpsLog_t)*GPS_LOG_SIZE; i++)
   {
     gps_log_packet.bytes[i]=0;

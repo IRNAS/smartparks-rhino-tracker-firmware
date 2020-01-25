@@ -82,9 +82,7 @@ function Decoder(bytes) {
     decoded.system_functions_errors.gps_fix_error = ((bytes[3] >> 2) & 0x01) ? 1 : 0;
     decoded.system_functions_errors.accelerometer_error = ((bytes[3] >> 3) & 0x01) ? 1 : 0;
     decoded.system_functions_errors.light_error = ((bytes[3] >> 4) & 0x01) ? 1 : 0;
-    decoded.system_functions_errors.temperature_error = ((bytes[3] >> 5) & 0x01) ? 1 : 0;
-    decoded.system_functions_errors.humidity_error = ((bytes[3] >> 6) & 0x01) ? 1 : 0;
-    decoded.system_functions_errors.charging_error = ((bytes[3] >> 7) & 0x01) ? 1 : 0;
+    decoded.system_functions_errors.charging_status = (bytes[3] >> 5) & 0x07;
     decoded.lat = ((bytes[4] << 16) >>> 0) + ((bytes[5] << 8) >>> 0) + bytes[6];
     decoded.lon = ((bytes[7] << 16) >>> 0) + ((bytes[8] << 8) >>> 0) + bytes[9];
     if(decoded.lat!==0 && decoded.lon!==0){

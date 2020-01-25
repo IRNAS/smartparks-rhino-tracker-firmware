@@ -26,9 +26,7 @@ extern boolean status_send_flag;
  *    bit 2 - gps fix error
  *    bit 3 - accelerometer error
  *    bit 4 - light sensor error
- *    bit 5 - temperature error
- *    bit 6 - humidity sensor error
- *    bit 7 - charging sensor error
+ *    bit 5-7 - charging
  */
 struct statusData_t{
   uint8_t resetCause;

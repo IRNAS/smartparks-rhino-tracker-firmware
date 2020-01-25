@@ -10,6 +10,8 @@ unsigned long event_status_last = 0;
 unsigned long event_status_voltage_last = 0;
 statusPacket_t status_packet;
 
+extern charging_e charging_state;
+
 LIS2DW12CLASS lis;
 
 /**
@@ -49,14 +51,6 @@ void status_measure_voltage(){
   // disable charging before measurement
   boolean charge_disabled=LOW;
 #ifdef CHG_DISABLE
-    charge_disabled=digitalRead(CHG_DISABLE);
-    if(charge_disabled){
-      bitSet(status_packet.data.system_functions_errors,7);
-    }
-    else{
-      bitClear(status_packet.data.system_functions_errors,7);
-    }
-    //remember the state of charging
     pinMode(CHG_DISABLE, OUTPUT);
     digitalWrite(CHG_DISABLE, HIGH);
 #endif // CHG_DISABLE
@@ -118,6 +112,8 @@ input_voltage=input_calib_value * input_voltage * (2500/stm32l0_vdd); // mV
 boolean status_send(void){
   //assemble information
   status_measure_voltage();
+  status_packet.data.system_functions_errors=status_packet.data.system_functions_errors&0b00011111;
+  status_packet.data.system_functions_errors=status_packet.data.system_functions_errors|(charging_state<<5);
 
   accel_data axis;
   axis = lis.read_accel_values();
