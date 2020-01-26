@@ -73,7 +73,8 @@ function Decoder(bytes) {
     decoded.system_input_charge_min = (bytes[25] << 8) | bytes[24];
   }
   else if (port === 12) {
-    decoded.resetCause = resetCause_dict[bytes[0]];
+    decoded.resetCause = resetCause_dict[bytes[0]&0x07];
+    decoded.system_state_timeout = bytes[0]>>3;
     decoded.battery = bytes[1]*10+2500; // result in mV
     decoded.temperature = get_num(bytes[2], -20, 80, 8, 1);
     decoded.system_functions_errors = {};//bytes[5];

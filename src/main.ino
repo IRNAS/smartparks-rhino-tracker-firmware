@@ -53,6 +53,7 @@ enum state_e{
 state_e state = INIT;
 state_e state_goto_timeout;
 state_e state_prev = INIT;
+state_e state_latest_timeout = INIT;
 unsigned long state_timeout_start;
 unsigned long state_timeout_duration;
 // Variable to monitor when the loop has been started
@@ -194,9 +195,10 @@ bool state_check_timeout(void){
   unsigned long elapsed = millis()-state_timeout_start;
   //check if we have been in the existing state too long
   if(elapsed >=state_timeout_duration){
+    state_latest_timeout=state;
     #ifdef debug
       serial_debug.print("timeout(");
-      serial_debug.print(state);
+      serial_debug.print(state_latest_timeout);
       serial_debug.println(")");
     #endif
     return true;
@@ -263,6 +265,9 @@ void loop() {
   sleep = -1; // reset the sleep after loop, set in every state if required
   event_loop_start = millis(); // start the timer of the loop
   callbackPeriodic();
+
+  // update values in the status packet
+  status_packet.data.resetCause=(STM32L0.resetCause()&0x07)|(state_latest_timeout<<3);
 
   // update prevous state
   state_prev=state;

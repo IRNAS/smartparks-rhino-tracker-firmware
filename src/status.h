@@ -29,7 +29,7 @@ extern boolean status_send_flag;
  *    bit 5-7 - charging
  */
 struct statusData_t{
-  uint8_t resetCause;
+  uint8_t resetCause; // reset cause lower 3 bits, state timeout upper 5 bits
   uint8_t battery;
   uint8_t temperature;
   uint8_t system_functions_errors;

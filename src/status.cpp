@@ -122,7 +122,6 @@ boolean status_send(void){
   status_packet.data.accely=(uint8_t)get_bits(axis.y_axis,-2000,2000,8);
   status_packet.data.accelz=(uint8_t)get_bits(axis.z_axis,-2000,2000,8);
 
-  status_packet.data.resetCause=STM32L0.resetCause();
   // increment prior to sending if valid data is there
   if(0!=status_packet.data.lat1){
     status_packet.data.gps_resend++;
