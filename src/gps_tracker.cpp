@@ -449,14 +449,6 @@ void gps_stop(void){
     timeinfo.tm_year = gps_location.year() - 1900;
     time_t time = mktime(&timeinfo);
 
-    // wrap around if log is full
-    if(GPS_LOG_SIZE<=gps_log_count){
-      gps_log_count=0;
-    }
-    else{
-      gps_log_count++;
-    }
-
     gps_log_packet.data[gps_log_count].lat1=gps_packet.data.lat1;
     gps_log_packet.data[gps_log_count].lat2=gps_packet.data.lat2;
     gps_log_packet.data[gps_log_count].lat3=gps_packet.data.lat3;
@@ -464,6 +456,13 @@ void gps_stop(void){
     gps_log_packet.data[gps_log_count].lon2=gps_packet.data.lon2;
     gps_log_packet.data[gps_log_count].lon3=gps_packet.data.lon3;
     gps_log_packet.data[gps_log_count].time=(uint32_t)time;
+
+    gps_log_count++;
+
+    // wrap around if log is full
+    if(GPS_LOG_SIZE<=gps_log_count){
+      gps_log_count=0;
+    }
 
     gps_packet.data.time=(uint32_t)time;
 
@@ -714,9 +713,9 @@ boolean gps_log_send(void){
     serial_debug.println(")");
   #endif
 
+  gps_log_send_count++;
   //reset log send count
   if(GPS_LOG_SIZE>gps_log_send_count*5){
-    gps_log_send_count++;
     gps_log_flag=true;
   }
   else{
