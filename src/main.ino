@@ -124,16 +124,16 @@ boolean callbackPeriodic(void){
     }
     else{
       // cycle charging between two thresholds for battery voltage
-      if(status_packet.data.battery>settings_packet.data.system_charge_max && settings_packet.data.system_charge_max>0){
+      if((status_packet.data.battery>settings_packet.data.system_charge_max) && settings_packet.data.system_charge_max>0){
         // disable charging as voltage is greater then threshold
         charging_state=CYCLE_DISCHARGE;
       }
       /// cycle charging between two thresholds for battery voltage
-      else if(status_packet.data.battery<settings_packet.data.system_charge_min&& settings_packet.data.system_charge_min>0){
+      else if((status_packet.data.battery<settings_packet.data.system_charge_min) && settings_packet.data.system_charge_min>0){
         // disable charging as voltage is greater then threshold
         charging_state=CYCLE_CHARGE;
       }
-      else if((charging_state!=CYCLE_CHARGE) | (charging_state!=CYCLE_DISCHARGE)){
+      else if((charging_state!=CYCLE_CHARGE) & (charging_state!=CYCLE_DISCHARGE)){
         charging_state=CHARGE;
       }
     }
