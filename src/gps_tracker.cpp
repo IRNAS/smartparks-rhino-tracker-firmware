@@ -23,6 +23,9 @@ unsigned long gps_accelerometer_last = 0;
 unsigned long gps_turn_on_last = 0;
 unsigned long gps_on_time_total = 0;
 
+unsigned long gps_command_on_stop = 0;
+unsigned long gps_command_interval = 0;
+
 unsigned long gps_fix_start_time = 0;
 unsigned long gps_timeout = 0;
 unsigned long gps_time_to_fix;
@@ -92,6 +95,16 @@ void gps_scheduler(void){
   if(settings_packet.data.gps_periodic_interval>0){
     interval=settings_packet.data.gps_periodic_interval;
     motion_flag=0;
+    // this is possibly risky, as it forces the retry of a failed GPS, however amy be useful
+    gps_fail_count=0;
+  }
+
+  // if manual command trigger GPS has been received - overrides above options
+  // upon reception configure the duration of this mode being active and use the provided configuration
+  if(((millis()-gps_command_on_stop/1000)>0) & (gps_command_on_stop!=0)){
+    if(gps_command_interval!=0){
+      interval=gps_command_interval;
+    }
   }
 
   // if triggered gps is enabled and accelerometer trigger has ocurred - overrides periodic interval
@@ -112,6 +125,11 @@ void gps_scheduler(void){
     gps_send_flag=true;
     gps_packet.data.motion=motion_flag;
   }
+}
+
+void gps_command_request(uint16_t interval, uint16_t duration){
+  gps_command_interval=interval;
+  gps_command_on_stop=millis()+duration*60000;
 }
 
 /**

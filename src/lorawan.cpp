@@ -236,42 +236,52 @@ void lorawan_receiveCallback(void)
 
     if (size)
     {
-        data[size] = '\0';
-        #ifdef debug
-            serial_debug.print(", PORT: ");
-            serial_debug.print(LoRaWAN.remotePort());
-            serial_debug.print(", SIZE: \"");
-            serial_debug.print(size);
-            serial_debug.print("\"");
-            serial_debug.println(" )");
-        #endif
+      data[size] = '\0';
+      #ifdef debug
+          serial_debug.print(", PORT: ");
+          serial_debug.print(LoRaWAN.remotePort());
+          serial_debug.print(", SIZE: \"");
+          serial_debug.print(size);
+          serial_debug.print("\"");
+          serial_debug.println(" )");
+      #endif
 
-        //handle settings
-        if(LoRaWAN.remotePort()==settings_get_packet_port()){
-            //check if length is correct
-            if(size==sizeof(settingsData_t)){
-                // now the settings can be copied into the structure
-                memcpy(&settings_packet_downlink.bytes[0],&data, sizeof(settingsData_t));
-                settings_from_downlink();
-            }
+      //handle settings
+      if(LoRaWAN.remotePort()==settings_get_packet_port()){
+          //check if length is correct
+          if(size==sizeof(settingsData_t)){
+              // now the settings can be copied into the structure
+              memcpy(&settings_packet_downlink.bytes[0],&data, sizeof(settingsData_t));
+              settings_from_downlink();
+          }
+      }
+      //handle rf testing
+      if(LoRaWAN.remotePort()==rf_vswr_port){
+          //check if length is correct
+          if(size==sizeof(rf_settingsData_t)){
+              // now the settings can be copied into the structure
+              memcpy(&rf_settings_packet.bytes[0],&data, sizeof(rf_settingsData_t));
+              rf_send_flag=true;
+          }
+      }
+      //handle commands
+      if(LoRaWAN.remotePort()==command_get_packet_port()){
+          //check if length is correct, single byte expected
+          if(size==1){
+              // now the settings can be copied into the structure
+              command_receive(data[0]);
+          }
+      }
+      // handle GPS commands
+      if(LoRaWAN.remotePort()==91){
+        if(size==5){
+          if(data[0]=0xcc){
+            uint16_t interval = data[1]|data[2]<<8;
+            uint16_t duration = data[3]|data[4]<<8;
+            gps_command_request(interval,duration);
+          }
         }
-        //handle rf testing
-        if(LoRaWAN.remotePort()==rf_vswr_port){
-            //check if length is correct
-            if(size==sizeof(rf_settingsData_t)){
-                // now the settings can be copied into the structure
-                memcpy(&rf_settings_packet.bytes[0],&data, sizeof(rf_settingsData_t));
-                rf_send_flag=true;
-            }
-        }
-        //handle commands
-        if(LoRaWAN.remotePort()==command_get_packet_port()){
-            //check if length is correct, single byte expected
-            if(size==1){
-                // now the settings can be copied into the structure
-                command_receive(data[0]);
-            }
-        }
+      }
     }
   }
 }

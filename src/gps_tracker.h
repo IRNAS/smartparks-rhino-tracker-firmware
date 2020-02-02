@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <time.h>
 
-#define GPS_LOG_SIZE 100
+#define GPS_LOG_SIZE 400
 /*#define LIS2DH12_ADDR 0x19
 #define LIS2DW12_WHO_AM_I                    0x0FU
 #define LIS2DW12_CTRL1                       0x20U
@@ -83,6 +83,7 @@ extern boolean gps_done;
 
 void gps_accelerometer_interrupt(void);
 void gps_scheduler(void);
+void gps_command_request(uint16_t interval, uint16_t duration);
 boolean gps_busy_timeout(uint16_t timeout);
 void gps_power(boolean enable);
 void gps_backup(boolean enable);

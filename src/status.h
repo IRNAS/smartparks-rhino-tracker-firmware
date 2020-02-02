@@ -44,6 +44,7 @@ struct statusData_t{
   uint8_t accely;
   uint8_t accelz;
   uint16_t input_voltage;
+  uint16_t gps_on_time_total;
 }__attribute__((packed));
 
 union statusPacket_t{

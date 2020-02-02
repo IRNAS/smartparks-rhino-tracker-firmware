@@ -66,6 +66,12 @@ Implemented commands to be sent as single byte to port 99:
  * `0x11` - Request the device GPS position log - last 100 positions if available, 5 per packet send one after the other
  * `0xf1` - Clear GPS position log - use if necessary, but log simply stores last 100 positions and overwrites itself
 
+GPS commands are a separate option on port 91:
+ * `0xcc` - Request the GPS to be active based on the downlink command, required additional parameters
+   * `duration` - configures how long in minutes should this mode be active
+   * `interval` - configures how often in minutes should the unit report position
+   * `example binary packet to port 91`: `0xCC 0x05 0x00 0x01 0x00` - send GPS every 1 minute for 5 minutes
+
 ## Tools
 There are a few tools available to make using this solution easier, namely:
  * `decoder.js` - TheThingsNetwork V2 payload decoder to jet nicely formatted json data from the binary messages
