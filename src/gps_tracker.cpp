@@ -20,6 +20,8 @@ uint8_t gps_response_fail_count = 0;
 boolean gps_hot_fix = false;
 unsigned long gps_event_last = 0;
 unsigned long gps_accelerometer_last = 0;
+unsigned long gps_turn_on_last = 0;
+unsigned long gps_on_time_total = 0;
 
 unsigned long gps_fix_start_time = 0;
 unsigned long gps_timeout = 0;
@@ -137,11 +139,13 @@ void gps_power(boolean enable){
   if(enable){
     pinMode(GPS_EN,OUTPUT);
     digitalWrite(GPS_EN,HIGH);
+    gps_turn_on_last=millis();
   }
   else{
     digitalWrite(GPS_EN,LOW);
     delay(100);
     pinMode(GPS_EN,INPUT_PULLDOWN);
+    gps_on_time_total+=millis()-gps_turn_on_last;
   }
 }
 
@@ -482,6 +486,7 @@ void gps_stop(void){
   gps_packet.data.epe = (uint8_t)epe;
   gps_packet.data.snr = (uint8_t)max_snr;
   gps_packet.data.lux = (uint8_t)get_bits(lux_read(),0,1000,8);
+  status_packet.data.gps_on_time_total=gps_on_time_total/60000;
 
   
     
