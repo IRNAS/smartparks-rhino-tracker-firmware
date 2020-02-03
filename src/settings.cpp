@@ -26,7 +26,7 @@ uint8_t settings_get_packet_port(void){
 void settings_init(void){
     //default settings
     settings_packet.data.system_status_interval=5;
-    settings_packet.data.system_functions=0xef;
+    settings_packet.data.system_functions=0xff;
     settings_packet.data.lorawan_datarate_adr=3;
     settings_packet.data.gps_periodic_interval=0;
     settings_packet.data.gps_triggered_interval=0;

@@ -184,6 +184,22 @@ void gps_backup(boolean enable){
 }
 
 /**
+ * @brief test the gps is present and working - not testing fixes
+ * 
+ * @return boolean 
+ */
+boolean gps_test(){
+  if(gps_begin()==false){
+    return false;
+  }
+  delay(3000);
+  gps_begin_happened==false;
+  gps_power(false);
+  gps_backup(false);
+  return true;
+}
+
+/**
  * @brief Initializes GPS - to be called upon boot or if no backup power is available
  * 
  * @return boolean - true if successful

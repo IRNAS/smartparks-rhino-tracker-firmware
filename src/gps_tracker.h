@@ -87,6 +87,7 @@ void gps_command_request(uint16_t interval, uint16_t duration);
 boolean gps_busy_timeout(uint16_t timeout);
 void gps_power(boolean enable);
 void gps_backup(boolean enable);
+boolean gps_test(void);
 boolean gps_begin(void);
 boolean gps_start(void);
 void gps_acquiring_callback(void);

@@ -235,7 +235,7 @@ void setup() {
     //no I2C pull-up detected
     bitSet(status_packet.data.system_functions_errors,3);
     #ifdef debug
-      serial_debug.println("i2c (error)");
+      serial_debug.println("ERROR(i2c)");
     #endif
   }
 
@@ -268,6 +268,7 @@ void loop() {
 
   // update values in the status packet
   status_packet.data.resetCause=(STM32L0.resetCause()&0x07)|(state_latest_timeout<<3);
+  boolean gps_test_result =false;
 
   // update prevous state
   state_prev=state;
@@ -348,7 +349,19 @@ void loop() {
     status_init(); // currently does not report a fail, should not be possible anyhow
     // Accelerometer
     //accelerometer_init();
-    status_accelerometer_init();          
+    status_accelerometer_init(); 
+    #ifdef debug
+      if(bitRead(status_packet.data.system_functions_errors,3)){
+        serial_debug.println("ERROR(accel)");
+      }
+    #endif
+
+    gps_test_result = gps_test();
+    #ifdef debug
+      if(gps_test_result==false){
+        serial_debug.println("ERROR(gps)");
+      }
+    #endif        
 
     // check if charging is enabled at all
     if(bitRead(settings_packet.data.system_functions,7)==0){
