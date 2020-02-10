@@ -97,6 +97,7 @@ function Decoder(bytes) {
     decoded.accely = get_num(bytes[12], -2000, 2000, 8, 1);
     decoded.accelz = get_num(bytes[13], -2000, 2000, 8, 1);
     decoded.battery_low = (bytes[15] << 8) | bytes[14];; // result in mV
+    decoded.gps_on_time_total = decoded.battery_low = (bytes[17] << 8) | bytes[16]; // result in mV
   }
   else if (port === 1) {
     decoded.lat = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];
