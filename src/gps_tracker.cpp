@@ -163,7 +163,10 @@ void gps_power(boolean enable){
     digitalWrite(GPS_EN,LOW);
     delay(100);
     pinMode(GPS_EN,INPUT_PULLDOWN);
-    gps_on_time_total+=millis()-gps_turn_on_last;
+    if(gps_turn_on_last>0){
+      gps_on_time_total+=(millis()-gps_turn_on_last);
+    }
+    gps_turn_on_last=0;
   }
 }
 
@@ -520,12 +523,13 @@ void gps_stop(void){
   gps_packet.data.epe = (uint8_t)epe;
   gps_packet.data.snr = (uint8_t)max_snr;
   gps_packet.data.lux = (uint8_t)get_bits(lux_read(),0,1000,8);
-  status_packet.data.gps_on_time_total=gps_on_time_total/60000;
+  status_packet.data.gps_on_time_total=gps_on_time_total/1000;
 
   
     
   #ifdef debug
     serial_debug.print("gps(");
+    serial_debug.print(" "); serial_debug.print(gps_on_time_total/1000);
     serial_debug.print(" "); serial_debug.print(latitude,7);
     serial_debug.print(" "); serial_debug.print(longitude,7);
     serial_debug.print(" "); serial_debug.print(altitude,3);
@@ -555,6 +559,7 @@ void gps_end(void){
   // Self-disable
   #ifdef debug
     serial_debug.print("gps_end(");
+    serial_debug.print(" "); serial_debug.print(gps_on_time_total);
     serial_debug.println(")");
   #endif
 }
