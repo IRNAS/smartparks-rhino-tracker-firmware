@@ -199,6 +199,7 @@ boolean gps_test(){
   gps_begin_happened==false;
   gps_power(false);
   gps_backup(false);
+  bitClear(status_packet.data.system_functions_errors,2);
   return true;
 }
 
