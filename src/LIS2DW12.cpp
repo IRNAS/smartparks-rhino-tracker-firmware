@@ -314,10 +314,16 @@ uint8_t LIS2DW12CLASS::read_temp()
  */
 void LIS2DW12CLASS::write_reg(uint8_t reg, uint8_t val)
 {
-    Wire.beginTransmission((uint8_t) LIS2DW12_ADDR);
-    Wire.write((uint8_t) reg);
-    Wire.write((uint8_t) val);
-    Wire.endTransmission();
+    for (int i = 0; i < 3; i++)
+    {
+        Wire.beginTransmission((uint8_t) LIS2DW12_ADDR);
+        Wire.write((uint8_t) reg);
+        Wire.write((uint8_t) val);
+        int result = Wire.endTransmission();  
+        if(result==0){
+            break;
+        }  
+    }
 }
 
 /* 
