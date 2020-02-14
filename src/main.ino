@@ -355,14 +355,14 @@ void loop() {
         serial_debug.println("ERROR(accel)");
       }
     #endif
-
+    /*
     gps_test_result = gps_test();
     #ifdef debug
       if(gps_test_result==false){
         serial_debug.println("ERROR(gps)");
       }
     #endif        
-
+    */
     // check if charging is enabled at all
     if(bitRead(settings_packet.data.system_functions,7)==0){
       charging_state=DISABLED;
