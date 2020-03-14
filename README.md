@@ -102,7 +102,7 @@ In this port we get several locations in one message, that we have to display as
 
 For this port message we have to read 5 different locations, each one with its own timestamp, format it and sent it into Influxdb node. Influxdb enables us to write several points at once, as seen on [node-red documentation website](https://flows.nodered.org/node/node-red-contrib-influxdb) about Influxdb.
 
->> **If msg.payload is an array of arrays, it will be written as a series of points containing fields and tags**.
+> **If msg.payload is an array of arrays, it will be written as a series of points containing fields and tags**.
 
 That means that we need 5 arrays, each will contain two objects. First object will contain value fields that we would like to write (lat and lon in this case), second object will contain dev id as usual. We also need time value in first object because each lat and lon pair has different timestamps.
 Injected epoch timestamp needs to be 19 digits in order to work with Grafana.
