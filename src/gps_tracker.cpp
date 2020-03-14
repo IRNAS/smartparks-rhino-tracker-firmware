@@ -101,7 +101,7 @@ void gps_scheduler(void){
 
   // if manual command trigger GPS has been received - overrides above options
   // upon reception configure the duration of this mode being active and use the provided configuration
-  if(((millis()-gps_command_on_stop/1000)>0) & (gps_command_on_stop!=0)){
+  if((millis()<gps_command_on_stop) & (gps_command_on_stop!=0)){
     if(gps_command_interval!=0){
       interval=gps_command_interval;
     }
@@ -128,8 +128,8 @@ void gps_scheduler(void){
 }
 
 void gps_command_request(uint16_t interval, uint16_t duration){
-  gps_command_interval=interval;
-  gps_command_on_stop=millis()+duration*60000;
+  gps_command_interval=interval; // in minutes as all intervals
+  gps_command_on_stop=millis()+duration*60000; // in minutes from the current time converted to milliseconds
 }
 
 /**
