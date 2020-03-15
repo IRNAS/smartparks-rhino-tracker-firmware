@@ -113,23 +113,27 @@ Below code creates functionality that is described above:
 //clear up payload, we will get our data from payload_fields
 msg.payload = []
     
+// Locations actualy contains a string not an js object so we need to parse it first.
+var parsed_locations = JSON.parse(msg.payload_fields.locations)
+    
 //iterate through payload_fields, there should be only 5 packets, but we can make this universal
-for (i = 0; i < msg.payload_fields.locations.length; i++)
+for (i = 0; i < parsed_locations.length; i++)
 {
+       
     // Make sure that time is correct length so that grafana accepts it
-    var epoch_number = msg.payload_fields.locations[i].time
+    var epoch_number = parsed_locations[i].time
     var epoch_length = epoch_number.toString().length
     var power_of_ten = 19 - epoch_length
     var correct_grafana_epoch = epoch_number * Math.pow(10, power_of_ten)
-    
-    
+
+        
     //fill up packet that we will push into our msg.payload object
     var lat_lon_packet = [{
         port:   msg.port,
-        lat:    msg.payload_fields.locations[i].lat,
-        lon:    msg.payload_fields.locations[i].lon,
+        lat:    parsed_locations[i].lat,
+        lon:    parsed_locations[i].lon,
         time:   correct_grafana_epoch,
-        rssi:           max_rssi
+        rssi:   max_rssi
     },
     {
        devId: msg.dev_id
