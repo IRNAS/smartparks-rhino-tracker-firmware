@@ -97,7 +97,10 @@ function Decoder(bytes) {
     decoded.accely = get_num(bytes[12], -2000, 2000, 8, 1);
     decoded.accelz = get_num(bytes[13], -2000, 2000, 8, 1);
     decoded.battery_low = (bytes[15] << 8) | bytes[14];; // result in mV
-    decoded.gps_on_time_total = (bytes[17] << 8) | bytes[16]; // result in mV
+    decoded.gps_on_time_total = (bytes[17] << 8) | bytes[16];
+    decoded.gps_time = bytes[18] | (bytes[19] << 8) | (bytes[20] << 16) | (bytes[21] << 24);
+    var d= new Date(decoded.gps_time*1000);
+    decoded.gps_time_decoded = d.toLocaleString();
   }
   else if (port === 1) {
     decoded.lat = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];

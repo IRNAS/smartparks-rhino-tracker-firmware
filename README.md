@@ -13,9 +13,34 @@ This device is a power-efficeint GPS tracker sending data via LoraWAN. There are
  * `status - port 2 ` - (legacy, not enabled in latest version anymore) device status message being sent with the specified `status_interval` in minutes - recommended to do this every 24h
  * `gps - port 1` - gps location - gps packet is set based on the `settings` and various intervals defined there.
  * `status+gps - port 12` - device status message being sent with the specified `status_interval` in minutes - recommended to do this every 24h, combined with last gps position. Particularly useful if gps fix interval is longer then the status interval.
+ * `gps log` - 
 
 ## Reed switch
 The magnetic REED switch is put in place to put the device in hibernation for transport purposes or prior to installation. Removing the magnet will initialize the operation in 60s of removing it. Note that putting the device in hibernation performs a system reset and forces an OTAA rejoin if that mode is programmed.
+
+## GPS data
+The device reports GPS position with various mechanisms, these only expain fields related to GPS
+* `status - port 12 `
+  * `decoded.lat` - Latitude position
+  * `decoded.lon` - Longtitude position
+  * `decoded.gps_resend` - number status packets sent since last updated GPS position
+  * `decoded.gps_on_time_total` - cumulative time in seconds since device reboot. This best correlated to the power consumption of the device.
+  * `decoded.gps_time` - linux epoch time when the last GPS position has been acquired
+* `gps - port 1`
+  * `decoded.lat` - Latitude position
+  * `decoded.lon` - Longtitude position
+  * `decoded.alt` - Altitude above sea level
+  * `decoded.satellites` - number of satellites acquired in the fix, expect >3 for 3D fix and >4 for 3D fix.
+  * `decoded.hdop` - horizontal dillution of precision - expect <5 for normal operation, see https://en.wikipedia.org/wiki/Dilution_of_precision_(navigation)
+  * `decoded.time_to_fix` - time to fix of the device, depends on configuration, signal and how ofthen the fix is acquired. <5s is expected if fix every 5min, <15s is expected for fix every hour, <60s for cold fix
+  * `decoded.epe` - estimated position error, this is configured as a target for every gps fix and the result show here is what happened actually. Normally in meters or feet. 50 is a good default, 100 will be very inaccurate fix, 10 is very accurate fix. Best advice is to keep this at 50, and set `gps_min_fix_time` to larger value, say 30 and the fix will be very good, epe is then expected to be about <10 in hotfix conditions.
+  * `decoded.snr` - best satellite SNR value, good functioning device is in 40-50 range, <30 is critical, check device orientation and close by objects.
+  * `decoded.motion` - high if the gps position has been triggered by movement, subject to configuration
+  * `decoded.gps_time` - linux epoch time when the last GPS position has been acquired
+* `gps log - port 11 ` - 5 positions per packet of this info
+  * `decoded.lat` - Latitude position
+  * `decoded.lon` - Longtitude position
+  * `decoded.gps_time` - linux epoch time when the last GPS position has been acquired
 
 ## GPS acquisition logic
 The GPS system is configured by defining the `gps_periodic_interval` - time between fixes periodically and `gps_triggered_interval` - time between fixes if device is in active mode based on `gps_triggered_threshold` and `gps_triggered_duration`.
@@ -63,7 +88,7 @@ Implemented commands to be sent as single byte to port 99:
  * `0xaa` - Sent the current settings
  * `0xab` - Triggers system reset
  * `0xde` - Resets LoraWAN stored settings in EEPROM and forces a re-join
- * `0x11` - Request the device GPS position log - last 100 positions if available, 5 per packet send one after the other
+ * `0x11` - Request the device GPS position log - 5 positions per packet, all available positions in sequence
  * `0xf1` - Clear GPS position log - use if necessary, but log simply stores last 100 positions and overwrites itself
 
 GPS commands are a separate option on port 91:

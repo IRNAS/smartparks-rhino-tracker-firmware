@@ -511,6 +511,7 @@ void gps_stop(void){
     status_packet.data.lon2 = gps_packet.data.lon2;
     status_packet.data.lon3 = gps_packet.data.lon3;
     status_packet.data.gps_resend = 0;
+    status_packet.data.gps_time =(uint32_t)time;
   }
   else{
     gps_packet.data.lat1 = 0;
