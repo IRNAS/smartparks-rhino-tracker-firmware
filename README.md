@@ -115,3 +115,55 @@ Measured consumption 2uA on average, excludes sending Lora messages.
 
 ### System functions 0x01 - GPS periodic enabled
 Measured consumption 15uA on average, excludes sending Lora messages
+
+## Node-RED integration
+
+Node-RED framework is used as bridge between The Things Network and InfluxDb-Grafana stack.
+It formats TTN messages so they can be saved into Influx database and plotted by Grafana.
+
+### port 11 messages
+
+In this port we get several locations in one message, that we have to display as separate points on the Grafan graph so it makes sense to explain how we do it.
+
+For this port message we have to read 5 different locations, each one with its own timestamp, format it and sent it into Influxdb node. Influxdb enables us to write several points at once, as seen on [node-red documentation website](https://flows.nodered.org/node/node-red-contrib-influxdb) about Influxdb.
+
+> **If msg.payload is an array of arrays, it will be written as a series of points containing fields and tags**.
+
+That means that we need 5 arrays, each will contain two objects. First object will contain value fields that we would like to write (lat and lon in this case), second object will contain dev id as usual. We also need time value in first object because each lat and lon pair has different timestamps.
+Injected epoch timestamp needs to be 19 digits in order to work with Grafana.
+
+Below code creates functionality that is described above:
+
+```javascript
+//clear up payload, we will get our data from payload_fields
+msg.payload = []
+    
+// Locations actualy contains a string not an js object so we need to parse it first.
+var parsed_locations = JSON.parse(msg.payload_fields.locations)
+    
+//iterate through payload_fields, there should be only 5 packets, but we can make this universal
+for (i = 0; i < parsed_locations.length; i++)
+{
+       
+    // Make sure that time is correct length so that grafana accepts it
+    var epoch_number = parsed_locations[i].time
+    var epoch_length = epoch_number.toString().length
+    var power_of_ten = 19 - epoch_length
+    var correct_grafana_epoch = epoch_number * Math.pow(10, power_of_ten)
+
+        
+    //fill up packet that we will push into our msg.payload object
+    var lat_lon_packet = [{
+        port:   msg.port,
+        lat:    parsed_locations[i].lat,
+        lon:    parsed_locations[i].lon,
+        time:   correct_grafana_epoch,
+        rssi:   max_rssi
+    },
+    {
+       devId: msg.dev_id
+    }]
+    
+    msg.payload.push(lat_lon_packet)
+}
+```
