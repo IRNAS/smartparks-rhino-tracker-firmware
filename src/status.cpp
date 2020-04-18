@@ -54,7 +54,8 @@ void status_measure_voltage(){
     pinMode(CHG_DISABLE, OUTPUT);
     digitalWrite(CHG_DISABLE, HIGH);
 #endif // CHG_DISABLE
-
+float stm32l0_battery = 0;
+#ifdef BAT_MON_EN
   // measure battery voltage
   pinMode(BAT_MON_EN, OUTPUT);
   digitalWrite(BAT_MON_EN, HIGH);
@@ -64,9 +65,11 @@ void status_measure_voltage(){
     value+=analogRead(BAT_MON);
     delay(1);
   }
-  float stm32l0_battery = BAT_MON_CALIB * (value/16) * (2500/stm32l0_vdd);// result in mV
+  stm32l0_battery = BAT_MON_CALIB * (value/16) * (2500/stm32l0_vdd);// result in mV
   stm32l0_battery=(stm32l0_battery-2500)/10;
   digitalWrite(BAT_MON_EN, LOW);
+#endif //BAT_MON_EN
+
 #ifdef debug
     serial_debug.print("status_measure_voltage( ");
     serial_debug.print(", battery: ");
@@ -78,15 +81,16 @@ void status_measure_voltage(){
 
   // measure input voltage
   float input_voltage = 0;
+  float input_value = 0;
 #ifdef INPUT_AN
   if(INPUT_AN!=0){
     delay(1);
-    value = 0;
+    input_value = 0;
     for(int i=0; i<16; i++){
-      value+=analogRead(INPUT_AN);
+      input_value+=analogRead(INPUT_AN);
       delay(1);
     }
-    input_voltage = value/16;
+    input_voltage = input_value/16;
   }
   uint8_t input_voltage_lookup_index = (uint8_t)(input_voltage/100);
   float input_calib_value=0;

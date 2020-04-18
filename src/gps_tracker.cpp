@@ -665,8 +665,10 @@ void lux_init(void){
   const APDS9306_ALS_MEAS_RES_t atime = APDS9306_ALS_MEAS_RES_20BIT_400MS;
 
   //initialize sensor even if not enabled to put it in low poewr
+#ifdef LIGHT_EN
   pinMode(LIGHT_EN,OUTPUT);
   digitalWrite(LIGHT_EN,HIGH);
+#endif // LIGHT_EN
   delay(1000);
   if (lux_sensor.begin(again, atime)==false) {
     //set lux error
@@ -676,8 +678,10 @@ void lux_init(void){
       serial_debug.println("lux error)");
     #endif
   }
+#ifdef LIGHT_EN
   digitalWrite(LIGHT_EN,LOW);
   pinMode(LIGHT_EN,INPUT_PULLDOWN);
+#endif // LIGHT_EN
   return;
 }
 
@@ -688,8 +692,10 @@ void lux_init(void){
 float lux_read(void){
   unsigned long startTime;
   unsigned long duration;
+#ifdef LIGHT_EN
   digitalWrite(LIGHT_EN,HIGH);
   delay(100);
+#endif // LIGHT_EN
 
   if(bitRead(status_packet.data.system_functions_errors,4)){
     return 0;
@@ -714,8 +720,10 @@ float lux_read(void){
       serial_debug.println(")");
   #endif
 
+#ifdef LIGHT_EN
   digitalWrite(LIGHT_EN,LOW);
   pinMode(LIGHT_EN,INPUT_PULLDOWN);
+#endif // LIGHT_EN
   return lux;
 }
 
