@@ -46,6 +46,8 @@ struct statusData_t{
   uint16_t input_voltage;
   uint16_t gps_on_time_total;
   uint32_t gps_time;
+  uint8_t pulse_count;
+  uint8_t none;
 }__attribute__((packed));
 
 union statusPacket_t{

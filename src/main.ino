@@ -216,6 +216,11 @@ void setup() {
   STM32L0.wdtEnable(18000);
   analogReadResolution(12);
 
+  pinMode(LED_RED,OUTPUT);
+  digitalWrite(LED_RED,HIGH);
+  delay(200);
+  digitalWrite(LED_RED,LOW);
+
   pinMode(A_INT2, INPUT);
   attachInterrupt(digitalPinToInterrupt(A_INT2),accelerometer_callback,CHANGE);
 
@@ -335,7 +340,7 @@ void loop() {
       state_transition(GENERAL_INIT);
       lora_join_fail_count=0;
       // LED diode
-      digitalWrite(LED_RED,LOW);
+      //digitalWrite(LED_RED,LOW);
     }
     else{
       sleep=5000;
@@ -381,7 +386,7 @@ void loop() {
     state_timeout_duration=25*60*60*1000; // 25h maximum
     state_goto_timeout=INIT;
     // LED diode
-    digitalWrite(LED_RED,LOW);
+    //digitalWrite(LED_RED,LOW);
     // send settings immediately when requested
     if(settings_send_flag){
       state_transition(SETTINGS_SEND);

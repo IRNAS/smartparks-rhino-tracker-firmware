@@ -10,6 +10,8 @@
     #define VSWR_ADC PA3
     //#define BAT_MON PA4
     //#define BAT_MON_EN PH1 // reused for SD
+    #define PULSE_OUT PH1
+    #define PULSE_IN PB14
     #define INPUT_AN PA5
     float static input_calib[]={
         2.016,

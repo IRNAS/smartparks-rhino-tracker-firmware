@@ -12,13 +12,95 @@ statusPacket_t status_packet;
 
 extern charging_e charging_state;
 
+TimerMillis timer_pulse_off;
+
 LIS2DW12CLASS lis;
+
+boolean pulse_state = LOW;
+uint8_t pulse_counter = 0;
+unsigned long pulse_last_time = 0;
+
+
+void pulse_output_on_callback(){
+#ifdef PULSE_OUT
+  digitalWrite(PULSE_OUT, HIGH);
+  //digitalWrite(LED_RED, HIGH);
+#endif // PULSE_OUT
+}
+
+void pulse_output_off_callback(){
+#ifdef PULSE_OUT
+  digitalWrite(PULSE_OUT, LOW);
+  //digitalWrite(LED_RED, LOW);
+#endif // PULSE_OUT
+}
+
+/*
+pulse callback does the following
+- count up the pulse counter on every rising edge
+- when a number of pulses is reached, trigger sending a message
+- on falling edge determine what to do
+- if minimal interval between output pulses conditions is ok, then create an output pulse of specified length
+- if a pulse occurs during this, count up and do nothing
+*/
+void pulse_callback(){
+  pulse_state = digitalRead(PULSE_IN);
+
+  if(pulse_state==LOW){
+    // if not delayed by timer, handle immediately
+    if(timer_pulse_off.active()){
+      //pass
+    }
+    else{
+      pulse_output_off_callback();
+    }
+  }
+  else{
+    // turn on output
+    pulse_output_on_callback();
+    pulse_counter++;
+
+    boolean trigger_output=false;
+
+    // if number of pulses threshold has been reached, trigger output
+    if(settings_packet.data.pulse_threshold<pulse_counter){
+      // do output
+      trigger_output=true;
+    }
+
+    // if enough has passed since last pulse
+    if((millis()-pulse_last_time)>(settings_packet.data.pulse_min_interval*1000)){
+      // do output
+      trigger_output=true;
+      pulse_last_time=millis();
+    }
+
+    if(trigger_output){
+      // send lora message
+      status_send_flag=HIGH;
+      // schedule a delayed pulse off
+      //timer_pulse_off.stop();
+      timer_pulse_off.start(pulse_output_off_callback, settings_packet.data.pulse_on_timeout*1000);
+    }
+  }
+}
 
 /**
  * @brief Schedule status events
  * 
  */
 void status_scheduler(void){
+
+#ifdef debug
+serial_debug.print("status_scheduler -( ");
+serial_debug.print("p thr: ");
+serial_debug.print(settings_packet.data.pulse_threshold);
+serial_debug.print(" p to: ");
+serial_debug.print(settings_packet.data.pulse_on_timeout);
+serial_debug.print(" p min: ");
+serial_debug.print(timer_pulse_off.active());
+serial_debug.println(" )");
+#endif
   unsigned long elapsed = millis()-event_status_last;
   if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
     event_status_last=millis();
@@ -39,6 +121,15 @@ void status_init(void){
         serial_debug.print(settings_packet.data.system_status_interval);
         serial_debug.println(" )");
     #endif
+
+#ifdef PULSE_IN
+  pinMode(PULSE_IN, INPUT);
+  attachInterrupt(digitalPinToInterrupt(PULSE_IN),pulse_callback,CHANGE);
+#endif // PULSE_IN
+#ifdef PULSE_OUT
+  pinMode(PULSE_OUT, OUTPUT);
+  digitalWrite(PULSE_OUT,LOW);
+#endif // PULSE_OUT
 }
 
 /**
@@ -125,6 +216,9 @@ boolean status_send(void){
   status_packet.data.accelx=(uint8_t)get_bits(axis.x_axis,-2000,2000,8);
   status_packet.data.accely=(uint8_t)get_bits(axis.y_axis,-2000,2000,8);
   status_packet.data.accelz=(uint8_t)get_bits(axis.z_axis,-2000,2000,8);
+
+  status_packet.data.pulse_count=pulse_counter;
+  pulse_counter=0;
 
   // increment prior to sending if valid data is there
   if(0!=status_packet.data.lat1){
