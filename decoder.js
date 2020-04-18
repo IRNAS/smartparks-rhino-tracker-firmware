@@ -142,6 +142,14 @@ function Decoder(bytes) {
     }
     decoded.locations=JSON.stringify(locations);
   }
+  else if (port === 30) {
+    var vswr=[];
+    for(i = 0; i < bytes.length; i++){
+      var value=(bytes[i]/10);
+      vswr.push(value);
+    }
+    decoded.vswr=vswr;
+  }
 
   return decoded;
 }
