@@ -68,6 +68,26 @@ Theory of operation is as follows:
 
 `gps_min_ehpe` is the principal factor to configure how fast the fix can be acquired and how good it is. A general value of 50 is a good starting point, 100 makes the fix fast but very inaccurate, under 20 the fix times get very very long and drain the battery. Leave at 50 unless you know what you are doing. `gps_min_fix_time` forces the fixes not to be too short, acquiring a bit more of almanach. If you can afford battery wise, 15s is a good default
 
+
+## Pulse counting mode
+The pulse counting and reporting mode is built to enable interfacing an external piece of electronics, for example a camera trap and detec actions as well as to control an ouput.
+
+Pulse input does the following:
+- Increment the field in status packet `pulse_count`
+- When `pulse_count` is greater then `pulse_threshold`, send status packet and reset the field. Set to 0 to send data on every pulse.
+- The device trigger sending at most often on `pulse_min_interval` in seconds, maximal value 255s.
+
+Pulse output does the following:
+- Replicate the input pulse to the output
+- When the sending conditions are met, the output pulse pin is turned on for `pulse_on_timeout` seconds.
+
+Configuration variables controlling this:
+* `pulse_threshold` - how many pulses must be received to send a status packet
+* `pulse_on_timeout` - how long is the pulse output on after threshold reached
+* `pulse_min_interval` - how often at maximum can a device send a packet on pulse event
+
+The use-case of above implementation is somewhat universal, however tailored at monitoring SD card activity in camera traps and similar devices and turning on these SD cards if they have WiFi capability.
+
 ## LoraWAN comissioning/provisioning
 The device povisioning is done with a separate sketch that uploads the keys to the EEPROM. Then the device gets the actual firmware. This is implemented such that the same firmware build can be distributed publicly and does not contain any key information.
 
