@@ -37,14 +37,14 @@ gps_settings['fully_resolved'] = False
 
 data['gps_settings'] = gps_settings
 data['system_voltage_interval'] =1
-data['gps_charge_min'] =0
+data['gps_charge_min'] =2500
 data['system_charge_min'] =3450
 data['system_charge_max'] =4000
 data['system_input_charge_min'] =10000
 
 data['pulse_threshold'] =10
 data['pulse_on_timeout'] =60
-data['pulse_min_interval'] =0
+data['pulse_min_interval'] =10
 
 json_data = json.dumps(data)
 print(json_data)

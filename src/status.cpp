@@ -30,6 +30,10 @@ void pulse_output_on_callback(){
 
 void pulse_output_off_callback(){
 #ifdef PULSE_OUT
+  // make sure if the input pin is high, that the output is not turned off
+  if(digitalRead(PULSE_IN)){
+    break;
+  }
   digitalWrite(PULSE_OUT, LOW);
   //digitalWrite(LED_RED, LOW);
 #endif // PULSE_OUT
