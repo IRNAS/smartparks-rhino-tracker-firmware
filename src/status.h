@@ -63,5 +63,6 @@ void status_init(void);
 void status_measure_voltage(void);
 boolean status_send(void);
 void status_accelerometer_init(void);
+accel_data status_accelerometer_read(void);
 
 #endif

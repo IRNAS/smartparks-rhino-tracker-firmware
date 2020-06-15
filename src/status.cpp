@@ -32,7 +32,7 @@ void pulse_output_off_callback(){
 #ifdef PULSE_OUT
   // make sure if the input pin is high, that the output is not turned off
   if(digitalRead(PULSE_IN)){
-    break;
+    return;
   }
   digitalWrite(PULSE_OUT, LOW);
   //digitalWrite(LED_RED, LOW);
@@ -215,7 +215,7 @@ boolean status_send(void){
   status_packet.data.system_functions_errors=status_packet.data.system_functions_errors|(charging_state<<5);
 
   accel_data axis;
-  axis = lis.read_accel_values();
+  axis = status_accelerometer_read();
 
   status_packet.data.accelx=(uint8_t)get_bits(axis.x_axis,-2000,2000,8);
   status_packet.data.accely=(uint8_t)get_bits(axis.y_axis,-2000,2000,8);
@@ -272,4 +272,8 @@ void status_accelerometer_init(void){
 
 
   lis.wake_up_free_fall_setup(settings_packet.data.gps_triggered_threshold, settings_packet.data.gps_triggered_duration, 0xff);
+}
+
+accel_data status_accelerometer_read(){
+  return lis.read_accel_values();
 }

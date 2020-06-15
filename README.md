@@ -60,6 +60,7 @@ The GPS system is configured by defining the `gps_periodic_interval` - time betw
   *  `bit 1` - linear backoff upon fail (based on interval time) - 1 is a good default
   *  `bit 2` - hot fix enabled - 1 is a good default
   *  `bit 3` - fully resolved required - 1 is a good default
+* `gps_accel_z_threshold` - accelerometer threshold for z value, such that gps does not trigger on wrong orientation. Typically GPS up is a negative accel Z value, good option to set this to is -500, 0 to disable this check
 
 Theory of operation is as follows:
 * GPS is initialized when first used, either by periodic or triggered interval, both can be used at the same time. GPS starts in the cold fix mode and will try to get the fix for the `gps_cold_fix_timeout` duration, if successful and hot-fix is enabled in general settings, then it will try all consequent fixes for the `gps_hot_fix_timeout` duration. If a fix fails to be acquired for `gps_hot_fix_retry` number of times then it reverts to cold fix for the `gps_cold_fix_timeout` duration for `gps_cold_fix_retry` times. When that is exhausted the gps goes to `gps_fail_retry`, which can currently only be 0, so practically the GPS will be disabled upon the reset of the device.

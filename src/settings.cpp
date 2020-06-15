@@ -96,6 +96,7 @@ void settings_from_downlink(void)
     settings_packet.data.pulse_on_timeout=constrain(settings_packet_downlink.data.pulse_on_timeout, 0,0xff);
     settings_packet.data.pulse_threshold=constrain(settings_packet_downlink.data.pulse_threshold, 0,0xff);
     settings_packet.data.pulse_min_interval=constrain(settings_packet_downlink.data.pulse_min_interval, 0,0xffff);
+    settings_packet.data.gps_accel_z_threshold=constrain(settings_packet_downlink.data.gps_accel_z_threshold, 0,0xffff);
 
     // Checks against stupid configurations
 

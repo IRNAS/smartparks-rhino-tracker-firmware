@@ -91,6 +91,24 @@ void gps_scheduler(void){
     return;
   }
 
+  accel_data axis;
+  axis = status_accelerometer_read();
+  float accel_threshold = settings_packet.data.gps_accel_z_threshold - 2000;
+
+  // do not schedule a GPS event if orientation is bad
+  if(accel_threshold!=0){
+    if(accel_threshold>0){
+      if(accel_threshold>axis.z_axis){
+        // do not make a GPS fix as orientation is not right
+        return;
+      }
+    }
+    else if(accel_threshold<axis.z_axis){
+        // do not make a GPS fix as orientation is not right
+        return;
+      }
+  }
+
   // if triggered gps is enabled and accelerometer trigger has ocurred
   if(settings_packet.data.gps_periodic_interval>0){
     interval=settings_packet.data.gps_periodic_interval;

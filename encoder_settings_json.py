@@ -18,7 +18,7 @@ lorawan_datarate_adr["adr"]=False
 data['lorawan_datarate_adr'] = lorawan_datarate_adr
 
 data['gps_periodic_interval'] =1
-data['gps_triggered_interval'] =1
+data['gps_triggered_interval'] =0
 data['gps_triggered_threshold'] =10
 data['gps_triggered_duration'] =10
 data['gps_cold_fix_timeout'] =200
@@ -45,6 +45,9 @@ data['system_input_charge_min'] =10000
 data['pulse_threshold'] =10
 data['pulse_on_timeout'] =60
 data['pulse_min_interval'] =10
+
+data['gps_accel_z_threshold'] =-500
+
 
 json_data = json.dumps(data)
 print(json_data)
