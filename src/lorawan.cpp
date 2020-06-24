@@ -23,18 +23,23 @@ boolean lorawan_init(void){
   if(LoRaWAN.begin(EU868)==0){
     return false;
   }
-  LoRaWAN.addChannel(1, 868100000, 0, 5);
-  LoRaWAN.addChannel(2, 868300000, 0, 5);
-  LoRaWAN.addChannel(3, 868500000, 0, 5);
-  LoRaWAN.addChannel(4, 867100000, 0, 5);
-  LoRaWAN.addChannel(5, 867300000, 0, 5);
-  LoRaWAN.addChannel(6, 867500000, 0, 5);
-  LoRaWAN.addChannel(7, 867900000, 0, 5);
-  LoRaWAN.addChannel(8, 867900000, 0, 5);
+  // Commented out, we only need one channel
+  //LoRaWAN.addChannel(1, 868100000, 0, 5);
+  //LoRaWAN.addChannel(2, 868300000, 0, 5);
+  //LoRaWAN.addChannel(3, 868500000, 0, 5);
+  //LoRaWAN.addChannel(4, 867100000, 0, 5);
+  //LoRaWAN.addChannel(5, 867300000, 0, 5);
+  //LoRaWAN.addChannel(6, 867500000, 0, 5);
+  //LoRaWAN.addChannel(7, 867900000, 0, 5);
+  //LoRaWAN.addChannel(8, 867900000, 0, 5);
   LoRaWAN.setDutyCycle(false);
   // LoRaWAN.setAntennaGain(2.0);
   LoRaWAN.setTxPower(20);
   
+  // Expected by relay software
+  LoRaWAN.setDataRate(3);
+  LoRaWAN.setPublicNetwork(true);
+
   LoRaWAN.onJoin(lorawan_joinCallback);
   LoRaWAN.onLinkCheck(lorawan_checkCallback);
   LoRaWAN.onTransmit(lorawan_doneCallback);

@@ -42,9 +42,9 @@ data['system_charge_min'] =3450
 data['system_charge_max'] =4000
 data['system_input_charge_min'] =10000
 
-data['pulse_threshold'] =10
+data['pulse_threshold'] =3
 data['pulse_on_timeout'] =60
-data['pulse_min_interval'] =10
+data['pulse_min_interval'] =1
 
 data['gps_accel_z_threshold'] =-500
 
