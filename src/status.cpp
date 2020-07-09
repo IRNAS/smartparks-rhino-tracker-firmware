@@ -2,8 +2,8 @@
 
 uint8_t resetCause = 0xff;
 
-//#define debug
-//#define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
 
 boolean status_send_flag = false;
 unsigned long event_status_last = 0;
@@ -19,6 +19,9 @@ LIS2DW12CLASS lis;
 boolean pulse_state = LOW;
 uint8_t pulse_counter = 0;
 unsigned long pulse_last_time = 0;
+
+// Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
+Adafruit_ADS1015 ads;     /* Use thi for the 12-bit version */
 
 
 void pulse_output_on_callback(){
@@ -276,4 +279,21 @@ void status_accelerometer_init(void){
 
 accel_data status_accelerometer_read(){
   return lis.read_accel_values();
+}
+
+void status_fence_monitor_read(){
+#ifdef ADS_EN
+  int16_t adc0, adc1, adc2, adc3;
+
+  adc0 = ads.readADC_SingleEnded(0);
+  adc1 = ads.readADC_SingleEnded(1);
+  adc2 = ads.readADC_SingleEnded(2);
+  adc3 = ads.readADC_SingleEnded(3);
+  Serial.print("AIN0: "); Serial.println(adc0);
+  Serial.print("AIN1: "); Serial.println(adc1);
+  Serial.print("AIN2: "); Serial.println(adc2);
+  Serial.print("AIN3: "); Serial.println(adc3);
+  Serial.println(" ");
+#endif //ADS_EN
+
 }

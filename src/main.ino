@@ -212,7 +212,7 @@ bool state_check_timeout(void){
  * 
  */
 void setup() {
-  STM32L0.stop(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
+  //STM32L0.stop(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
   // Watchdog
   STM32L0.wdtEnable(18000);
   analogReadResolution(12);

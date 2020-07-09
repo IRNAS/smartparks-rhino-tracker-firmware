@@ -66,6 +66,7 @@
     #define BAT_MON PA4
     #define BAT_MON_EN PH1
     #define INPUT_AN PA5
+    #define ADS_EN PA0
     float static input_calib[]={
         2.016,
         2.016,
