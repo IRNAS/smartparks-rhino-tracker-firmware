@@ -128,8 +128,8 @@ void status_init(void){
     #endif
 
 #ifdef PULSE_IN
-  pinMode(PULSE_IN, INPUT);
-  attachInterrupt(digitalPinToInterrupt(PULSE_IN),pulse_callback,CHANGE);
+  pinMode(PULSE_IN, INPUT_PULLDOWN);
+  attachInterrupt(digitalPinToInterrupt(PULSE_IN), pulse_callback, RISING);
 #endif // PULSE_IN
 #ifdef PULSE_OUT
   pinMode(PULSE_OUT, OUTPUT);
