@@ -1,7 +1,7 @@
 import json
 
 data = {}
-data['system_status_interval'] = 3
+data['system_status_interval'] = 5
 
 system_functions = {}
 system_functions['accelerometer_enabled'] = False
@@ -12,7 +12,7 @@ system_functions['charging_enabled'] = True
 data['system_functions'] = system_functions
 
 lorawan_datarate_adr = {}
-lorawan_datarate_adr["datarate"]=3
+lorawan_datarate_adr["datarate"]=5
 lorawan_datarate_adr["confirmed_uplink"]=False
 lorawan_datarate_adr["adr"]=False
 data['lorawan_datarate_adr'] = lorawan_datarate_adr
@@ -23,10 +23,10 @@ data['gps_triggered_threshold'] =10
 data['gps_triggered_duration'] =10
 data['gps_cold_fix_timeout'] =200
 data['gps_hot_fix_timeout'] =60
-data['gps_min_fix_time'] =5
+data['gps_min_fix_time'] =1
 data['gps_min_ehpe'] =50
 data['gps_hot_fix_retry'] = 5
-data['gps_cold_fix_retry'] =2
+data['gps_cold_fix_retry'] =20
 data['gps_fail_retry'] =0
 
 gps_settings = {}
@@ -46,7 +46,7 @@ data['pulse_threshold'] =10
 data['pulse_on_timeout'] =60
 data['pulse_min_interval'] =10
 
-data['gps_accel_z_threshold'] =-500
+data['gps_accel_z_threshold'] =0
 
 
 json_data = json.dumps(data)

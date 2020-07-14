@@ -8,7 +8,7 @@
 #include "settings.h"
 #include "board.h"
 #include "LIS2DW12.h"
-#include "Adafruit_ADS1015.h"
+#include "Adafruit_ADS1015.h" // irnas libray version is required here
 
 extern boolean status_send_flag;
 
@@ -48,7 +48,8 @@ struct statusData_t{
   uint16_t gps_on_time_total;
   uint32_t gps_time;
   uint8_t pulse_count;
-  uint8_t none;
+  uint8_t pulse_energy;
+  uint16_t pulse_voltage;
 }__attribute__((packed));
 
 union statusPacket_t{

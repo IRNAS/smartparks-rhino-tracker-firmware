@@ -38,4 +38,7 @@ void command_receive(uint8_t command){
     else if(command==0xf1){
         gps_log_clear();
     }
+    else if(command==0x01){
+        rf_autotune();
+    }
 }

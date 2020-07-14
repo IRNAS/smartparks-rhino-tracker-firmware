@@ -1,7 +1,7 @@
 #ifndef BOARD_H_
 #define BOARD_H_
 
-#define VER2_4_CAMERA
+#define VER2_3_LION
 
 
 // lion
@@ -66,7 +66,7 @@
     #define BAT_MON PA4
     #define BAT_MON_EN PH1
     #define INPUT_AN PA5
-    #define ADS_EN PA0
+    #define ADS_EN PB14 // for ADS sensor
     float static input_calib[]={
         2.016,
         2.016,
@@ -109,7 +109,7 @@
     #define GPS_EN PB6
     #define A_INT2 PB2
     #define A_INT1 PB7
-    #define LIGHT_EN PB14
+    //#define LIGHT_EN PB14 // NOT USED
     #define PIN_REED PH0
     #define BAT_MON_CALIB 1.14
 #endif

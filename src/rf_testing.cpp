@@ -107,6 +107,11 @@ boolean rf_send(void){
         serial_debug.print("rf_send( ");
         serial_debug.println(" )");
     #endif
+
+    //inplementing different types of measurements
+    // type=0 set tuning value
+    // type=1 rf_autotune
+    // type=2 vswr scan frequency
     digitalWrite(VSWR_EN,HIGH);
     delay(3000);
     // guard against overflow
@@ -121,6 +126,46 @@ boolean rf_send(void){
     if(length>LoRaWAN.getMaxPayloadSize()){
         length=LoRaWAN.getMaxPayloadSize();
     }
+
+    return lorawan_send(rf_vswr_port, &message[0], length);
+}
+
+boolean rf_autotune(void){
+    float tune_start  = 0;
+    float tune_stop   = 15;
+    float tune_step   = 1;
+    uint8_t *output = &message[0];
+    uint8_t length = 0;
+    float vcc = 2.5;
+    pinMode(VSWR_EN,OUTPUT);
+    digitalWrite(VSWR_EN,HIGH);
+
+  for(float tune=0;tune<tune_stop;tune++){
+    delay(1000);
+    STM32L0.wdtReset(); // just a hack due to a large delay in this loop
+    DTC_Initialize(STM32L0_GPIO_PIN_PB12, tune, STM32L0_GPIO_PIN_NONE, 0b0);
+    LoRaWAN.setTxContinuousWave(868000000,5,100);
+    unsigned long start_time=millis();
+    unsigned long elapsed=millis()-start_time;
+    float avg=0;
+    float count = 0;
+    while(elapsed<110){
+        elapsed=millis()-start_time;
+        int adc=analogRead(VSWR_ADC);
+        if(adc>0){
+        avg+=adc;
+        count++;
+        }
+    }
+    *output=avg/count/10;
+    output++;
+    length++;
+    Serial.print(tune);
+    Serial.print(",");
+    Serial.println(avg/count);
+  }
+digitalWrite(VSWR_EN,LOW);
+delay(3000);
 
     return lorawan_send(rf_vswr_port, &message[0], length);
 }

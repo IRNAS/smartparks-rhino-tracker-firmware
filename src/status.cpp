@@ -22,6 +22,7 @@ unsigned long pulse_last_time = 0;
 
 // Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
 Adafruit_ADS1015 ads;     /* Use thi for the 12-bit version */
+boolean ads_present = false;
 
 
 void pulse_output_on_callback(){
@@ -51,6 +52,7 @@ pulse callback does the following
 - if a pulse occurs during this, count up and do nothing
 */
 void pulse_callback(){
+#ifdef PULSE_IN
   pulse_state = digitalRead(PULSE_IN);
 
   if(pulse_state==LOW){
@@ -90,6 +92,7 @@ void pulse_callback(){
       timer_pulse_off.start(pulse_output_off_callback, settings_packet.data.pulse_on_timeout*1000);
     }
   }
+#endif //PULSE_IN
 }
 
 /**
@@ -137,6 +140,25 @@ void status_init(void){
   pinMode(PULSE_OUT, OUTPUT);
   digitalWrite(PULSE_OUT,LOW);
 #endif // PULSE_OUT
+
+#ifdef ADS_EN
+  pinMode(ADS_EN, OUTPUT);
+  digitalWrite(ADS_EN,HIGH);
+  delay(10);
+  if(ads.begin()){
+    ads_present=true;
+  }
+  else{
+    ads_present=false;
+  }
+  digitalWrite(ADS_EN,LOW);
+  #ifdef debug
+    serial_debug.print("status_ads( ");
+    serial_debug.print(ads_present);
+    serial_debug.println(" )");
+  #endif
+#endif // ADS_EN
+
 }
 
 /**
@@ -227,6 +249,8 @@ boolean status_send(void){
   status_packet.data.pulse_count=pulse_counter;
   pulse_counter=0;
 
+  status_fence_monitor_read();
+
   // increment prior to sending if valid data is there
   if(0!=status_packet.data.lat1){
     status_packet.data.gps_resend++;
@@ -282,18 +306,50 @@ accel_data status_accelerometer_read(){
 }
 
 void status_fence_monitor_read(){
-#ifdef ADS_EN
-  int16_t adc0, adc1, adc2, adc3;
+  digitalWrite(ADS_EN,HIGH);
+  delay(10);
+  if(ads_present){
+    int16_t adc0, adc1, adc2, adc3;
+    adc0 = ads.readADC_SingleEnded(0);
+    adc1 = ads.readADC_SingleEnded(1);
+    adc2 = ads.readADC_SingleEnded(2);
+    adc3 = ads.readADC_SingleEnded(3);
+    Serial.print("AIN0: "); Serial.println(adc0);
+    Serial.print("AIN1: "); Serial.println(adc1);
+    Serial.print("AIN2: "); Serial.println(adc2);
+    Serial.print("AIN3: "); Serial.println(adc3);
+    Serial.println(" ");
 
-  adc0 = ads.readADC_SingleEnded(0);
-  adc1 = ads.readADC_SingleEnded(1);
-  adc2 = ads.readADC_SingleEnded(2);
-  adc3 = ads.readADC_SingleEnded(3);
-  Serial.print("AIN0: "); Serial.println(adc0);
-  Serial.print("AIN1: "); Serial.println(adc1);
-  Serial.print("AIN2: "); Serial.println(adc2);
-  Serial.print("AIN3: "); Serial.println(adc3);
-  Serial.println(" ");
-#endif //ADS_EN
+    ads.configSingleEnded_continuous(1);
+    int counter=10000;
+    float cumulative=0;
+    float peak=0;
+    float raw=0;
+    while(counter){
+      counter--;
+      raw = ads.readADC_SingleEnded_continuous()-260; // 240 offset
+      raw=max(raw,0); // limit to 0
+      cumulative+=raw;
+      peak=max(peak,raw);
+    }
+    //to recunfigure ADS back to low power
+    ads.readADC_SingleEnded(0);
 
+    Serial.print("cumo: "); Serial.println(cumulative);
+    Serial.print("peak: "); Serial.println(peak);;
+
+    status_packet.data.pulse_count=0; // not yet implemented
+    float energy = 0;
+    if(cumulative>0){
+      energy=10*log10(cumulative);
+    }
+    status_packet.data.pulse_energy=(uint8_t)energy;
+    status_packet.data.pulse_voltage=(uint16_t)(peak);
+
+
+    // uint8_t pulse_count; // duration bwtween pulses in 100ms counts
+    // uint8_t pulse_energy; // calculated energy from raw pulses
+    // uint16_t pulse_voltage; // peak value
+  }
+  digitalWrite(ADS_EN,LOW);
 }

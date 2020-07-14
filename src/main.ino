@@ -216,8 +216,9 @@ void setup() {
   // Watchdog
   STM32L0.wdtEnable(18000);
   analogReadResolution(12);
+
     // Tuning capacitor
-  DTC_Initialize(STM32L0_GPIO_PIN_PB12, 1, STM32L0_GPIO_PIN_NONE, 0b0);
+  DTC_Initialize(STM32L0_GPIO_PIN_PB12, 4, STM32L0_GPIO_PIN_NONE, 0b0);
 
   pinMode(LED_RED,OUTPUT);
   digitalWrite(LED_RED,HIGH);
@@ -236,6 +237,8 @@ void setup() {
     serial_debug.print("resetCause: ");
     serial_debug.println(STM32L0.resetCause(),HEX);
   #endif
+
+
 
   pinMode(PIN_WIRE_SCL,INPUT);
   delay(100);

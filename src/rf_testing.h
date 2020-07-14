@@ -7,6 +7,7 @@
 #include "project_utils.h"
 #include "board.h"
 #include <math.h>
+#include "wiring_private.h"
 
 extern boolean rf_send_flag;
 
@@ -34,5 +35,6 @@ extern rf_settingsPacket_t rf_settings_packet;
 
 void rf_init(void);
 boolean rf_send(void);
+boolean rf_autotune(void);
 
 #endif
