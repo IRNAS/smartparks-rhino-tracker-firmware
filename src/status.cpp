@@ -26,6 +26,8 @@ boolean ads_present = false;
 
 
 void pulse_output_on_callback(){
+#ifdef PULSE_IN
+
 #ifdef PULSE_OUT
   digitalWrite(PULSE_OUT, HIGH);
   //digitalWrite(LED_RED, HIGH);
