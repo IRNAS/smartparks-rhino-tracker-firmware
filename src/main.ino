@@ -216,8 +216,10 @@ void setup() {
   // Watchdog
   STM32L0.wdtEnable(18000);
   analogReadResolution(12);
-    // Tuning capacitor
-  DTC_Initialize(STM32L0_GPIO_PIN_PB12, 1, STM32L0_GPIO_PIN_NONE, 0b0);
+
+  // Tuning capacitor not needed for now 
+  // TODO add it back if needed in field   
+  //DTC_Initialize(STM32L0_GPIO_PIN_PB12, 1, STM32L0_GPIO_PIN_NONE, 0b0);
 
   pinMode(LED_RED,OUTPUT);
   digitalWrite(LED_RED,HIGH);

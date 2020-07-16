@@ -106,11 +106,14 @@ serial_debug.print(" p min: ");
 serial_debug.print(timer_pulse_off.active());
 serial_debug.println(" )");
 #endif
-  unsigned long elapsed = millis()-event_status_last;
-  if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
-    event_status_last=millis();
-    status_send_flag = true;
-  }
+
+  // // TODO: For now this will be commented out
+  // as it is sending status packeges, Tue 14 Jul 2020 15:54:50 CEST
+  //unsigned long elapsed = millis()-event_status_last;
+  //if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
+  //  event_status_last=millis();
+  //  status_send_flag = true;
+  //}
 }
 
 /**
