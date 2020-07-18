@@ -54,7 +54,7 @@ void settings_init(void){
     #ifndef FORCE_DEFAULT_SETTINGS
     if(EEPROM.read(eeprom_settings_address)==0xab){
         for(int i=0;i<sizeof(settingsData_t);i++){
-            settings_packet.bytes[i]=EEPROM.read(eeprom_settings_address+1+i);
+            settings_packet.bytes[i]=EEPROM.read(eeprom_settings_address+8+i);
         }
         //EEPROM.get(eeprom_settings_address,settings_packet.bytes); // does not work on the byte array
     }
@@ -113,7 +113,7 @@ void settings_from_downlink(void)
     uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
     EEPROM.write(eeprom_settings_address,0xab);
     for(int i=0;i<sizeof(settingsData_t);i++){
-        EEPROM.write(eeprom_settings_address+1+i,settings_packet.bytes[i]);
+        EEPROM.write(eeprom_settings_address+8+i,settings_packet.bytes[i]);
     }
     //EEPROM.put(eeprom_settings_address,settings_packet.bytes); // does not work on the byte array
     settings_updated = true;
