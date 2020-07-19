@@ -1,5 +1,6 @@
 #include "lorawan.h"
 #include "avr/eeprom.h"
+#include "wiring_private.h"
 
 //#define debug
 //#define serial_debug  Serial
@@ -24,22 +25,18 @@ boolean lorawan_init(void){
     return false;
   }
   // Commented out, we only need one channel
-  //LoRaWAN.addChannel(1, 868100000, 0, 5);
-  //LoRaWAN.addChannel(2, 868300000, 0, 5);
-  //LoRaWAN.addChannel(3, 868500000, 0, 5);
-  //LoRaWAN.addChannel(4, 867100000, 0, 5);
-  //LoRaWAN.addChannel(5, 867300000, 0, 5);
-  //LoRaWAN.addChannel(6, 867500000, 0, 5);
-  //LoRaWAN.addChannel(7, 867900000, 0, 5);
-  //LoRaWAN.addChannel(8, 867900000, 0, 5);
+  LoRaWAN.addChannel(1, 868100000, 0, 5);
+  LoRaWAN.addChannel(2, 868300000, 0, 5);
+  LoRaWAN.addChannel(3, 868500000, 0, 5);
+  LoRaWAN.addChannel(4, 867100000, 0, 5);
+  LoRaWAN.addChannel(5, 867300000, 0, 5);
+  LoRaWAN.addChannel(6, 867500000, 0, 5);
+  LoRaWAN.addChannel(7, 867900000, 0, 5);
+  LoRaWAN.addChannel(8, 867900000, 0, 5);
   LoRaWAN.setDutyCycle(false);
-  // LoRaWAN.setAntennaGain(2.0);
+  LoRaWAN.setAntennaGain(-5.0);
   LoRaWAN.setTxPower(20);
   
-  // Expected by relay software
-  LoRaWAN.setDataRate(3);
-  LoRaWAN.setPublicNetwork(true);
-
   LoRaWAN.onJoin(lorawan_joinCallback);
   LoRaWAN.onLinkCheck(lorawan_checkCallback);
   LoRaWAN.onTransmit(lorawan_doneCallback);
@@ -116,6 +113,28 @@ boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
   #ifdef debug
     serial_debug.println("lorawan_send() init");
   #endif
+
+  // DTC tuning logic
+
+  // Tuning capacitor
+  uint8_t eeprom_dtc_1=EEPROM.read(EEPROM_DATA_START_SETTINGS+1);
+  if(eeprom_dtc_1!=0){
+    #ifdef debug
+      serial_debug.print("DTC from eeprom: ");
+      serial_debug.println(eeprom_dtc_1);
+    #endif
+  }
+  else
+  {
+    eeprom_dtc_1=4; // default value assigned
+  }
+
+  #ifdef debug
+      serial_debug.print("DTC: ");
+      serial_debug.println(eeprom_dtc_1);
+    #endif
+    DTC_Initialize(STM32L0_GPIO_PIN_PB12, eeprom_dtc_1, STM32L0_GPIO_PIN_NONE, 0b0);
+
   int response = 0; 
   if (!LoRaWAN.joined()) {
     #ifdef debug
@@ -287,6 +306,12 @@ void lorawan_receiveCallback(void)
           }
         }
       }
+      // handle set DTC value
+      if(LoRaWAN.remotePort()==92){
+        if(size==1){
+          lorawan_set_dtc(data[0]);
+        }
+      }
     }
   }
 }
@@ -310,4 +335,15 @@ void lorawan_doneCallback(void)
   else{
     lorawan_send_successful = true;
   }
+}
+
+void lorawan_set_dtc(uint8_t dtc_value){
+  // make sure the value is not zero
+  if(dtc_value==0){
+    return;
+  }
+  if(dtc_value>32){
+    return;
+  }
+  EEPROM.write(EEPROM_DATA_START_SETTINGS+1,dtc_value);
 }

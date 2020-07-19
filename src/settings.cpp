@@ -50,13 +50,13 @@ void settings_init(void){
     settings_packet.data.pulse_min_interval=0;
 
     //check if valid settings present in eeprom 
-    uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
+    //uint8_t EEPROM_DATA_START_SETTINGS = EEPROM_DATA_START_SETTINGS;
     #ifndef FORCE_DEFAULT_SETTINGS
-    if(EEPROM.read(eeprom_settings_address)==0xab){
+    if(EEPROM.read(EEPROM_DATA_START_SETTINGS)==0xab){
         for(int i=0;i<sizeof(settingsData_t);i++){
-            settings_packet.bytes[i]=EEPROM.read(eeprom_settings_address+8+i);
+            settings_packet.bytes[i]=EEPROM.read(EEPROM_DATA_START_SETTINGS+8+i);
         }
-        //EEPROM.get(eeprom_settings_address,settings_packet.bytes); // does not work on the byte array
+        //EEPROM.get(EEPROM_DATA_START_SETTINGS,settings_packet.bytes); // does not work on the byte array
     }
     #endif
 
@@ -110,12 +110,11 @@ void settings_from_downlink(void)
         settings_packet.data.gps_min_fix_time=settings_packet.data.gps_hot_fix_timeout;
     }
 
-    uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
-    EEPROM.write(eeprom_settings_address,0xab);
+    EEPROM.write(EEPROM_DATA_START_SETTINGS,0xab);
     for(int i=0;i<sizeof(settingsData_t);i++){
-        EEPROM.write(eeprom_settings_address+8+i,settings_packet.bytes[i]);
+        EEPROM.write(EEPROM_DATA_START_SETTINGS+8+i,settings_packet.bytes[i]);
     }
-    //EEPROM.put(eeprom_settings_address,settings_packet.bytes); // does not work on the byte array
+    //EEPROM.put(EEPROM_DATA_START_SETTINGS,settings_packet.bytes); // does not work on the byte array
     settings_updated = true;
 }
 

@@ -8,7 +8,6 @@
 #include "status.h"
 #include "project_utils.h"
 #include "rf_testing.h"
-#include "wiring_private.h"
 
 #define debug
 #define serial_debug  Serial
@@ -216,9 +215,6 @@ void setup() {
   // Watchdog
   STM32L0.wdtEnable(18000);
   analogReadResolution(12);
-
-    // Tuning capacitor
-  DTC_Initialize(STM32L0_GPIO_PIN_PB12, 4, STM32L0_GPIO_PIN_NONE, 0b0);
 
   pinMode(LED_RED,OUTPUT);
   digitalWrite(LED_RED,HIGH);
