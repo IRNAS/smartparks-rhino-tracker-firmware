@@ -2,8 +2,8 @@
 #include "avr/eeprom.h"
 #include "wiring_private.h"
 
-//#define debug
-//#define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
 
 // All keys are provisionted to memory with special firmware.
 
@@ -34,6 +34,7 @@ boolean lorawan_init(void){
   LoRaWAN.addChannel(7, 867900000, 0, 5);
   LoRaWAN.addChannel(8, 867900000, 0, 5);
   LoRaWAN.setDutyCycle(false);
+  LoRaWAN.setMaxEIRP(22);
   LoRaWAN.setAntennaGain(-5.0);
   LoRaWAN.setTxPower(20);
   
