@@ -76,7 +76,7 @@ The pulse counting and reporting mode is built to enable interfacing an external
 Pulse input does the following:
 - Increment the field in status packet `pulse_count`
 - When `pulse_count` is greater then `pulse_threshold`, send status packet and reset the field. Set to 0 to send data on every pulse.
-- The device trigger sending at most often on `pulse_min_interval` in seconds, maximal value 255s.
+- The device trigger sending at most often on `pulse_min_interval` in seconds, maximum value 65535.
 
 Pulse output does the following:
 - Replicate the input pulse to the output
