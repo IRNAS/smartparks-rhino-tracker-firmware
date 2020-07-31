@@ -44,14 +44,15 @@ pulse callback does the following
 - count up the pulse counter on every rising edge
 - when a number of pulses is reached, trigger sending a message
 - on falling edge determine what to do
-- if minimal interval between output pulses conditions is ok, then create an output pulse of specified length
+- if minimal interval between output pulses conditions is OK, then create an output pulse of specified length
 - if a pulse occurs during this, count up and do nothing
 */
 void pulse_callback(){
-  Serial.print("PULSE DETECTED");
+  Serial.println("PULSE DETECTED");
   pulse_state = digitalRead(PULSE_IN);
+  uint32_t start_of_pulse = millis();
 
-  if(pulse_state==LOW){
+  if(pulse_state == LOW){
     // if not delayed by timer, handle immediately
     if(timer_pulse_off.active()){
       //pass
@@ -65,27 +66,36 @@ void pulse_callback(){
     pulse_output_on_callback();
     pulse_counter++;
 
-    boolean trigger_output=false;
+    boolean trigger_output = false;
 
     // if number of pulses threshold has been reached, trigger output
-    if(settings_packet.data.pulse_threshold<pulse_counter){
+    if(settings_packet.data.pulse_threshold < pulse_counter){
       // do output
-      trigger_output=true;
+      trigger_output = true;
     }
 
     // if enough has passed since last pulse
-    if((millis()-pulse_last_time)>(settings_packet.data.pulse_min_interval*1000)){
+    if((millis() - pulse_last_time) > (settings_packet.data.pulse_min_interval * 1000)){
       // do output
-      trigger_output=true;
-      pulse_last_time=millis();
+      trigger_output = true;
+      pulse_last_time = millis();
     }
 
-    if(trigger_output){
-      // send lora message
-      status_send_flag=HIGH;
+    while(digitalRead(PULSE_IN) == 1);
+    uint32_t end_of_pulse = millis();
+    
+    status_packet.data.duration_of_pulse = (end_of_pulse - start_of_pulse);
+    Serial.print("Duration of pulse is: ");
+    Serial.println(status_packet.data.duration_of_pulse);
+
+    // Only set send flag, if duration of pulse is longer 1900 ms, this will
+    // filter out all pulses that were not result of detected PIR activity
+    if(trigger_output && status_packet.data.duration_of_pulse > 1900){
+      // send LoRa message
+      status_send_flag = HIGH;
       // schedule a delayed pulse off
       //timer_pulse_off.stop();
-      timer_pulse_off.start(pulse_output_off_callback, settings_packet.data.pulse_on_timeout*1000);
+      timer_pulse_off.start(pulse_output_off_callback, settings_packet.data.pulse_on_timeout * 1000);
     }
   }
 }
@@ -108,7 +118,7 @@ serial_debug.println(" )");
 #endif
 
   // // TODO: For now this will be commented out
-  // as it is sending status packeges, Tue 14 Jul 2020 15:54:50 CEST
+  // as it is sending status packages, Tue 14 Jul 2020 15:54:50 CEST
   //unsigned long elapsed = millis()-event_status_last;
   //if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
   //  event_status_last=millis();
@@ -117,7 +127,7 @@ serial_debug.println(" )");
 }
 
 /**
- * @brief Initialize the staus logic
+ * @brief Initialize the status logic
  * 
  */
 void status_init(void){ 
@@ -202,13 +212,13 @@ input_voltage=input_calib_value * input_voltage * (2500/stm32l0_vdd); // mV
   switch_charging_state();
 #endif // CHG_DISABLE
 #endif
-  status_packet.data.battery=(uint8_t)stm32l0_battery; // 0-5000 input, assuming 2500mV is minimu that is subtracted and then divided by 10
+  status_packet.data.battery=(uint8_t)stm32l0_battery; // 0-5000 input, assuming 2500mV is minimum that is subtracted and then divided by 10
   status_packet.data.temperature=(uint8_t)get_bits(stm32l0_temp,-20,80,8);
   status_packet.data.input_voltage=input_voltage;
 }
 
 /**
- * @brief Send stauts values
+ * @brief Send status values
  * 
  * @return boolean 
  */
@@ -252,7 +262,7 @@ boolean status_send(void){
 /**
  * @brief initialize sensors upon boot or new settings
  * 
- * @details Make sure each sensors is firstlu properly reset and put into sleep and then if enabled in settings, initialize it
+ * @details Make sure each sensors is firstly properly reset and put into sleep and then if enabled in settings, initialize it
  * 
  */
 void status_accelerometer_init(void){
