@@ -308,6 +308,7 @@ accel_data status_accelerometer_read(){
 }
 
 void status_fence_monitor_read(){
+#ifdef ADS_EN
   digitalWrite(ADS_EN,HIGH);
   delay(10);
   if(ads_present){
@@ -354,4 +355,5 @@ void status_fence_monitor_read(){
     // uint16_t pulse_voltage; // peak value
   }
   digitalWrite(ADS_EN,LOW);
+#endif //ADS_EN
 }
