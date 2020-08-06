@@ -66,6 +66,7 @@ struct settingsData_t{
   uint8_t   pulse_on_timeout; // how long is the pulse output on after threshold reached
   uint16_t  pulse_min_interval; // how often at maximum can a device send a packet on pulse event
   uint16_t  gps_accel_z_threshold; // accelerometer threshold for z value, such that gps does not trigger on wrong orientation
+  uint16_t  fw_version; // fw version data
 }__attribute__((packed));
 
 union settingsPacket_t{

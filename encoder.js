@@ -59,6 +59,9 @@ function Encoder(object, port) {
 
         bytes[30] = (object.gps_accel_z_threshold+2000) & 0xFF;
         bytes[31] = (object.gps_accel_z_threshold+2000)>>8 & 0xFF;
+
+        bytes[32] = 0;
+        bytes[33] = 0;
     }
     else if (port === 30){
         bytes[0] = (object.freq_start) & 0xFF;

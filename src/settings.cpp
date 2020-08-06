@@ -59,6 +59,8 @@ void settings_init(void){
         //EEPROM.get(EEPROM_DATA_START_SETTINGS,settings_packet.bytes); // does not work on the byte array
     }
     #endif
+    // reading here as this must not be restored from flash
+    settings_packet.data.fw_version=FW_VERSION;
 
     #ifdef debug
         serial_debug.println("lorawan_load_settings()");
