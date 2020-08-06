@@ -68,7 +68,7 @@
     #define BAT_MON PA4
     #define BAT_MON_EN PH1
     #define INPUT_AN PA5
-    #define ADS_EN PB14 // for ADS sensor
+    //#define ADS_EN PB14 // for ADS sensor
     float static input_calib[]={
         2.016,
         2.016,
