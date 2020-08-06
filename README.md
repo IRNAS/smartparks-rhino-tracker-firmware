@@ -1,6 +1,8 @@
 # smartparks-rhino/lion-tracker-firmware
 Smartparks Rhino and Lion GPS tracker firmware repository. This firmware is the first generation solution for multiple LoraWAN devices. The implementation is as straightforward as possible to ensure simple operation, however not suitable for very complex device operation taks which is implemented int eh second generation in a separate repository.
 
+WARNING: This documentation may not be up to date with the actual firwmare release.
+
 # Requirements:
  * Modified Arduino Core for STM32L0
  * vscode or similar compile tool (Arduino IDE may break things)
@@ -69,6 +71,14 @@ Theory of operation is as follows:
 
 `gps_min_ehpe` is the principal factor to configure how fast the fix can be acquired and how good it is. A general value of 50 is a good starting point, 100 makes the fix fast but very inaccurate, under 20 the fix times get very very long and drain the battery. Leave at 50 unless you know what you are doing. `gps_min_fix_time` forces the fixes not to be too short, acquiring a bit more of almanach. If you can afford battery wise, 15s is a good default
 
+`gps_accel_z_threshold` is the value set as accelerometer z value above which gps can trigger, meaning the tracker is pointing to the sky. Negative hangles are handled as well such that the more negative number then the threshold, then trigger occurs.
+
+## RF tuning DTC 
+Trackers include a DTC tuning component, which can be used to tune the antenna accordingly.
+
+Send to RF port 30 the message based on `encoder_rf_settings_json.py` and set `type=1` to receive vswr values based on capacitor value. 
+
+Send to port 92 a single byte value of what DTC should be, this gets stored into eeprom. Use with caution.
 
 ## Pulse counting mode
 The pulse counting and reporting mode is built to enable interfacing an external piece of electronics, for example a camera trap and detec actions as well as to control an ouput.

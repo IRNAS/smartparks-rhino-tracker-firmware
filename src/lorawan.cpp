@@ -2,8 +2,8 @@
 #include "avr/eeprom.h"
 #include "wiring_private.h"
 
-#define debug
-#define serial_debug  Serial
+//#define debug
+//#define serial_debug  Serial
 
 // All keys are provisionted to memory with special firmware.
 
