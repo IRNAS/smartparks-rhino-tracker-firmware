@@ -1,6 +1,8 @@
 # smartparks-rhino/lion-tracker-firmware
 Smartparks Rhino and Lion GPS tracker firmware repository. This firmware is the first generation solution for multiple LoraWAN devices. The implementation is as straightforward as possible to ensure simple operation, however not suitable for very complex device operation taks which is implemented int eh second generation in a separate repository.
 
+WARNING: This documentation may not be up to date with the actual firwmare release.
+
 # Requirements:
  * Modified Arduino Core for STM32L0
  * vscode or similar compile tool (Arduino IDE may break things)
@@ -60,6 +62,7 @@ The GPS system is configured by defining the `gps_periodic_interval` - time betw
   *  `bit 1` - linear backoff upon fail (based on interval time) - 1 is a good default
   *  `bit 2` - hot fix enabled - 1 is a good default
   *  `bit 3` - fully resolved required - 1 is a good default
+* `gps_accel_z_threshold` - accelerometer threshold for z value, such that gps does not trigger on wrong orientation. Typically GPS up is a negative accel Z value, good option to set this to is -500, 0 to disable this check
 
 Theory of operation is as follows:
 * GPS is initialized when first used, either by periodic or triggered interval, both can be used at the same time. GPS starts in the cold fix mode and will try to get the fix for the `gps_cold_fix_timeout` duration, if successful and hot-fix is enabled in general settings, then it will try all consequent fixes for the `gps_hot_fix_timeout` duration. If a fix fails to be acquired for `gps_hot_fix_retry` number of times then it reverts to cold fix for the `gps_cold_fix_timeout` duration for `gps_cold_fix_retry` times. When that is exhausted the gps goes to `gps_fail_retry`, which can currently only be 0, so practically the GPS will be disabled upon the reset of the device.
@@ -67,6 +70,34 @@ Theory of operation is as follows:
 `gps_settings` allows for 3D fix to be enabled, linear backoff upon a failure of a cold or hot fix, meaning tha the defined `gps_periodic_interval` or `gps_triggered_interval`will be multiplied by the number of fails that have occured. This sonserves the battery by allowing the device to get out of a bad spot. Hot fix should alwazy be enabled unles very clearly needed otherwise, likewise for fully resolved.
 
 `gps_min_ehpe` is the principal factor to configure how fast the fix can be acquired and how good it is. A general value of 50 is a good starting point, 100 makes the fix fast but very inaccurate, under 20 the fix times get very very long and drain the battery. Leave at 50 unless you know what you are doing. `gps_min_fix_time` forces the fixes not to be too short, acquiring a bit more of almanach. If you can afford battery wise, 15s is a good default
+
+`gps_accel_z_threshold` is the value set as accelerometer z value above which gps can trigger, meaning the tracker is pointing to the sky. Negative hangles are handled as well such that the more negative number then the threshold, then trigger occurs.
+
+## RF tuning DTC 
+Trackers include a DTC tuning component, which can be used to tune the antenna accordingly.
+
+Send to RF port 30 the message based on `encoder_rf_settings_json.py` and set `type=1` to receive vswr values based on capacitor value. 
+
+Send to port 92 a single byte value of what DTC should be, this gets stored into eeprom. Use with caution.
+
+## Pulse counting mode
+The pulse counting and reporting mode is built to enable interfacing an external piece of electronics, for example a camera trap and detec actions as well as to control an ouput.
+
+Pulse input does the following:
+- Increment the field in status packet `pulse_count`
+- When `pulse_count` is greater then `pulse_threshold`, send status packet and reset the field. Set to 0 to send data on every pulse.
+- The device trigger sending at most often on `pulse_min_interval` in seconds, maximal value 255s.
+
+Pulse output does the following:
+- Replicate the input pulse to the output
+- When the sending conditions are met, the output pulse pin is turned on for `pulse_on_timeout` seconds.
+
+Configuration variables controlling this:
+* `pulse_threshold` - how many pulses must be received to send a status packet
+* `pulse_on_timeout` - how long is the pulse output on after threshold reached
+* `pulse_min_interval` - how often at maximum can a device send a packet on pulse event
+
+The use-case of above implementation is somewhat universal, however tailored at monitoring SD card activity in camera traps and similar devices and turning on these SD cards if they have WiFi capability.
 
 ## LoraWAN comissioning/provisioning
 The device povisioning is done with a separate sketch that uploads the keys to the EEPROM. Then the device gets the actual firmware. This is implemented such that the same firmware build can be distributed publicly and does not contain any key information.

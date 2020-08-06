@@ -7,7 +7,6 @@
 #include "stm32l0_eeprom.h"
 
 #define EEPROM_DATA_START_SETTINGS 0
-
 extern boolean settings_updated;
 
 /**
@@ -63,6 +62,11 @@ struct settingsData_t{
   uint8_t   system_charge_min;  // charge voltage minimum 2.8V
   uint8_t   system_charge_max;  // charge voltage maximum 4.2v
   uint16_t  system_input_charge_min; // stop charging when input voltage is less then X
+  uint8_t   pulse_threshold; // how many pulses must be received to send a packet
+  uint8_t   pulse_on_timeout; // how long is the pulse output on after threshold reached
+  uint16_t  pulse_min_interval; // how often at maximum can a device send a packet on pulse event
+  uint16_t  gps_accel_z_threshold; // accelerometer threshold for z value, such that gps does not trigger on wrong orientation
+  uint16_t  fw_version; // fw version data
 }__attribute__((packed));
 
 union settingsPacket_t{

@@ -91,6 +91,24 @@ void gps_scheduler(void){
     return;
   }
 
+  accel_data axis;
+  axis = status_accelerometer_read();
+  float accel_threshold = settings_packet.data.gps_accel_z_threshold - 2000;
+
+  // do not schedule a GPS event if orientation is bad
+  if(accel_threshold!=0){
+    if(accel_threshold>0){
+      if(accel_threshold>axis.z_axis){
+        // do not make a GPS fix as orientation is not right
+        return;
+      }
+    }
+    else if(accel_threshold<axis.z_axis){
+        // do not make a GPS fix as orientation is not right
+        return;
+      }
+  }
+
   // if triggered gps is enabled and accelerometer trigger has ocurred
   if(settings_packet.data.gps_periodic_interval>0){
     interval=settings_packet.data.gps_periodic_interval;
@@ -665,8 +683,10 @@ void lux_init(void){
   const APDS9306_ALS_MEAS_RES_t atime = APDS9306_ALS_MEAS_RES_20BIT_400MS;
 
   //initialize sensor even if not enabled to put it in low poewr
+#ifdef LIGHT_EN
   pinMode(LIGHT_EN,OUTPUT);
   digitalWrite(LIGHT_EN,HIGH);
+#endif // LIGHT_EN
   delay(1000);
   if (lux_sensor.begin(again, atime)==false) {
     //set lux error
@@ -676,8 +696,10 @@ void lux_init(void){
       serial_debug.println("lux error)");
     #endif
   }
+#ifdef LIGHT_EN
   digitalWrite(LIGHT_EN,LOW);
   pinMode(LIGHT_EN,INPUT_PULLDOWN);
+#endif // LIGHT_EN
   return;
 }
 
@@ -688,8 +710,10 @@ void lux_init(void){
 float lux_read(void){
   unsigned long startTime;
   unsigned long duration;
+#ifdef LIGHT_EN
   digitalWrite(LIGHT_EN,HIGH);
   delay(100);
+#endif // LIGHT_EN
 
   if(bitRead(status_packet.data.system_functions_errors,4)){
     return 0;
@@ -714,8 +738,10 @@ float lux_read(void){
       serial_debug.println(")");
   #endif
 
+#ifdef LIGHT_EN
   digitalWrite(LIGHT_EN,LOW);
   pinMode(LIGHT_EN,INPUT_PULLDOWN);
+#endif // LIGHT_EN
   return lux;
 }
 

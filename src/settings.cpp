@@ -45,17 +45,22 @@ void settings_init(void){
     settings_packet.data.system_charge_min=0;
     settings_packet.data.system_charge_max=255;
     settings_packet.data.system_input_charge_min=10000;
+    settings_packet.data.pulse_threshold=0;
+    settings_packet.data.pulse_on_timeout=0;
+    settings_packet.data.pulse_min_interval=0;
 
     //check if valid settings present in eeprom 
-    uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
+    //uint8_t EEPROM_DATA_START_SETTINGS = EEPROM_DATA_START_SETTINGS;
     #ifndef FORCE_DEFAULT_SETTINGS
-    if(EEPROM.read(eeprom_settings_address)==0xab){
+    if(EEPROM.read(EEPROM_DATA_START_SETTINGS)==0xab){
         for(int i=0;i<sizeof(settingsData_t);i++){
-            settings_packet.bytes[i]=EEPROM.read(eeprom_settings_address+1+i);
+            settings_packet.bytes[i]=EEPROM.read(EEPROM_DATA_START_SETTINGS+8+i);
         }
-        //EEPROM.get(eeprom_settings_address,settings_packet.bytes); // does not work on the byte array
+        //EEPROM.get(EEPROM_DATA_START_SETTINGS,settings_packet.bytes); // does not work on the byte array
     }
     #endif
+    // reading here as this must not be restored from flash
+    settings_packet.data.fw_version=FW_VERSION;
 
     #ifdef debug
         serial_debug.println("lorawan_load_settings()");
@@ -90,6 +95,10 @@ void settings_from_downlink(void)
     settings_packet.data.system_charge_min=constrain(settings_packet_downlink.data.system_charge_min, 0,0xff);
     settings_packet.data.system_charge_max=constrain(settings_packet_downlink.data.system_charge_max, 0,0xff);
     settings_packet.data.system_input_charge_min=constrain(settings_packet_downlink.data.system_input_charge_min, 0,0xffff);
+    settings_packet.data.pulse_on_timeout=constrain(settings_packet_downlink.data.pulse_on_timeout, 0,0xff);
+    settings_packet.data.pulse_threshold=constrain(settings_packet_downlink.data.pulse_threshold, 0,0xff);
+    settings_packet.data.pulse_min_interval=constrain(settings_packet_downlink.data.pulse_min_interval, 0,0xffff);
+    settings_packet.data.gps_accel_z_threshold=constrain(settings_packet_downlink.data.gps_accel_z_threshold, 0,0xffff);
 
     // Checks against stupid configurations
 
@@ -103,12 +112,11 @@ void settings_from_downlink(void)
         settings_packet.data.gps_min_fix_time=settings_packet.data.gps_hot_fix_timeout;
     }
 
-    uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
-    EEPROM.write(eeprom_settings_address,0xab);
+    EEPROM.write(EEPROM_DATA_START_SETTINGS,0xab);
     for(int i=0;i<sizeof(settingsData_t);i++){
-        EEPROM.write(eeprom_settings_address+1+i,settings_packet.bytes[i]);
+        EEPROM.write(EEPROM_DATA_START_SETTINGS+8+i,settings_packet.bytes[i]);
     }
-    //EEPROM.put(eeprom_settings_address,settings_packet.bytes); // does not work on the byte array
+    //EEPROM.put(EEPROM_DATA_START_SETTINGS,settings_packet.bytes); // does not work on the byte array
     settings_updated = true;
 }
 

@@ -9,8 +9,8 @@
 #include "project_utils.h"
 #include "rf_testing.h"
 
-#define debug
-#define serial_debug  Serial
+//#define debug
+//#define serial_debug  Serial
 
 // Initialize timer for periodic callback
 // TimerMillis periodic;
@@ -211,10 +211,15 @@ bool state_check_timeout(void){
  * 
  */
 void setup() {
-  STM32L0.stop(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
+  //STM32L0.stop(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
   // Watchdog
   STM32L0.wdtEnable(18000);
   analogReadResolution(12);
+
+  pinMode(LED_RED,OUTPUT);
+  digitalWrite(LED_RED,HIGH);
+  delay(200);
+  digitalWrite(LED_RED,LOW);
 
   pinMode(A_INT2, INPUT);
   attachInterrupt(digitalPinToInterrupt(A_INT2),accelerometer_callback,CHANGE);
@@ -228,6 +233,8 @@ void setup() {
     serial_debug.print("resetCause: ");
     serial_debug.println(STM32L0.resetCause(),HEX);
   #endif
+
+
 
   pinMode(PIN_WIRE_SCL,INPUT);
   delay(100);
@@ -335,7 +342,7 @@ void loop() {
       state_transition(GENERAL_INIT);
       lora_join_fail_count=0;
       // LED diode
-      digitalWrite(LED_RED,LOW);
+      //digitalWrite(LED_RED,LOW);
     }
     else{
       sleep=5000;
@@ -381,7 +388,7 @@ void loop() {
     state_timeout_duration=25*60*60*1000; // 25h maximum
     state_goto_timeout=INIT;
     // LED diode
-    digitalWrite(LED_RED,LOW);
+    //digitalWrite(LED_RED,LOW);
     // send settings immediately when requested
     if(settings_send_flag){
       state_transition(SETTINGS_SEND);

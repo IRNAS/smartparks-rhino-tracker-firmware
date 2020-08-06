@@ -57,35 +57,42 @@ boolean scan_vswr(uint32_t start, uint32_t stop, int8_t power, uint16_t samples,
         if(time>4000){
             time=4000;
         }
-        // set-up the continuous mode
-        for(uint16_t i=0;i<5000;i++){
-            if(LoRaWAN.setTxContinuousWave(freq,power,time)==false){
-                break;
+        STM32L0.stop(1000);
+        STM32L0.wdtReset(); // just a hack due to a large delay in this loop
+        digitalWrite(VSWR_EN,HIGH);
+        while(LoRaWAN.setTxContinuousWave(freq,power,100)==false){
+            delay(500);
+            Serial.println("cw wait");
+        }
+        
+        unsigned long start_time=millis();
+        unsigned long elapsed=millis()-start_time;
+        float avg=0;
+        float count = 0;
+        while(elapsed<110){
+            elapsed=millis()-start_time;
+            int adc=analogRead(VSWR_ADC);
+            if(adc>0){
+            avg+=adc;
+            count++;
             }
-            delay(100);
         }
-        // acquire measurements for the specified duration
-        unsigned long start_time = millis();
-        //wait for stabilization
-        delay(10);
-        while((millis()-start_time)<time){
-            measurement_sum+=analogRead(VSWR_ADC);
-            measurement_count++;
-            delay(10);
-        }
+        digitalWrite(VSWR_EN,LOW);
 
-        double value = measurement_sum/measurement_count*vcc/4096; // calculate average and convert to volts
+
+        double value = avg/count; // calculate average and convert to volts
         double dbm=-31; // covnert to dBm
         // secure against division by zero
         if(value!=0){
-            dbm = log10(value)-27;
+            dbm = 10*log10(value)-27;
         }
         #ifdef debug
-            serial_debug.print(dbm); serial_debug.println(" dBm) ");
+            serial_debug.print(value); 
+            serial_debug.print(" ");
+            serial_debug.print(dbm); 
+            serial_debug.println(" dBm) ");
         #endif
-        // create an 8 bit datapoint use dBm=result/10-30 on the server side
-        uint8_t result = (dbm+31)*10;
-        *output=result;
+        *output=value/10;
         output++;
         //increment frequency
         freq+=step;
@@ -107,7 +114,27 @@ boolean rf_send(void){
         serial_debug.print("rf_send( ");
         serial_debug.println(" )");
     #endif
-    digitalWrite(VSWR_EN,HIGH);
+
+    boolean status = false;
+
+    if(rf_settings_packet.data.type==1){
+        status= rf_autotune();
+    }
+    else if(rf_settings_packet.data.type==2)
+    {
+        status=rf_scan();
+    }
+    
+
+    //inplementing different types of measurements
+    // type=0 set tuning value
+    // type=1 rf_autotune
+    // type=2 vswr scan frequency
+    return status;
+}
+
+boolean rf_scan(){
+    digitalWrite(VSWR_EN,LOW);
     delay(3000);
     // guard against overflow
     if(rf_settings_packet.data.samples>sizeof(message)){
@@ -121,6 +148,56 @@ boolean rf_send(void){
     if(length>LoRaWAN.getMaxPayloadSize()){
         length=LoRaWAN.getMaxPayloadSize();
     }
+
+    return lorawan_send(rf_vswr_port, &message[0], length);
+}
+
+boolean rf_autotune(void){
+
+    #ifdef debug
+        serial_debug.print("rf_autotune( ");
+        serial_debug.println(" )");
+    #endif
+    float tune_start  = 0;
+    float tune_stop   = 15;
+    float tune_step   = 1;
+    uint8_t *output = &message[0];
+    uint8_t length = 0;
+    float vcc = 2.5;
+    pinMode(VSWR_EN,OUTPUT);
+    digitalWrite(VSWR_EN,LOW);
+
+  for(float tune=0;tune<tune_stop;tune++){
+    delay(1000);
+    STM32L0.wdtReset(); // just a hack due to a large delay in this loop
+    DTC_Initialize(STM32L0_GPIO_PIN_PB12, tune, STM32L0_GPIO_PIN_NONE, 0b0);
+    digitalWrite(VSWR_EN,HIGH);
+
+    while(LoRaWAN.setTxContinuousWave(868000000,5,100)==false){
+        delay(100);
+    }
+    unsigned long start_time=millis();
+    unsigned long elapsed=millis()-start_time;
+    float avg=0;
+    float count = 0;
+    while(elapsed<110){
+        elapsed=millis()-start_time;
+        int adc=analogRead(VSWR_ADC);
+        if(adc>0){
+        avg+=adc;
+        count++;
+        }
+    }
+    digitalWrite(VSWR_EN,LOW);
+    *output=avg/count/10;
+    output++;
+    length++;
+    #ifdef debug
+        serial_debug.println(avg/count);
+    #endif
+  }
+digitalWrite(VSWR_EN,LOW);
+delay(3000);
 
     return lorawan_send(rf_vswr_port, &message[0], length);
 }

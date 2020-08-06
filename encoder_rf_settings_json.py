@@ -1,12 +1,12 @@
 import json
 
 data = {}
-data['freq_start'] = 800000000
-data['freq_stop'] = 900000000
-data['samples'] = 20
-data['power'] = 14
+data['freq_start'] = 840000000
+data['freq_stop'] = 880000000
+data['samples'] = 40
+data['power'] = 5
 data['time'] = 100
-data['type'] = 0
+data['type'] = 2
 
 
 json_data = json.dumps(data)

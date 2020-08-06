@@ -22,6 +22,7 @@ void lorawan_joinCallback(void);
 void lorawan_checkCallback(void);
 void lorawan_receiveCallback(void);
 void lorawan_doneCallback(void);
+void lorawan_set_dtc(uint8_t dtc_value);
 
 #if defined(DATA_EEPROM_BANK2_END)
 #define EEPROM_OFFSET_START            ((((DATA_EEPROM_BANK2_END - DATA_EEPROM_BASE) + 1023) & ~1023) - 1024)
