@@ -2,8 +2,8 @@
 
 uint8_t resetCause = 0xff;
 
-//#define debug
-//#define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
 
 boolean status_send_flag = false;
 unsigned long event_status_last = 0;
@@ -17,8 +17,8 @@ TimerMillis timer_pulse_off;
 LIS2DW12CLASS lis;
 
 boolean pulse_state = LOW;
-uint8_t pulse_counter = 0;
 unsigned long pulse_last_time = 0;
+uint8_t pulse_counter = 0;
 
 // Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
 Adafruit_ADS1015 ads;     /* Use thi for the 12-bit version */
@@ -145,20 +145,7 @@ void status_init(void){
 
 #ifdef ADS_EN
   pinMode(ADS_EN, OUTPUT);
-  digitalWrite(ADS_EN,HIGH);
-  delay(10);
-  if(ads.begin()){
-    ads_present=true;
-  }
-  else{
-    ads_present=false;
-  }
   digitalWrite(ADS_EN,LOW);
-  #ifdef debug
-    serial_debug.print("status_ads( ");
-    serial_debug.print(ads_present);
-    serial_debug.println(" )");
-  #endif
 #endif // ADS_EN
 
 }
@@ -308,52 +295,90 @@ accel_data status_accelerometer_read(){
 }
 
 void status_fence_monitor_read(){
+/*
+1) read analog samples until pulse is DETECTED
+2) check pulse data to see if pulse is valid
+3) measure a few pulses and return the period between them
+*/
 #ifdef ADS_EN
   digitalWrite(ADS_EN,HIGH);
   delay(10);
-  if(ads_present){
-    int16_t adc0, adc1, adc2, adc3;
-    adc0 = ads.readADC_SingleEnded(0);
-    adc1 = ads.readADC_SingleEnded(1);
-    adc2 = ads.readADC_SingleEnded(2);
-    adc3 = ads.readADC_SingleEnded(3);
-    Serial.print("AIN0: "); Serial.println(adc0);
-    Serial.print("AIN1: "); Serial.println(adc1);
-    Serial.print("AIN2: "); Serial.println(adc2);
-    Serial.print("AIN3: "); Serial.println(adc3);
-    Serial.println(" ");
+  unsigned long start = millis();
+  int raw=0;
+  float cumulative=0;
+  float peak=0;
+  float peak_average=0;
+  float sample_counter=0;
 
-    ads.configSingleEnded_continuous(1);
-    int counter=10000;
-    float cumulative=0;
-    float peak=0;
-    float raw=0;
-    while(counter){
-      counter--;
-      raw = ads.readADC_SingleEnded_continuous()-260; // 240 offset
-      raw=max(raw,0); // limit to 0
-      cumulative+=raw;
-      peak=max(peak,raw);
+  bool pulse_active = false;
+
+  // start by assuming we are not in the middle of the pulse
+  // the function below wait for 100ms
+  int counter = 0; // when 100 samples in a row are 0, then there is for sure no pulse
+  while(millis()<(start+1000)){
+    raw = analogRead(VSWR_ADC)-100;
+    if(raw==0){
+      counter++;
     }
-    //to recunfigure ADS back to low power
-    ads.readADC_SingleEnded(0);
-
-    Serial.print("cumo: "); Serial.println(cumulative);
-    Serial.print("peak: "); Serial.println(peak);;
-
-    status_packet.data.pulse_count=0; // not yet implemented
-    float energy = 0;
-    if(cumulative>0){
-      energy=10*log10(cumulative);
+    if(counter>100){
+      break;
     }
-    status_packet.data.pulse_energy=(uint8_t)energy;
-    status_packet.data.pulse_voltage=(uint16_t)(peak);
-
-
-    // uint8_t pulse_count; // duration bwtween pulses in 100ms counts
-    // uint8_t pulse_energy; // calculated energy from raw pulses
-    // uint16_t pulse_voltage; // peak value
   }
+  Serial.println("Pulse start");
+  start = millis();
+  // read values for 10s
+  while(millis()<(start+20000)){
+    raw = analogRead(VSWR_ADC)-100;
+
+    if(pulse_active==true){
+      // we are in the pulse
+      if(raw>0){
+        cumulative+=raw;
+        peak=max(peak,raw);
+        sample_counter=0;
+      }
+      else{
+        // wait for 100 samples of no pulse
+        sample_counter++;
+        if(sample_counter>100){
+          pulse_active=false;
+          pulse_counter++;
+          peak_average+=peak;
+          Serial.print("Pulse ");
+          Serial.print(pulse_counter);
+          Serial.print(" ");
+          Serial.println(peak);
+          peak=0;
+        }
+      }
+
+    }
+    else{
+      // we are waiting for the pulse
+      if(raw>0){
+        // go to pulse active mode
+        pulse_active=true;
+        peak=max(peak,raw);
+        sample_counter=0;
+      }
+    }
+    if(pulse_counter>=5){
+      break;
+    }
+  }
+
+  peak_average=peak_average/pulse_counter;
+  cumulative=cumulative/pulse_counter;
+  Serial.print("cumo: "); Serial.println(cumulative);
+  Serial.print("peak: "); Serial.println(peak_average);
+
+  status_packet.data.pulse_count=(uint8_t)pulse_counter; // not yet implemented
+  float energy = 0;
+  //limit peak to 255
+  peak_average=min(peak_average/10,0xff);
+  status_packet.data.pulse_energy=(uint8_t)peak_average;
+  status_packet.data.pulse_voltage=(uint16_t)(cumulative/100);
   digitalWrite(ADS_EN,LOW);
 #endif //ADS_EN
 }
+

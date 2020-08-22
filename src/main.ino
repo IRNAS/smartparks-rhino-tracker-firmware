@@ -9,8 +9,8 @@
 #include "project_utils.h"
 #include "rf_testing.h"
 
-//#define debug
-//#define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
 
 // Initialize timer for periodic callback
 // TimerMillis periodic;
