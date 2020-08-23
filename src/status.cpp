@@ -301,6 +301,8 @@ void status_fence_monitor_read(){
 3) measure a few pulses and return the period between them
 */
 #ifdef ADS_EN
+  // LoRaWAN.sendPacket( function changes PB14 pin to input for some reason
+  pinMode(ADS_EN, OUTPUT);
   digitalWrite(ADS_EN,HIGH);
   delay(10);
   unsigned long start = millis();
@@ -327,7 +329,7 @@ void status_fence_monitor_read(){
   Serial.println("Pulse start");
   start = millis();
   // read values for 10s
-  while(millis()<(start+20000)){
+  while(millis()<(start+10000)){
     raw = analogRead(VSWR_ADC)-100;
 
     if(pulse_active==true){
@@ -367,18 +369,25 @@ void status_fence_monitor_read(){
     }
   }
 
-  peak_average=peak_average/pulse_counter;
-  cumulative=cumulative/pulse_counter;
+  if(pulse_counter>0){
+    peak_average=peak_average/pulse_counter;
+    cumulative=cumulative/pulse_counter;
+  }
+  else{
+    peak_average=0;
+    cumulative=0;
+  }
   Serial.print("cumo: "); Serial.println(cumulative);
   Serial.print("peak: "); Serial.println(peak_average);
 
   status_packet.data.pulse_count=(uint8_t)pulse_counter; // not yet implemented
   float energy = 0;
   //limit peak to 255
-  peak_average=min(peak_average/10,0xff);
+  peak_average=min(peak_average/10-20,0xff);
   status_packet.data.pulse_energy=(uint8_t)peak_average;
   status_packet.data.pulse_voltage=(uint16_t)(cumulative/100);
   digitalWrite(ADS_EN,LOW);
+  pinMode(ADS_EN, INPUT);
 #endif //ADS_EN
 }
 
