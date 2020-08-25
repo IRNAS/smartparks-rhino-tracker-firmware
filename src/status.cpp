@@ -3,7 +3,7 @@
 uint8_t resetCause = 0xff;
 
 // #define debug
-// #define serial_debug  Serial
+#define serial_debug  Serial
 
 boolean status_send_flag = false;
 unsigned long event_status_last = 0;
@@ -86,7 +86,7 @@ void pulse_callback(){
       boolean trigger_output = false;
 
       // if number of pulses threshold has been reached, trigger output
-      if(pulse_counter > settings_packet.data.pulse_threshold){
+      if(pulse_counter >= settings_packet.data.pulse_threshold){
         // do output
         trigger_output = true;
       }
@@ -94,20 +94,24 @@ void pulse_callback(){
       // if enough has passed since last pulse
       uint32_t pulse_interval = millis() - pulse_last_time;
       
-      if(pulse_interval > (settings_packet.data.pulse_min_interval * 1000)){
+      if(pulse_interval >= (settings_packet.data.pulse_min_interval * 1000)){
         // do output
         trigger_output = true;
       }
       
       #ifdef serial_debug
-        serial_debug.print("trigger_output: ");
+        serial_debug.print("trigger: ");
         serial_debug.println(trigger_output);
 
-        serial_debug.print("pulse_interval: ");
-        serial_debug.println(pulse_interval / 1000);
+        serial_debug.print("interval: ");
+        serial_debug.print(pulse_interval / 1000);
+        serial_debug.print(" - ");
+        serial_debug.println(settings_packet.data.pulse_min_interval);
         
-        serial_debug.print("pulse_counter: ");
-        serial_debug.println(pulse_counter);
+        serial_debug.print("counter: ");
+        serial_debug.print(pulse_counter);
+        serial_debug.print(" - ");
+        serial_debug.println(settings_packet.data.pulse_threshold);
       #endif
 
       if(trigger_output) {
