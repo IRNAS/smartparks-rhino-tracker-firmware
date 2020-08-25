@@ -2,8 +2,8 @@
 
 uint8_t resetCause = 0xff;
 
-#define debug
-#define serial_debug  Serial
+//#define debug
+//#define serial_debug  Serial
 
 boolean status_send_flag = false;
 unsigned long event_status_last = 0;
@@ -321,7 +321,7 @@ void status_fence_monitor_read(){
       break;
     }
   }
-  Serial.println("Pulse start");
+  //Serial.println("Pulse start");
   start = millis();
   // read values for 10s
   while(millis()<(start+10000)){
@@ -352,10 +352,10 @@ void status_fence_monitor_read(){
           pulse_active=false;
           pulse_counter++;
           peak_average+=peak;
-          Serial.print("Pulse ");
-          Serial.print(pulse_counter);
-          Serial.print(" ");
-          Serial.println(peak);
+          //Serial.print("Pulse ");
+          //Serial.print(pulse_counter);
+          //Serial.print(" ");
+          //Serial.println(peak);
           peak=0;
         }
       }
@@ -378,8 +378,8 @@ void status_fence_monitor_read(){
   }
 
   if(pulse_counter>0){
-    Serial.print("sum: "); Serial.println(peak_average);
-    Serial.print("cnt: "); Serial.println(pulse_counter);
+    //Serial.print("sum: "); Serial.println(peak_average);
+    //Serial.print("cnt: "); Serial.println(pulse_counter);
     peak_average=peak_average/pulse_counter;
     //limit peak to 255
     peak_average=min(peak_average/16,255);
@@ -389,8 +389,8 @@ void status_fence_monitor_read(){
     peak_average=0;
     cumulative=0;
   }
-  Serial.print("cumo: "); Serial.println(cumulative);
-  Serial.print("peak: "); Serial.println(peak_average);
+  //Serial.print("cumo: "); Serial.println(cumulative);
+  //Serial.print("peak: "); Serial.println(peak_average);
 
   status_packet.data.pulse_count=(uint8_t)pulse_counter; // not yet implemented
   float energy = 0;
