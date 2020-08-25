@@ -63,14 +63,14 @@ void settings_init(void){
     // reading here as this must not be restored from flash
     settings_packet.data.fw_version=FW_VERSION;
 
-    //default calibration values
-    calibration_packet.data.ads_calib = 1;//2.3810;
-
     // note calibration data is 8 bytes inclusive of settings check byte
-    if(EEPROM.read(EEPROM_DATA_START_SETTINGS)==0xab){
-        for(int i=0;i<sizeof(calibrationData_t);i++){
-            calibration_packet.bytes[i]=EEPROM.read(EEPROM_DATA_START_SETTINGS+i);
-        }
+    for(int i=0;i<sizeof(calibrationData_t);i++){
+        calibration_packet.bytes[i]=EEPROM.read(EEPROM_DATA_START_SETTINGS+i);
+    }
+
+    // check if the calibration value is not set
+    if(calibration_packet.data.ads_calib ==0){
+        calibration_packet.data.ads_calib = 1;
     }
 
     // TEST METHOD TO ENTER SETTINGS MANUALLY
@@ -81,9 +81,9 @@ void settings_init(void){
     //calibration_packet.data.ads_calib = 1.0; // test-6
     //calibration_packet.data.ads_calib = 1.1711; // test-7
 
-    for(int i=0;i<sizeof(calibrationData_t);i++){
-        EEPROM.write(EEPROM_DATA_START_SETTINGS+i,calibration_packet.bytes[i]);
-    }
+    // for(int i=0;i<sizeof(calibrationData_t);i++){
+    //     EEPROM.write(EEPROM_DATA_START_SETTINGS+i,calibration_packet.bytes[i]);
+    // }
     
     #ifdef debug
         serial_debug.println("lorawan_load_settings()");
