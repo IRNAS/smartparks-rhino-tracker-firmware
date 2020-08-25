@@ -20,11 +20,6 @@ boolean pulse_state = LOW;
 unsigned long pulse_last_time = 0;
 uint8_t pulse_counter = 0;
 
-// Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
-Adafruit_ADS1015 ads;     /* Use thi for the 12-bit version */
-boolean ads_present = false;
-
-
 void pulse_output_on_callback(){
 #ifdef PULSE_IN
 
@@ -306,7 +301,7 @@ void status_fence_monitor_read(){
   digitalWrite(ADS_EN,HIGH);
   delay(10);
   unsigned long start = millis();
-  int raw=0;
+  float raw=0;
   float cumulative=0;
   float peak=0;
   float peak_average=0;
@@ -330,10 +325,21 @@ void status_fence_monitor_read(){
   start = millis();
   // read values for 10s
   while(millis()<(start+10000)){
-    raw = analogRead(VSWR_ADC)-100;
-
+    raw = analogRead(VSWR_ADC);
+    //Serial.println(raw);
+    raw= raw*calibration_packet.data.ads_calib;
+    if(raw<100){
+      raw=0;
+    }
+    //raw=max(raw,0);
+    // Serial.print(" ");
+    // Serial.print(raw);
+    // Serial.print(" ");
+    // Serial.println(calibration_packet.data.ads_calib);
     if(pulse_active==true){
       // we are in the pulse
+      //Serial.print("true ");
+      //Serial.println(raw);
       if(raw>0){
         cumulative+=raw;
         peak=max(peak,raw);
@@ -357,6 +363,8 @@ void status_fence_monitor_read(){
     }
     else{
       // we are waiting for the pulse
+      //Serial.print("false ");
+      //Serial.println(raw);
       if(raw>0){
         // go to pulse active mode
         pulse_active=true;
@@ -370,7 +378,11 @@ void status_fence_monitor_read(){
   }
 
   if(pulse_counter>0){
+    Serial.print("sum: "); Serial.println(peak_average);
+    Serial.print("cnt: "); Serial.println(pulse_counter);
     peak_average=peak_average/pulse_counter;
+    //limit peak to 255
+    peak_average=min(peak_average/16,255);
     cumulative=cumulative/pulse_counter;
   }
   else{
@@ -382,8 +394,6 @@ void status_fence_monitor_read(){
 
   status_packet.data.pulse_count=(uint8_t)pulse_counter; // not yet implemented
   float energy = 0;
-  //limit peak to 255
-  peak_average=min(peak_average/10-20,0xff);
   status_packet.data.pulse_energy=(uint8_t)peak_average;
   status_packet.data.pulse_voltage=(uint16_t)(cumulative/100);
   digitalWrite(ADS_EN,LOW);

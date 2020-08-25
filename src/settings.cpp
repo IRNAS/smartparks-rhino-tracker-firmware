@@ -8,6 +8,8 @@ boolean settings_updated = false;
 settingsPacket_t settings_packet;
 settingsPacket_t settings_packet_downlink;
 
+calibrationPacket_t calibration_packet;
+
 /**
  * @brief Setttings get lorawan settings port
  * 
@@ -56,12 +58,33 @@ void settings_init(void){
         for(int i=0;i<sizeof(settingsData_t);i++){
             settings_packet.bytes[i]=EEPROM.read(EEPROM_DATA_START_SETTINGS+8+i);
         }
-        //EEPROM.get(EEPROM_DATA_START_SETTINGS,settings_packet.bytes); // does not work on the byte array
     }
     #endif
     // reading here as this must not be restored from flash
     settings_packet.data.fw_version=FW_VERSION;
 
+    //default calibration values
+    calibration_packet.data.ads_calib = 1;//2.3810;
+
+    // note calibration data is 8 bytes inclusive of settings check byte
+    if(EEPROM.read(EEPROM_DATA_START_SETTINGS)==0xab){
+        for(int i=0;i<sizeof(calibrationData_t);i++){
+            calibration_packet.bytes[i]=EEPROM.read(EEPROM_DATA_START_SETTINGS+i);
+        }
+    }
+
+    // TEST METHOD TO ENTER SETTINGS MANUALLY
+    //calibration_packet.data.ads_calib = 1.8575; // test-1
+    //calibration_packet.data.ads_calib = 1.0; // test-2
+    //calibration_packet.data.ads_calib = 3.084; // test-3
+    //calibration_packet.data.ads_calib = 1.2000; // test-5
+    //calibration_packet.data.ads_calib = 1.0; // test-6
+    //calibration_packet.data.ads_calib = 1.1711; // test-7
+
+    for(int i=0;i<sizeof(calibrationData_t);i++){
+        EEPROM.write(EEPROM_DATA_START_SETTINGS+i,calibration_packet.bytes[i]);
+    }
+    
     #ifdef debug
         serial_debug.println("lorawan_load_settings()");
     #endif
