@@ -7,7 +7,6 @@
 boolean settings_updated = false;
 settingsPacket_t settings_packet;
 settingsPacket_t settings_packet_downlink;
-
 calibrationPacket_t calibration_packet;
 
 /**

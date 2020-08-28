@@ -313,6 +313,13 @@ void lorawan_receiveCallback(void)
           lorawan_set_dtc(data[0]);
         }
       }
+      // handle calibrate ADS
+      if(LoRaWAN.remotePort()==93){
+        if(size==2){
+          uint16_t calibrate_value= data[1]|data[0]<<8;
+          status_fence_monitor_calibrate(calibrate_value);
+        }
+      }
     }
   }
 }

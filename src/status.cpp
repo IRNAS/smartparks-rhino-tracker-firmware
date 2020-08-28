@@ -289,6 +289,20 @@ accel_data status_accelerometer_read(){
   return lis.read_accel_values();
 }
 
+void status_fence_monitor_calibrate(uint16_t calibrate_value){
+  //calculate and apply calibration
+  float factor = calibrate_value;
+  factor=factor/10000;
+  calibration_packet.data.ads_calib =  factor;
+
+  Serial.println(calibrate_value);
+  Serial.println(calibration_packet.data.ads_calib);
+
+  for(int i=0;i<sizeof(calibrationData_t);i++){
+    EEPROM.write(EEPROM_DATA_START_SETTINGS+i,calibration_packet.bytes[i]);
+  }
+}
+
 void status_fence_monitor_read(){
 /*
 1) read analog samples until pulse is DETECTED
@@ -305,15 +319,19 @@ void status_fence_monitor_read(){
   float cumulative=0;
   float peak=0;
   float peak_average=0;
-  float sample_counter=0;
+  float sample_counter_low=0;
+  float sample_counter_high=0;
+  float sample_test_length = 100;
 
   bool pulse_active = false;
+
 
   // start by assuming we are not in the middle of the pulse
   // the function below wait for 100ms
   int counter = 0; // when 100 samples in a row are 0, then there is for sure no pulse
   while(millis()<(start+1000)){
     raw = analogRead(VSWR_ADC)-100;
+    raw=raw*calibration_packet.data.ads_calib;
     if(raw==0){
       counter++;
     }
@@ -326,64 +344,56 @@ void status_fence_monitor_read(){
   // read values for 10s
   while(millis()<(start+10000)){
     raw = analogRead(VSWR_ADC);
-    //Serial.println(raw);
-    raw= raw*calibration_packet.data.ads_calib;
+    raw = raw*calibration_packet.data.ads_calib;
+    // lower threshold to cut off noise
     if(raw<100){
       raw=0;
     }
-    //raw=max(raw,0);
-    // Serial.print(" ");
-    // Serial.print(raw);
-    // Serial.print(" ");
-    // Serial.println(calibration_packet.data.ads_calib);
-    if(pulse_active==true){
-      // we are in the pulse
-      //Serial.print("true ");
-      //Serial.println(raw);
-      if(raw>0){
-        cumulative+=raw;
-        peak=max(peak,raw);
-        sample_counter=0;
-      }
-      else{
-        // wait for 100 samples of no pulse
-        sample_counter++;
-        if(sample_counter>100){
-          pulse_active=false;
-          pulse_counter++;
-          peak_average+=peak;
-          //Serial.print("Pulse ");
-          //Serial.print(pulse_counter);
-          //Serial.print(" ");
-          //Serial.println(peak);
-          peak=0;
-        }
-      }
+    // track cumulative pulse energy and peak
+    cumulative+=raw;
+    peak=max(peak,raw);
 
+    // track how many samples in a row are 0 or not
+    if(raw>0){
+      sample_counter_high++;
+      sample_counter_low=0;
     }
     else{
-      // we are waiting for the pulse
-      //Serial.print("false ");
-      //Serial.println(raw);
-      if(raw>0){
-        // go to pulse active mode
+      sample_counter_low++;
+      sample_counter_high=0;
+    }
+
+    // if we are not in a pulse and sample_test_length(100) samples are of pulse value, go to pulse
+    if(pulse_active==false){
+      if(sample_counter_high>sample_test_length){
+        // go to pulse active staet
         pulse_active=true;
-        peak=max(peak,raw);
-        sample_counter=0;
+        sample_counter_high=0;
       }
     }
+    // else we are in a pulse and sample_test_length(100) samples are of 0 value, go to no pulse
+    else{
+      if(sample_counter_low>sample_test_length){
+        // go to pulse not active
+        pulse_active=false;
+        sample_counter_low=0;
+        peak_average+=peak;
+        peak=0;
+        pulse_counter++;
+      }
+    }
+    // stop after 5 detected pulses
     if(pulse_counter>=5){
       break;
     }
   }
 
+  // check if any pulses have been detected
   if(pulse_counter>0){
-    //Serial.print("sum: "); Serial.println(peak_average);
-    //Serial.print("cnt: "); Serial.println(pulse_counter);
     peak_average=peak_average/pulse_counter;
-    //limit peak to 255
-    peak_average=min(peak_average/16,255);
-    cumulative=cumulative/pulse_counter;
+    peak_average=min(peak_average,0x0fff);
+    cumulative=cumulative/pulse_counter/100;
+    cumulative=min(cumulative,0x0fff);
   }
   else{
     peak_average=0;
@@ -392,10 +402,17 @@ void status_fence_monitor_read(){
   //Serial.print("cumo: "); Serial.println(cumulative);
   //Serial.print("peak: "); Serial.println(peak_average);
 
-  status_packet.data.pulse_count=(uint8_t)pulse_counter; // not yet implemented
-  float energy = 0;
-  status_packet.data.pulse_energy=(uint8_t)peak_average;
-  status_packet.data.pulse_voltage=(uint16_t)(cumulative/100);
+  // data transmission is split into 
+  // 8 bits for counter
+  // 12 bits for peak
+  // 12 bits for energy
+  // This is packed into existing variables, which is not very clean, but backwards compatible
+  status_packet.data.pulse_count=(uint8_t)pulse_counter;
+  uint16_t pulse_energy = (uint16_t)cumulative;
+  uint16_t pulse_voltage = (uint16_t)peak_average;
+
+  status_packet.data.pulse_energy=pulse_energy>>4;
+  status_packet.data.pulse_voltage=((pulse_energy<<12)&0xf000) | (pulse_voltage & 0x0fff);
   digitalWrite(ADS_EN,LOW);
   pinMode(ADS_EN, INPUT);
 #endif //ADS_EN

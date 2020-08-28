@@ -90,7 +90,6 @@ union calibrationPacket_t{
 static const uint8_t settings_packet_port = 3;
 extern settingsPacket_t settings_packet;
 extern settingsPacket_t settings_packet_downlink;
-
 extern calibrationPacket_t calibration_packet;
 
 uint8_t settings_get_packet_port(void);
