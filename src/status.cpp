@@ -65,9 +65,6 @@ void pulse_callback(){
     }
   }
   else{
-    // turn on output
-    pulse_output_on_callback();
-
     while(digitalRead(PULSE_IN) == 1);
     uint32_t end_of_pulse = millis();
     
@@ -98,6 +95,11 @@ void pulse_callback(){
         // do output
         trigger_output = true;
       }
+
+      // When we actually want to trigger the output but the timer is ot running, then skip the trigger.
+      if(trigger_output && timer_pulse_off.active()) {
+        trigger_output = false;
+      }
       
       #ifdef serial_debug
         serial_debug.print("trigger: ");
@@ -119,8 +121,9 @@ void pulse_callback(){
         pulse_counter = 0;
         // send LoRa message
         status_send_flag = HIGH;
-        // schedule a delayed pulse off
-        //timer_pulse_off.stop();
+        // turn on output to power the SDCard
+        pulse_output_on_callback();
+        // schedule a delayed pulse off to power doen the SDCard
         timer_pulse_off.start(pulse_output_off_callback, settings_packet.data.pulse_on_timeout * 1000);
       }
     }
