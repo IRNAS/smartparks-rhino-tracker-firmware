@@ -107,8 +107,8 @@ function Decoder(bytes) {
     var d= new Date(decoded.gps_time*1000);
     decoded.gps_time_decoded = d.toLocaleString();
     decoded.pulse_counter = bytes[22];
-    decoded.pulse_energy = (bytes[23]<<4) | (bytes[24]>>12);
-    decoded.pulse_voltage = (bytes[24]<<8 | bytes[25]) & 0x0fff;
+    decoded.pulse_energy = (bytes[23]<<4) | (bytes[24] | (bytes[25] << 8)>>12);
+    decoded.pulse_voltage = (bytes[24] | (bytes[25] << 8)) & 0x0fff;
     decoded.voltage_fence_v = decoded.pulse_voltage * 8;
   }
   else if (port === 1) {
