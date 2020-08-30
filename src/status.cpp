@@ -321,7 +321,7 @@ void status_fence_monitor_read(){
   float peak_average=0;
   float sample_counter_low=0;
   float sample_counter_high=0;
-  float sample_test_length = 100;
+  float sample_test_length = 10;
 
   bool pulse_active = false;
 
@@ -330,12 +330,12 @@ void status_fence_monitor_read(){
   // the function below wait for 100ms
   int counter = 0; // when 100 samples in a row are 0, then there is for sure no pulse
   while(millis()<(start+1000)){
-    raw = analogRead(VSWR_ADC)-100;
+    raw = analogRead(VSWR_ADC)-20;
     raw=raw*calibration_packet.data.ads_calib;
     if(raw==0){
       counter++;
     }
-    if(counter>100){
+    if(counter>10){
       break;
     }
   }
@@ -346,7 +346,7 @@ void status_fence_monitor_read(){
     raw = analogRead(VSWR_ADC);
     raw = raw*calibration_packet.data.ads_calib;
     // lower threshold to cut off noise
-    if(raw<100){
+    if(raw<12){
       raw=0;
     }
     // track cumulative pulse energy and peak
@@ -377,8 +377,8 @@ void status_fence_monitor_read(){
         // go to pulse not active
         pulse_active=false;
         sample_counter_low=0;
-        peak_average+=peak;
-        peak=0;
+        //peak_average+=peak;
+        //peak=0;
         pulse_counter++;
       }
     }
@@ -390,15 +390,17 @@ void status_fence_monitor_read(){
 
   // check if any pulses have been detected
   if(pulse_counter>0){
-    peak_average=peak_average/pulse_counter;
-    peak_average=min(peak_average,0x0fff);
+    //peak_average=peak_average/pulse_counter;
+
     cumulative=cumulative/pulse_counter/100;
     cumulative=min(cumulative,0x0fff);
   }
   else{
-    peak_average=0;
+    //peak_average=0;
     cumulative=0;
   }
+
+  peak_average=min(peak,0x0fff);
   //Serial.print("cumo: "); Serial.println(cumulative);
   //Serial.print("peak: "); Serial.println(peak_average);
 
