@@ -49,7 +49,7 @@ pulse callback does the following
 - if a pulse occurs during this, count up and do nothing
 */
 void pulse_callback(){
-  Serial.print("PULSE DETECTED");
+  //Serial.print("PULSE DETECTED");
   pulse_state = digitalRead(PULSE_IN);
 
   if(pulse_state==LOW){
