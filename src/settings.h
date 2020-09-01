@@ -69,14 +69,28 @@ struct settingsData_t{
   uint16_t  fw_version; // fw version data
 }__attribute__((packed));
 
+
 union settingsPacket_t{
   settingsData_t data;
   byte bytes[sizeof(settingsData_t)];
 };
 
+struct calibrationData_t{
+  uint8_t settings_byte;
+  uint8_t dtc_value;
+  float ads_calib;
+}__attribute__((packed));
+
+
+union calibrationPacket_t{
+  calibrationData_t data;
+  byte bytes[sizeof(calibrationData_t)];
+};
+
 static const uint8_t settings_packet_port = 3;
 extern settingsPacket_t settings_packet;
 extern settingsPacket_t settings_packet_downlink;
+extern calibrationPacket_t calibration_packet;
 
 uint8_t settings_get_packet_port(void);
 void settings_init(void);

@@ -17,6 +17,7 @@ LIS2DW12CLASS::LIS2DW12CLASS(TwoWire *twi)
 bool LIS2DW12CLASS::begin()
 {
     Wire.begin();
+    Wire.setClockLowTimeout(100);
     
     // Comparing with expected value
     if(0x44 == read_reg(LIS2DW12_WHO_AM_I))

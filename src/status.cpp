@@ -17,13 +17,8 @@ TimerMillis timer_pulse_off;
 LIS2DW12CLASS lis;
 
 boolean pulse_state = LOW;
-uint8_t pulse_counter = 0;
 unsigned long pulse_last_time = 0;
-
-// Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
-Adafruit_ADS1015 ads;     /* Use thi for the 12-bit version */
-boolean ads_present = false;
-
+uint8_t pulse_counter = 0;
 
 void pulse_output_on_callback(){
 #ifdef PULSE_IN
@@ -54,7 +49,7 @@ pulse callback does the following
 - if a pulse occurs during this, count up and do nothing
 */
 void pulse_callback(){
-  Serial.print("PULSE DETECTED");
+  //Serial.print("PULSE DETECTED");
   pulse_state = digitalRead(PULSE_IN);
 
   if(pulse_state==LOW){
@@ -145,20 +140,7 @@ void status_init(void){
 
 #ifdef ADS_EN
   pinMode(ADS_EN, OUTPUT);
-  digitalWrite(ADS_EN,HIGH);
-  delay(10);
-  if(ads.begin()){
-    ads_present=true;
-  }
-  else{
-    ads_present=false;
-  }
   digitalWrite(ADS_EN,LOW);
-  #ifdef debug
-    serial_debug.print("status_ads( ");
-    serial_debug.print(ads_present);
-    serial_debug.println(" )");
-  #endif
 #endif // ADS_EN
 
 }
@@ -307,53 +289,134 @@ accel_data status_accelerometer_read(){
   return lis.read_accel_values();
 }
 
+void status_fence_monitor_calibrate(uint16_t calibrate_value){
+  //calculate and apply calibration
+  float factor = calibrate_value;
+  factor=factor/10000;
+  calibration_packet.data.ads_calib =  factor;
+
+  Serial.println(calibrate_value);
+  Serial.println(calibration_packet.data.ads_calib);
+
+  for(int i=0;i<sizeof(calibrationData_t);i++){
+    EEPROM.write(EEPROM_DATA_START_SETTINGS+i,calibration_packet.bytes[i]);
+  }
+}
+
 void status_fence_monitor_read(){
+/*
+1) read analog samples until pulse is DETECTED
+2) check pulse data to see if pulse is valid
+3) measure a few pulses and return the period between them
+*/
 #ifdef ADS_EN
+  // LoRaWAN.sendPacket( function changes PB14 pin to input for some reason
+  pinMode(ADS_EN, OUTPUT);
   digitalWrite(ADS_EN,HIGH);
   delay(10);
-  if(ads_present){
-    int16_t adc0, adc1, adc2, adc3;
-    adc0 = ads.readADC_SingleEnded(0);
-    adc1 = ads.readADC_SingleEnded(1);
-    adc2 = ads.readADC_SingleEnded(2);
-    adc3 = ads.readADC_SingleEnded(3);
-    Serial.print("AIN0: "); Serial.println(adc0);
-    Serial.print("AIN1: "); Serial.println(adc1);
-    Serial.print("AIN2: "); Serial.println(adc2);
-    Serial.print("AIN3: "); Serial.println(adc3);
-    Serial.println(" ");
+  unsigned long start = millis();
+  float raw=0;
+  float cumulative=0;
+  float peak=0;
+  float peak_average=0;
+  float sample_counter_low=0;
+  float sample_counter_high=0;
+  float sample_test_length = 10;
 
-    ads.configSingleEnded_continuous(1);
-    int counter=10000;
-    float cumulative=0;
-    float peak=0;
-    float raw=0;
-    while(counter){
-      counter--;
-      raw = ads.readADC_SingleEnded_continuous()-260; // 240 offset
-      raw=max(raw,0); // limit to 0
-      cumulative+=raw;
-      peak=max(peak,raw);
+  bool pulse_active = false;
+
+
+  // start by assuming we are not in the middle of the pulse
+  // the function below wait for 100ms
+  int counter = 0; // when 100 samples in a row are 0, then there is for sure no pulse
+  while(millis()<(start+1000)){
+    raw = analogRead(VSWR_ADC)-20;
+    raw=raw*calibration_packet.data.ads_calib;
+    if(raw==0){
+      counter++;
     }
-    //to recunfigure ADS back to low power
-    ads.readADC_SingleEnded(0);
-
-    Serial.print("cumo: "); Serial.println(cumulative);
-    Serial.print("peak: "); Serial.println(peak);;
-
-    status_packet.data.pulse_count=0; // not yet implemented
-    float energy = 0;
-    if(cumulative>0){
-      energy=10*log10(cumulative);
+    if(counter>10){
+      break;
     }
-    status_packet.data.pulse_energy=(uint8_t)energy;
-    status_packet.data.pulse_voltage=(uint16_t)(peak);
-
-
-    // uint8_t pulse_count; // duration bwtween pulses in 100ms counts
-    // uint8_t pulse_energy; // calculated energy from raw pulses
-    // uint16_t pulse_voltage; // peak value
   }
+  //Serial.println("Pulse start");
+  start = millis();
+  // read values for 10s
+  while(millis()<(start+10000)){
+    raw = analogRead(VSWR_ADC);
+    raw = raw*calibration_packet.data.ads_calib;
+    // lower threshold to cut off noise
+    if(raw<12){
+      raw=0;
+    }
+    // track cumulative pulse energy and peak
+    cumulative+=raw;
+    peak=max(peak,raw);
+
+    // track how many samples in a row are 0 or not
+    if(raw>0){
+      sample_counter_high++;
+      sample_counter_low=0;
+    }
+    else{
+      sample_counter_low++;
+      sample_counter_high=0;
+    }
+
+    // if we are not in a pulse and sample_test_length(100) samples are of pulse value, go to pulse
+    if(pulse_active==false){
+      if(sample_counter_high>sample_test_length){
+        // go to pulse active staet
+        pulse_active=true;
+        sample_counter_high=0;
+      }
+    }
+    // else we are in a pulse and sample_test_length(100) samples are of 0 value, go to no pulse
+    else{
+      if(sample_counter_low>sample_test_length){
+        // go to pulse not active
+        pulse_active=false;
+        sample_counter_low=0;
+        //peak_average+=peak;
+        //peak=0;
+        pulse_counter++;
+      }
+    }
+    // stop after 5 detected pulses
+    if(pulse_counter>=5){
+      break;
+    }
+  }
+
+  // check if any pulses have been detected
+  if(pulse_counter>0){
+    //peak_average=peak_average/pulse_counter;
+
+    cumulative=cumulative/pulse_counter/100;
+    cumulative=min(cumulative,0x0fff);
+  }
+  else{
+    //peak_average=0;
+    cumulative=0;
+  }
+
+  peak_average=min(peak,0x0fff);
+  //Serial.print("cumo: "); Serial.println(cumulative);
+  //Serial.print("peak: "); Serial.println(peak_average);
+
+  // data transmission is split into 
+  // 8 bits for counter
+  // 12 bits for peak
+  // 12 bits for energy
+  // This is packed into existing variables, which is not very clean, but backwards compatible
+  status_packet.data.pulse_count=(uint8_t)pulse_counter;
+  uint16_t pulse_energy = (uint16_t)cumulative;
+  uint16_t pulse_voltage = (uint16_t)peak_average;
+
+  status_packet.data.pulse_energy=pulse_energy>>4;
+  status_packet.data.pulse_voltage=((pulse_energy<<12)&0xf000) | (pulse_voltage & 0x0fff);
   digitalWrite(ADS_EN,LOW);
+  pinMode(ADS_EN, INPUT);
 #endif //ADS_EN
 }
+
