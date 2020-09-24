@@ -10,8 +10,8 @@
 #include "rf_testing.h"
 #include "wiring_private.h"
 
-#define debug
-#define serial_debug  Serial
+// #define debug
+// #define serial_debug  Serial
 
 // Initialize timer for periodic callback
 // TimerMillis periodic;
