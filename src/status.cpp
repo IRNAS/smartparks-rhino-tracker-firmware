@@ -2,7 +2,7 @@
 
 uint8_t resetCause = 0xff;
 
-// #define debug
+#define debug
 #define serial_debug  Serial
 
 boolean status_send_flag = false;
@@ -48,9 +48,9 @@ pulse callback does the following
 - if a pulse occurs during this, count up and do nothing
 */
 void pulse_callback(){
-  #ifdef debug
-    serial_debug.println("PULSE DETECTED");
-  #endif
+  // #ifdef debug
+  //   serial_debug.println("PULSE DETECTED");
+  // #endif
 
   pulse_state = digitalRead(PULSE_IN);
   uint32_t start_of_pulse = millis();
@@ -70,10 +70,10 @@ void pulse_callback(){
     
     status_packet.data.duration_of_pulse = (end_of_pulse - start_of_pulse);
     
-    #ifdef debug
-      Serial.print("Duration of pulse is: ");
-      Serial.println(status_packet.data.duration_of_pulse);
-    #endif
+    // #ifdef debug
+    //   Serial.print("Duration of pulse is: ");
+    //   Serial.println(status_packet.data.duration_of_pulse);
+    // #endif
 
     // Only set send flag, if duration of pulse is longer 1900 ms, this will
     // filter out all pulses that were not result of detected PIR activity
@@ -100,22 +100,6 @@ void pulse_callback(){
       if(trigger_output && timer_pulse_off.active()) {
         trigger_output = false;
       }
-      
-      #ifdef serial_debug
-        serial_debug.print("trigger: ");
-        serial_debug.println(trigger_output);
-
-        serial_debug.print("interval: ");
-        serial_debug.print(pulse_interval / 1000);
-        serial_debug.print(" - ");
-        serial_debug.println(settings_packet.data.pulse_min_interval);
-        
-        serial_debug.print("counter: ");
-        serial_debug.print(pulse_counter);
-        serial_debug.print(" - ");
-        serial_debug.println(settings_packet.data.pulse_threshold);
-      #endif
-
       if(trigger_output) {
         pulse_last_time = millis();
         pulse_counter = 0;
@@ -138,6 +122,8 @@ void status_scheduler(void){
 
 #ifdef debug
 serial_debug.print("status_scheduler -( ");
+serial_debug.print("p int: ");
+serial_debug.print(settings_packet.data.pulse_min_interval);
 serial_debug.print("p thr: ");
 serial_debug.print(settings_packet.data.pulse_threshold);
 serial_debug.print(" p to: ");
