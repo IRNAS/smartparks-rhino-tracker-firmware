@@ -16,6 +16,8 @@ TimerMillis timer_pulse_off;
 
 LIS2DW12CLASS lis;
 
+Adafruit_ADS1015 ads;     /* Use thi for the 12-bit version */
+
 boolean pulse_state = LOW;
 unsigned long pulse_last_time = 0;
 uint8_t pulse_counter = 0;
@@ -142,6 +144,17 @@ void status_init(void){
   pinMode(ADS_EN, OUTPUT);
   digitalWrite(ADS_EN,LOW);
 #endif // ADS_EN
+
+#if defined DROP_CHG && defined DROP_EN
+
+  pinMode(DROP_CHG, OUTPUT);
+  digitalWrite(DROP_CHG,LOW);
+  pinMode(DROP_EN, OUTPUT);
+  digitalWrite(DROP_EN,LOW);
+
+  ads.begin();
+
+#endif //DROP_CHG DROP_EN
 
 }
 
@@ -295,9 +308,10 @@ void status_fence_monitor_calibrate(uint16_t calibrate_value){
   factor=factor/10000;
   calibration_packet.data.ads_calib =  factor;
 
-  Serial.println(calibrate_value);
-  Serial.println(calibration_packet.data.ads_calib);
-
+#ifdef debug
+  serial_debug.println(calibrate_value);
+  serial_debug.println(calibration_packet.data.ads_calib);
+#endif
   for(int i=0;i<sizeof(calibrationData_t);i++){
     EEPROM.write(EEPROM_DATA_START_SETTINGS+i,calibration_packet.bytes[i]);
   }
@@ -420,3 +434,86 @@ void status_fence_monitor_read(){
 #endif //ADS_EN
 }
 
+void status_dropoff(){
+// this is a prototype impelmentation, needs a rewrite
+
+#if defined DROP_CHG && defined DROP_EN
+
+// send a lora message to show the process start
+uint8_t packet[2]={0xd0,0x00};
+lorawan_send(99,&packet[0], sizeof(packet));
+delay(3000);
+
+  // set up the reqired state
+  digitalWrite(DROP_CHG,LOW);
+  digitalWrite(DROP_EN,LOW);
+  // read battery and capacitor voltage
+
+  int16_t capacitor, charge;
+
+  capacitor = ads.readADC_SingleEnded(0)*3;
+  charge = ads.readADC_SingleEnded(1)*3*1.846;
+
+  #ifdef debug
+  serial_debug.print("capacitor mv: "); serial_debug.println(capacitor);
+  serial_debug.print("charge mv: "); serial_debug.println(charge);
+  #endif
+
+  //charge the capacitor
+  digitalWrite(DROP_CHG,HIGH);
+
+  unsigned long start = millis();
+  // charge for 600s or less if voltage is reached sooner
+  while(millis()<(start+(600000))){
+    capacitor = ads.readADC_SingleEnded(0)*3;
+    charge = ads.readADC_SingleEnded(1)*3*1.846;
+    #ifdef debug
+    serial_debug.print("capacitor mv: "); serial_debug.println(capacitor);
+    serial_debug.print("charge mv: "); serial_debug.println(charge);
+    #endif
+
+    if(capacitor>2800){
+      break;
+    }
+    STM32L0.wdtReset(); // reset watchdog
+    STM32L0.stop(10000); // sleep for 10s
+  }
+  #ifdef debug
+  serial_debug.print("charged to mv: "); serial_debug.println(capacitor);
+  #endif
+
+  //stop charging the capacitor
+  digitalWrite(DROP_CHG,LOW);
+
+  start = millis();
+  // discharge for 5s or less if voltage is reached sooner
+
+  //trigger the drop-off mechanism
+  digitalWrite(DROP_EN,HIGH);
+
+  while(millis()<(start+5000)){
+    capacitor = ads.readADC_SingleEnded(0)*3;
+    #ifdef debug
+    serial_debug.print("capacitor mv: "); serial_debug.println(capacitor);
+    #endif
+
+    if(capacitor<900){
+      break;
+    }
+    STM32L0.wdtReset(); // reset watchdog
+    STM32L0.stop(100); // sleep for 100ms
+  }
+
+  //stop the drop-off mechanism
+  digitalWrite(DROP_EN,LOW);
+
+  //send lora message to denote the end
+  packet[1]=1;
+  lorawan_send(99,&packet[0], sizeof(packet));
+  delay(3000);
+
+  #ifdef debug
+  serial_debug.println("drop done");
+  #endif
+#endif
+}

@@ -9,6 +9,7 @@
 #include "settings.h"
 #include "board.h"
 #include "LIS2DW12.h"
+#include <Adafruit_ADS1015.h>
 
 
 extern boolean status_send_flag;
@@ -69,5 +70,6 @@ void status_accelerometer_init(void);
 accel_data status_accelerometer_read(void);
 void status_fence_monitor_calibrate(uint16_t calibrate_value);
 void status_fence_monitor_read();
+void status_dropoff();
 
 #endif
