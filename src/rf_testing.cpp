@@ -57,7 +57,7 @@ boolean scan_vswr(uint32_t start, uint32_t stop, int8_t power, uint16_t samples,
         if(time>4000){
             time=4000;
         }
-        STM32L0.stop(1000);
+        STM32L0.deepsleep(1000);
         STM32L0.wdtReset(); // just a hack due to a large delay in this loop
         digitalWrite(VSWR_EN,HIGH);
         while(LoRaWAN.setTxContinuousWave(freq,power,100)==false){

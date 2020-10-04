@@ -725,7 +725,7 @@ float lux_read(void){
     if(lux_sensor.isMeasurementReady()){
       break;
     }
-    //STM32L0.stop(10);
+    //STM32L0.deepsleep(10);
     delay(10);
   }
 
