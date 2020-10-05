@@ -6,6 +6,7 @@ uint8_t resetCause = 0xff;
 //#define serial_debug  Serial
 
 boolean status_send_flag = false;
+boolean status_dropoff_flag = false;
 unsigned long event_status_last = 0;
 unsigned long event_status_voltage_last = 0;
 statusPacket_t status_packet;
@@ -114,6 +115,10 @@ serial_debug.println(" )");
   if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
     event_status_last=millis();
     status_send_flag = true;
+  }
+  if(status_dropoff_flag){
+    status_dropoff_flag=false;
+    status_dropoff();
   }
 }
 
@@ -451,8 +456,8 @@ delay(3000);
 
   int16_t capacitor, charge;
 
-  capacitor = ads.readADC_SingleEnded(0)*3;
-  charge = ads.readADC_SingleEnded(1)*3*1.846;
+  capacitor = ads.readADC_SingleEnded(0);//*3;
+  charge = ads.readADC_SingleEnded(1);//*3*1.846;
 
   #ifdef debug
   serial_debug.print("capacitor mv: "); serial_debug.println(capacitor);
@@ -460,6 +465,7 @@ delay(3000);
   #endif
 
   //charge the capacitor
+  pinMode(DROP_CHG,OUTPUT);
   digitalWrite(DROP_CHG,HIGH);
 
   unsigned long start = millis();
@@ -490,8 +496,9 @@ delay(3000);
 
   //trigger the drop-off mechanism
   digitalWrite(DROP_EN,HIGH);
+  STM32L0.stop(500); // sleep for 100ms
 
-  while(millis()<(start+5000)){
+  while(millis()<(start+10000)){
     capacitor = ads.readADC_SingleEnded(0)*3;
     #ifdef debug
     serial_debug.print("capacitor mv: "); serial_debug.println(capacitor);
@@ -502,6 +509,9 @@ delay(3000);
     }
     STM32L0.wdtReset(); // reset watchdog
     STM32L0.stop(100); // sleep for 100ms
+    digitalWrite(DROP_EN,LOW);
+    STM32L0.stop(250); // sleep for 100ms
+    digitalWrite(DROP_EN,HIGH);
   }
 
   //stop the drop-off mechanism

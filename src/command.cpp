@@ -39,6 +39,6 @@ void command_receive(uint8_t command){
         gps_log_clear();
     }
     else if(command==0xd0){
-        status_dropoff();
+        status_dropoff_flag=true;
     }    
 }

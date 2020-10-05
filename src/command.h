@@ -13,5 +13,6 @@ uint8_t command_get_packet_port(void);
 void command_receive(uint8_t command);
 extern boolean settings_send_flag;
 extern boolean gps_log_flag;
+extern boolean status_dropoff_flag;
 
 #endif
