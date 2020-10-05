@@ -60,6 +60,7 @@ boolean scan_vswr(uint32_t start, uint32_t stop, int8_t power, uint16_t samples,
         STM32L0.deepsleep(1000);
         STM32L0.wdtReset(); // just a hack due to a large delay in this loop
         digitalWrite(VSWR_EN,HIGH);
+        
         while(LoRaWAN.setTxContinuousWave(freq,power,100)==false){
             delay(500);
             Serial.println("cw wait");
@@ -170,10 +171,10 @@ boolean rf_autotune(void){
   for(float tune=0;tune<tune_stop;tune++){
     delay(1000);
     STM32L0.wdtReset(); // just a hack due to a large delay in this loop
-    DTC_Initialize(STM32L0_GPIO_PIN_PB12, tune, STM32L0_GPIO_PIN_NONE, 0b0);
+    //DTC_Initialize(STM32L0_GPIO_PIN_PB12, tune, STM32L0_GPIO_PIN_NONE, 0b0);
     digitalWrite(VSWR_EN,HIGH);
 
-    while(LoRaWAN.setTxContinuousWave(868000000,5,100)==false){
+    while(LoRaWAN.setTxContinuousWave((unsigned long)868000000,(float)5,(unsigned long)100)==0){
         delay(100);
     }
     unsigned long start_time=millis();

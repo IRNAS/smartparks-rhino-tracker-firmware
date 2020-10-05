@@ -134,7 +134,7 @@ boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
       serial_debug.print("DTC: ");
       serial_debug.println(eeprom_dtc_1);
     #endif
-    DTC_Initialize(STM32L0_GPIO_PIN_PB12, eeprom_dtc_1, STM32L0_GPIO_PIN_NONE, 0b0);
+    //DTC_Initialize(STM32L0_GPIO_PIN_PB12, eeprom_dtc_1, STM32L0_GPIO_PIN_NONE, 0b0); //TODO
 
   int response = 0; 
   if (!LoRaWAN.joined()) {
