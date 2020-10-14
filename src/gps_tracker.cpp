@@ -466,16 +466,15 @@ void gps_stop(void){
       max_snr=gps_satellites.snr(index);
     }
   }
-
   float latitude, longitude, hdop, epe, satellites, altitude = 0;
-  latitude = gps_location.latitude();
-  longitude = gps_location.longitude();
-  altitude = gps_location.altitude();
-  hdop = gps_location.hdop();
-  epe = gps_location.ehpe();
-  satellites = gps_location.satellites();
-
   if (gps_location.fixType()>= GNSSLocation::TYPE_2D){
+    
+    latitude = gps_location.latitude();
+    longitude = gps_location.longitude();
+    altitude = gps_location.altitude();
+    hdop = gps_location.hdop();
+    epe = gps_location.ehpe();
+    satellites = gps_location.satellites();
     // 3 of 4 bytes of the variable are populated with data
     uint32_t lat_packed = (uint32_t)(((latitude + 90) / 180.0) * 16777215);
     uint32_t lon_packed = (uint32_t)(((longitude + 180) / 360.0) * 16777215);
