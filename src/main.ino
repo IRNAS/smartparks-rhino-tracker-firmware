@@ -211,7 +211,7 @@ bool state_check_timeout(void){
  * 
  */
 void setup() {
-  //STM32L0.stop(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
+  //STM32L0.deepsleep(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
   // Watchdog
   STM32L0.wdtEnable(18000);
   analogReadResolution(12);
@@ -596,10 +596,10 @@ void system_sleep(unsigned long sleep){
   while(remaining_sleep>0){
     if(remaining_sleep>5000){
       remaining_sleep=remaining_sleep-5000;
-      STM32L0.stop(5000);
+      STM32L0.deepsleep(5000);
     }
     else{
-      STM32L0.stop(remaining_sleep);
+      STM32L0.deepsleep(remaining_sleep);
       remaining_sleep=0;
     }
     //wake-up

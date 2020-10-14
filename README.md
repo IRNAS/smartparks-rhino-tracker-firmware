@@ -55,7 +55,7 @@ The GPS system is configured by defining the `gps_periodic_interval` - time betw
 * `gps_min_fix_time` - minimal fix time - 5-15 is a good default
 * `gps_min_ehpe` - minimal ehpe to be achieved - 50 is a good default
 * `gps_hot_fix_retry`(0-255)- number of times a hot fix is retried before failing to cold-fix - 5 is a good default
-* `gps_cold_fix_retry`(0-255) - number of time a cold fix is retried before failing the gps module. `gps_settings.hot_fix` needs to be enabled for this settings to be used - 2 is a good default
+* `gps_cold_fix_retry`(0-255) - number of time a cold fix is retried before failing the gps module. `gps_settings.hot_fix` needs to be enabled for this settings to be used - 2 is a good default, 255 is a special value indicating the cold fix never times out.
 * `gps_fail_retry` - number of times gps system is retried before putting it in failed state, only 0 can be used currently
 * `gps_settings` -
   *  `bit 0` - 3d fix enabled - 1 is agood default
