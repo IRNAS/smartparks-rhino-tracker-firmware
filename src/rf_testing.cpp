@@ -171,7 +171,7 @@ boolean rf_autotune(void){
   for(float tune=0;tune<tune_stop;tune++){
     delay(1000);
     STM32L0.wdtReset(); // just a hack due to a large delay in this loop
-    //DTC_Initialize(STM32L0_GPIO_PIN_PB12, tune, STM32L0_GPIO_PIN_NONE, 0b0);
+    DTC_Initialize(STM32L0_GPIO_PIN_PB12, tune, STM32L0_GPIO_PIN_NONE, 0b0);
     digitalWrite(VSWR_EN,HIGH);
 
     while(LoRaWAN.setTxContinuousWave((unsigned long)868000000,(float)5,(unsigned long)100)==0){
