@@ -1,7 +1,7 @@
 #ifndef BOARD_H_
 #define BOARD_H_
 
-#define FW_VERSION 0x0102 // upper byte is major, lower is minor
+#define FW_VERSION 0x0200 // upper byte is major, lower is minor
 
 #define VER2_3_DROPOFF
 
