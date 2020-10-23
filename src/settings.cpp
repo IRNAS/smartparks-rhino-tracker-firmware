@@ -26,20 +26,20 @@ uint8_t settings_get_packet_port(void){
  */
 void settings_init(void){
     //default settings
-    settings_packet.data.system_status_interval=30;
+    settings_packet.data.system_status_interval=10;
     settings_packet.data.system_functions=0xff;
     settings_packet.data.lorawan_datarate_adr=3;
-    settings_packet.data.gps_periodic_interval=0;
+    settings_packet.data.gps_periodic_interval=5;
     settings_packet.data.gps_triggered_interval=0;
     settings_packet.data.gps_triggered_threshold=0x0f;
     settings_packet.data.gps_triggered_duration=0x0f;
-    settings_packet.data.gps_cold_fix_timeout=200;
-    settings_packet.data.gps_hot_fix_timeout=30;
+    settings_packet.data.gps_cold_fix_timeout=60;
+    settings_packet.data.gps_hot_fix_timeout=10;
     settings_packet.data.gps_min_fix_time=5;
     settings_packet.data.gps_min_ehpe=50;
     settings_packet.data.gps_hot_fix_retry=5;
     settings_packet.data.gps_cold_fix_retry=2;
-    settings_packet.data.gps_fail_retry=0; //must be 0 due to bug in GPS core
+    settings_packet.data.gps_fail_retry=1;
     settings_packet.data.gps_settings=0b10001101;
     settings_packet.data.system_voltage_interval=30;
     settings_packet.data.gps_charge_min=0;
@@ -49,6 +49,7 @@ void settings_init(void){
     settings_packet.data.pulse_threshold=0;
     settings_packet.data.pulse_on_timeout=0;
     settings_packet.data.pulse_min_interval=0;
+    settings_packet.data.gps_accel_z_threshold=2000;
 
     //check if valid settings present in eeprom 
     //uint8_t EEPROM_DATA_START_SETTINGS = EEPROM_DATA_START_SETTINGS;
