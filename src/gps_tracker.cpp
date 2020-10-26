@@ -462,6 +462,19 @@ void gps_stop(void){
   GNSS.satellites(gps_satellites);
   uint8_t max_snr = 0;
   for (unsigned int index = 0; index < gps_satellites.count(); index++){
+#ifdef debug
+    serial_debug.print("gps_sat(");
+    serial_debug.print(gps_satellites.svid(index));
+    serial_debug.print(",");
+    serial_debug.print(gps_satellites.snr(index));
+    serial_debug.print(",");
+    serial_debug.print(gps_satellites.acquired(index));
+    serial_debug.print(",");
+    serial_debug.print(gps_satellites.locked(index));
+    serial_debug.print(",");
+    serial_debug.print(gps_satellites.navigating(index));
+    serial_debug.print(")");
+#endif
     if(max_snr<gps_satellites.snr(index)){
       max_snr=gps_satellites.snr(index);
     }
