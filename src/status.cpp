@@ -482,7 +482,7 @@ delay(3000);
       break;
     }
     STM32L0.wdtReset(); // reset watchdog
-    STM32L0.stop(10000); // sleep for 10s
+    STM32L0.deepsleep(10000); // sleep for 10s
   }
   #ifdef debug
   serial_debug.print("charged to mv: "); serial_debug.println(capacitor);
@@ -496,7 +496,7 @@ delay(3000);
 
   //trigger the drop-off mechanism
   digitalWrite(DROP_EN,HIGH);
-  STM32L0.stop(500); // sleep for 100ms
+  STM32L0.deepsleep(500); // sleep for 100ms
 
   while(millis()<(start+10000)){
     capacitor = ads.readADC_SingleEnded(0)*3;
@@ -508,9 +508,9 @@ delay(3000);
       break;
     }
     STM32L0.wdtReset(); // reset watchdog
-    STM32L0.stop(100); // sleep for 100ms
+    STM32L0.deepsleep(100); // sleep for 100ms
     digitalWrite(DROP_EN,LOW);
-    STM32L0.stop(250); // sleep for 100ms
+    STM32L0.deepsleep(250); // sleep for 100ms
     digitalWrite(DROP_EN,HIGH);
   }
 
