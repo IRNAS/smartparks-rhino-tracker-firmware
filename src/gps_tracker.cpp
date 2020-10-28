@@ -218,6 +218,7 @@ boolean gps_test(){
     return false;
   }
   delay(3000);
+  gps_fail_count=0;
   gps_begin_happened==false;
   gps_end();
   gps_fail_fix_count=0;
@@ -225,6 +226,20 @@ boolean gps_test(){
   gps_backup(false);
   bitClear(status_packet.data.system_functions_errors,2);
   return true;
+}
+
+/**
+ * @brief reset gps
+ */
+boolean gps_reset(){
+  gps_fail_count=0;
+  gps_begin_happened==false;
+  gps_fail_fix_count=0;
+  gps_power(false);
+  gps_backup(false);
+  bitClear(status_packet.data.system_functions_errors,0);
+  bitClear(status_packet.data.system_functions_errors,1);
+  bitClear(status_packet.data.system_functions_errors,2);
 }
 
 /**
