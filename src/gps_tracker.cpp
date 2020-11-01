@@ -10,8 +10,8 @@ boolean gps_send_flag = false; // extern
 boolean gps_log_flag = false; // extarn
 boolean gps_done = false; // extern
 
-uint8_t gps_log_count=0;
-uint8_t gps_log_send_count=0;
+uint16_t gps_eeprom_offset=0;
+uint16_t gps_send_offset=0;
 
 boolean gps_begin_happened = false;
 uint8_t gps_fail_count = 0;
@@ -252,6 +252,9 @@ boolean gps_begin(void){
     serial_debug.print("gps_begin(");
     serial_debug.println(")");
   #endif
+
+  // initialize the log and determine what has been written thus far
+  gps_log_init();
   
   // check if more fails have occured then allowed
   if(gps_fail_count>settings_packet.data.gps_fail_retry){
@@ -478,7 +481,7 @@ void gps_stop(void){
   uint8_t max_snr = 0;
   for (unsigned int index = 0; index < gps_satellites.count(); index++){
 #ifdef debug
-    serial_debug.print("gps_sat(");
+    /*serial_debug.print("gps_sat(");
     serial_debug.print(gps_satellites.svid(index));
     serial_debug.print(",");
     serial_debug.print(gps_satellites.snr(index));
@@ -488,7 +491,7 @@ void gps_stop(void){
     serial_debug.print(gps_satellites.locked(index));
     serial_debug.print(",");
     serial_debug.print(gps_satellites.navigating(index));
-    serial_debug.print(")");
+    serial_debug.print(")");*/
 #endif
     if(max_snr<gps_satellites.snr(index)){
       max_snr=gps_satellites.snr(index);
@@ -525,20 +528,23 @@ void gps_stop(void){
     timeinfo.tm_year = gps_location.year() - 1900;
     time_t time = mktime(&timeinfo);
 
-    gps_log_packet.data[gps_log_count].lat1=gps_packet.data.lat1;
-    gps_log_packet.data[gps_log_count].lat2=gps_packet.data.lat2;
-    gps_log_packet.data[gps_log_count].lat3=gps_packet.data.lat3;
-    gps_log_packet.data[gps_log_count].lon1=gps_packet.data.lon1;
-    gps_log_packet.data[gps_log_count].lon2=gps_packet.data.lon2;
-    gps_log_packet.data[gps_log_count].lon3=gps_packet.data.lon3;
-    gps_log_packet.data[gps_log_count].time=(uint32_t)time;
-
-    gps_log_count++;
-
-    // wrap around if log is full
-    if(GPS_LOG_SIZE<=gps_log_count){
-      gps_log_count=0;
-    }
+    gps_log_packet.data.lat1=gps_packet.data.lat1;
+    gps_log_packet.data.lat2=gps_packet.data.lat2;
+    gps_log_packet.data.lat3=gps_packet.data.lat3;
+    gps_log_packet.data.lon1=gps_packet.data.lon1;
+    gps_log_packet.data.lon2=gps_packet.data.lon2;
+    gps_log_packet.data.lon3=gps_packet.data.lon3;
+    uint32_t time_temp =(uint32_t)time-1600000000; // subtract the starting date 
+    time_temp=time_temp/60; // divide to get 60s precision
+    gps_log_packet.data.time1=time_temp >> 16;
+    gps_log_packet.data.time2=time_temp >> 8;
+    gps_log_packet.data.time3=time_temp;
+    uint8_t epe_temp = min(gps_packet.data.epe/12,7);
+    uint8_t ttf_temp = min(gps_packet.data.time_to_fix/5,15);
+    gps_log_packet.data.fix_stats=(gps_packet.data.motion<<7)|(epe_temp<<4)|(ttf_temp);
+    delay(10);
+    gps_log_add();
+    delay(10);
 
     gps_packet.data.time=(uint32_t)time;
 
@@ -705,7 +711,77 @@ float lux_read(void){
  *  
  */
 boolean gps_send(void){
-  return lorawan_send(gps_packet_port, &gps_packet.bytes[0], sizeof(gpsData_t));
+  return lorawan_send(gps_packet_port, &gps_packet.bytes[0], sizeof(gpsData_t),settings_packet.data.lorawan_datarate_adr&0x0f);
+}
+
+/**
+ * @brief initialize gps log
+ *  
+ */
+void gps_log_init(){
+  // read eeprom to find the last entry based on time
+  gps_eeprom_offset=EEPROM_DATA_START_LOG;
+  gps_send_offset = EEPROM_DATA_START_LOG;
+  uint32_t time_max=0;
+  uint16_t start_offset=EEPROM_DATA_START_LOG;
+
+  for (uint16_t offset = EEPROM_DATA_START_LOG; offset < EEPROM_DATA_END_LOG; offset+=sizeof(gpsLog_t)){
+    // this reads a single log entry from EEPROM
+    float sum=0;
+    for (int i = 0; i < sizeof(gpsLog_t); i++)
+    {
+      gps_log_packet.bytes[i]=EEPROM.read(offset+i);
+      sum+=gps_log_packet.bytes[i];
+      //serial_debug.println(EEPROM.read(offset+i),HEX);
+      delay(1);
+    }
+    // read time and determine if the greatest time entry in the log
+    uint32_t time_temp = gps_log_packet.data.time1<<16 | gps_log_packet.data.time2<<8 | gps_log_packet.data.time3;
+    //serial_debug.print("time_temp: ");
+    //serial_debug.println(time_temp);
+    if(sum==0){
+      // erased eeprom found
+      start_offset=offset;
+      break;
+    }
+    else if(time_temp>time_max){
+      time_max=time_temp;
+      start_offset=offset+sizeof(gpsLog_t);
+    }
+  }
+
+  gps_eeprom_offset=start_offset;
+  // make sure it is within bounds or go to the beginning
+  if(gps_eeprom_offset>=EEPROM_DATA_END_LOG){
+    gps_eeprom_offset=EEPROM_DATA_START_LOG;
+  }
+  #ifdef debug
+    serial_debug.print("gps_log_init offset: 0x");
+    serial_debug.println(gps_eeprom_offset,HEX);
+  #endif  
+}
+
+/**
+ * @brief add to gps log
+ *  
+ */
+void gps_log_add(){
+  #ifdef debug
+      serial_debug.print("gps_log_add offset: 0x");
+      serial_debug.println(gps_eeprom_offset,HEX);
+  #endif  
+  delay(100);
+  // add the latest entry to the gps log
+  for (int i = 0; i < sizeof(gpsLog_t); i++)
+  {
+    EEPROM.write(gps_eeprom_offset+i,gps_log_packet.bytes[i]);
+  }
+  // set the offset to one higher then the highest log value
+  gps_eeprom_offset+=sizeof(gpsLog_t);
+  // make sure it is within bounds or go to the beginning
+  if(gps_eeprom_offset>=EEPROM_DATA_END_LOG){
+    gps_eeprom_offset=EEPROM_DATA_START_LOG;
+  }
 }
 
 /**
@@ -715,37 +791,38 @@ boolean gps_send(void){
 boolean gps_log_send(void){
   //send gps log in batches of 5 locations until all data is sent
   // if there is remaining data to be sent, schedule sending again
-  uint8_t logs_per_packet=5;
-
-  uint16_t offset=logs_per_packet*gps_log_send_count*sizeof(gpsLog_t);
+  uint8_t logs_per_packet=20;
 
   #ifdef debug
-    serial_debug.print("gps_log_send(");
-    serial_debug.print(gps_log_send_count);
-    serial_debug.print(" ");
-    serial_debug.print(gps_log_send_count/logs_per_packet);
-    serial_debug.print(" ");
-    serial_debug.print(gps_log_count);
-    serial_debug.print(" ");
-    serial_debug.print(gps_log_count/logs_per_packet);
-    serial_debug.print(" ");
-    serial_debug.print(gps_log_flag);
-    serial_debug.print(" ");
-    serial_debug.print(offset);
-    serial_debug.print(" ");
-    serial_debug.println(")");
-  #endif
+      serial_debug.print("gps_log_send offset: 0x");
+      serial_debug.println(gps_send_offset,HEX);
+  #endif  
 
-  gps_log_send_count++;
-  //reset log send count
-  if(GPS_LOG_SIZE>gps_log_send_count*5){
-    gps_log_flag=true;
+  // create a buffer and read from eeprom
+  uint8_t buf[logs_per_packet*sizeof(gpsLog_t)];
+  float sum = 0;
+  for (int i = 0; i < logs_per_packet*sizeof(gpsLog_t); i++)
+  {
+    buf[i]=EEPROM.read(gps_send_offset+i);
+    sum+=buf[i];
+  }
+
+  // set the offset to one higher then the highest log value
+  gps_send_offset+=logs_per_packet*sizeof(gpsLog_t);
+  // make sure it is within bounds or go to the beginning
+  if(gps_send_offset>=EEPROM_DATA_END_LOG){
+    gps_send_offset=EEPROM_DATA_START_LOG;
+  }
+  // no more entries in log
+  else if(sum==0){
+    gps_send_offset=EEPROM_DATA_START_LOG;
   }
   else{
-    gps_log_send_count=0;
+    //schedule more transmissions if the end has not yet been reached
+    gps_log_flag=true;
   }
-
-  return lorawan_send(gps_log_packet_port, &gps_log_packet.bytes[offset], sizeof(gpsLog_t)*logs_per_packet);
+  // NOTE: Log data is always sent on SF7 to conserve airtime
+  return lorawan_send(gps_log_packet_port, &buf[0], sizeof(gpsLog_t)*logs_per_packet,5);
 }
 
 /**
@@ -753,12 +830,18 @@ boolean gps_log_send(void){
  *  
  */
 void gps_log_clear(void){
-  gps_log_send_count=0;
-  gps_log_count=0;
-  for (int i = 0; i < sizeof(gpsLog_t)*GPS_LOG_SIZE; i++)
-  {
-    gps_log_packet.bytes[i]=0;
+  for (uint16_t offset = EEPROM_DATA_START_LOG; offset < EEPROM_DATA_END_LOG; offset+=sizeof(gpsLog_t)){
+    // this reads a single log entry from EEPROM
+    for (int i = 0; i < sizeof(gpsLog_t); i++)
+    {
+      EEPROM.write(offset+i,0x00);
+    }
   }
+  gps_send_offset=EEPROM_DATA_START_LOG;
+  gps_eeprom_offset=EEPROM_DATA_START_LOG;
+  #ifdef debug
+    serial_debug.println("gps_log_clear()");
+  #endif
 }
 
 /**

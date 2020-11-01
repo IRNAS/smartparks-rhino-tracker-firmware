@@ -110,7 +110,7 @@ boolean lorawan_init(void){
  * @param size 
  * @return boolean 
  */
-boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
+boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size, uint8_t datarate){
   #ifdef debug
     serial_debug.println("lorawan_send() init");
   #endif
@@ -152,7 +152,7 @@ boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size){
   }
 
   LoRaWAN.setADR(settings_packet.data.lorawan_datarate_adr>>7);
-  LoRaWAN.setDataRate(settings_packet.data.lorawan_datarate_adr&0x0f);
+  LoRaWAN.setDataRate(datarate);
   #ifdef debug
     serial_debug.print("lorawan_send( ");
     serial_debug.print("TimeOnAir: ");
@@ -296,16 +296,6 @@ void lorawan_receiveCallback(void)
               // now the settings can be copied into the structure
               command_receive(data[0]);
           }
-      }
-      // handle GPS commands
-      if(LoRaWAN.remotePort()==91){
-        if(size==5){
-          if(data[0]=0xcc){
-            uint16_t interval = data[1]|data[2]<<8;
-            uint16_t duration = data[3]|data[4]<<8;
-            gps_command_request(interval,duration);
-          }
-        }
       }
       // handle set DTC value
       if(LoRaWAN.remotePort()==92){

@@ -271,7 +271,7 @@ boolean status_send(void){
     serial_debug.println(" )");
   #endif
 
-  return lorawan_send(status_packet_port, &status_packet.bytes[0], sizeof(statusData_t));
+  return lorawan_send(status_packet_port, &status_packet.bytes[0], sizeof(statusData_t),settings_packet.data.lorawan_datarate_adr&0x0f);
 }
 
 /**
@@ -446,7 +446,7 @@ void status_dropoff(){
 
 // send a lora message to show the process start
 uint8_t packet[2]={0xd0,0x00};
-lorawan_send(99,&packet[0], sizeof(packet));
+lorawan_send(99,&packet[0], sizeof(packet),settings_packet.data.lorawan_datarate_adr&0x0f);
 delay(3000);
 
   // set up the reqired state
@@ -519,7 +519,7 @@ delay(3000);
 
   //send lora message to denote the end
   packet[1]=1;
-  lorawan_send(99,&packet[0], sizeof(packet));
+  lorawan_send(99,&packet[0], sizeof(packet),settings_packet.data.lorawan_datarate_adr&0x0f);
   delay(3000);
 
   #ifdef debug

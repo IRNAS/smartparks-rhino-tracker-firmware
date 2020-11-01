@@ -15,7 +15,7 @@ This device is a power-efficeint GPS tracker sending data via LoraWAN. There are
  * `status - port 2 ` - (legacy, not enabled in latest version anymore) device status message being sent with the specified `status_interval` in minutes - recommended to do this every 24h
  * `gps - port 1` - gps location - gps packet is set based on the `settings` and various intervals defined there.
  * `status+gps - port 12` - device status message being sent with the specified `status_interval` in minutes - recommended to do this every 24h, combined with last gps position. Particularly useful if gps fix interval is longer then the status interval.
- * `gps log` - 
+ * `gps log - port 11` - GPS positions are stored in flash memory, last 500 locations. Theya re requested with a command and sent out as SF7 packets of 200 bytes.
 
 ## Reed switch
 The magnetic REED switch is put in place to put the device in hibernation for transport purposes or prior to installation. Removing the magnet will initialize the operation in 60s of removing it. Note that putting the device in hibernation performs a system reset and forces an OTAA rejoin if that mode is programmed.
@@ -73,6 +73,18 @@ Theory of operation is as follows:
 
 `gps_accel_z_threshold` is the value set as accelerometer z value above which gps can trigger, meaning the tracker is pointing to the sky. Negative hangles are handled as well such that the more negative number then the threshold, then trigger occurs.
 
+## GPS logging
+5kB of EEPROM is available for GPS logging. At 10B per position, this means we can store last 500 positions. Upon request, these positions are sent via LoRaWAN.
+
+### GPS data storage format
+ * `lat` - 3 bytes lattitude
+ * `lon` - 3 bytes longtitude
+ * `time` - 3 bytes of time - for fixes we are mostly interested in 60s precision. Timestamp is in format (linux epoch time in seconds - 1600000000 (starting date Sept 13th 2020))/60. This gives us 30 years of runtime.
+ * `fix_info` - 1 byte
+   * 1 bit - motion triggered flag
+   * 3 bit - epe/12 (0-100 typical, value ranges 0-7), any value higher maps to higest value
+   * 4 bit - ttf/5 (0-200s typical, value ranges to 0-15), any value higher maps to higest value
+
 ## RF tuning DTC 
 Trackers include a DTC tuning component, which can be used to tune the antenna accordingly.
 
@@ -123,15 +135,11 @@ There are a number of single-byte commands specified for critical device control
 Implemented commands to be sent as single byte to port 99:
  * `0xaa` - Sent the current settings
  * `0xab` - Triggers system reset
+ * `0xac` - GPS system reset, restarts GPS without system reset
  * `0xde` - Resets LoraWAN stored settings in EEPROM and forces a re-join
+ * `0xd0` - Drop-off command for the drop-off mechanism
  * `0x11` - Request the device GPS position log - 5 positions per packet, all available positions in sequence
  * `0xf1` - Clear GPS position log - use if necessary, but log simply stores last 100 positions and overwrites itself
-
-GPS commands are a separate option on port 91:
- * `0xcc` - Request the GPS to be active based on the downlink command, required additional parameters
-   * `duration` - configures how long in minutes should this mode be active
-   * `interval` - configures how often in minutes should the unit report position
-   * `example binary packet to port 91`: `0xCC 0x05 0x00 0x01 0x00` - send GPS every 1 minute for 5 minutes
 
 ## Tools
 There are a few tools available to make using this solution easier, namely:
