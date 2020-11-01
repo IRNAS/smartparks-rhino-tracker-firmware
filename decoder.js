@@ -143,9 +143,9 @@ function Decoder(bytes) {
       var d= new Date(location.gps_time*1000);
       location.gps_time_decoded = d.toLocaleString();
       var fix_stats= bytes[cnt++];
-      locations.motion = fix_stats>>7;
-      locations.epe = ((fix_stats>>4)&0x07)*12;
-      locations.ttf = (fix_stats&0x0f)*5;
+      location.motion = fix_stats>>7;
+      location.epe = ((fix_stats>>4)&0x07)*12;
+      location.ttf = (fix_stats&0x0f)*5;
       if(location.lat!==0 && location.lon!==0){
         location.lat = (location.lat / 16777215.0 * 180) - 90;
         location.lon = (location.lon / 16777215.0 * 360) - 180;
