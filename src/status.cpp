@@ -2,8 +2,8 @@
 
 uint8_t resetCause = 0xff;
 
-#define debug
-#define serial_debug  Serial
+// #define debug
+// #define serial_debug  Serial
 
 boolean status_send_flag = false;
 unsigned long event_status_last = 0;
@@ -83,7 +83,7 @@ void pulse_callback(){
       boolean trigger_output = false;
 
       // if number of pulses threshold has been reached, trigger output
-      if(pulse_counter >= settings_packet.data.pulse_threshold){
+      if(settings_packet.data.pulse_threshold > 0 && pulse_counter >= settings_packet.data.pulse_threshold){
         // do output
         trigger_output = true;
       }

@@ -1,8 +1,8 @@
 #include "settings.h"
 
-//#define debug
-//#define serial_debug  Serial
-//#define FORCE_DEFAULT_SETTINGS // TODO: remove for production
+// #define debug
+// #define serial_debug  Serial
+#define FORCE_DEFAULT_SETTINGS // TODO: remove for production
 
 boolean settings_updated = false;
 settingsPacket_t settings_packet;
@@ -45,7 +45,7 @@ void settings_init(void){
     settings_packet.data.system_charge_min=0;
     settings_packet.data.system_charge_max=255;
     settings_packet.data.system_input_charge_min=10000;
-    settings_packet.data.pulse_threshold=5;
+    settings_packet.data.pulse_threshold=0;
     settings_packet.data.pulse_on_timeout=120;
     settings_packet.data.pulse_min_interval=300;
 
