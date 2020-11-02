@@ -80,7 +80,7 @@ void pulse_callback(){
     if(status_packet.data.duration_of_pulse > 1900){
       pulse_counter++;
 
-      boolean trigger_output = false;
+      boolean trigger_output = pulse_last_time == 0; // On first pulse always trigger the output
 
       // if number of pulses threshold has been reached, trigger output
       if(settings_packet.data.pulse_threshold > 0 && pulse_counter >= settings_packet.data.pulse_threshold){
@@ -100,7 +100,8 @@ void pulse_callback(){
       if(trigger_output && timer_pulse_off.active()) {
         trigger_output = false;
       }
-      if(trigger_output) {
+      
+      if (trigger_output) {
         pulse_last_time = millis();
         pulse_counter = 0;
         // send LoRa message
