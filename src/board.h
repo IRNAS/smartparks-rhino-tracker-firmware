@@ -4,7 +4,7 @@
 #define FW_VERSION 0x0202
 // upper byte is major, lower is minor
 
-#define VER2_3_FENCE
+#define VER2_3_DROPOFF
 
 
 // lion
