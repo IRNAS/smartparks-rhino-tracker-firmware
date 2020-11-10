@@ -75,9 +75,9 @@ Theory of operation is as follows:
 
 ## GPS error logic
 GPS errors are shown by 3 different varaibles in status message:
-`gps_periodic_error` - issued when `gps_cold_fix_retry` times the gps has failed toa cquire a fix. Subject to `gps_fail_retry` the system may try self-reset the GPS system.
-`gps_triggered_error` - absolutely same as above
-`gps_fix_error` - issued for every fix attempt, which fails due to tiemout hot or cold.
+ * `gps_periodic_error` - issued when `gps_cold_fix_retry` times the gps has failed toa cquire a fix. Subject to `gps_fail_retry` the system may try self-reset the GPS system.
+ * `gps_triggered_error` - absolutely same as above
+ * `gps_fix_error` - issued for every fix attempt, which fails due to tiemout hot or cold.
 
 ## RF tuning DTC 
 Trackers include a DTC tuning component, which can be used to tune the antenna accordingly.
