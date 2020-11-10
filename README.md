@@ -73,6 +73,12 @@ Theory of operation is as follows:
 
 `gps_accel_z_threshold` is the value set as accelerometer z value above which gps can trigger, meaning the tracker is pointing to the sky. Negative hangles are handled as well such that the more negative number then the threshold, then trigger occurs.
 
+## GPS error logic
+GPS errors are shown by 3 different varaibles in status message:
+`gps_periodic_error` - issued when `gps_cold_fix_retry` times the gps has failed toa cquire a fix. Subject to `gps_fail_retry` the system may try self-reset the GPS system.
+`gps_triggered_error` - absolutely same as above
+`gps_fix_error` - issued for every fix attempt, which fails due to tiemout hot or cold.
+
 ## RF tuning DTC 
 Trackers include a DTC tuning component, which can be used to tune the antenna accordingly.
 
