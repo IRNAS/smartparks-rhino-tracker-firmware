@@ -46,7 +46,7 @@ void settings_init(void){
     settings_packet.data.system_charge_max=255;
     settings_packet.data.system_input_charge_min=10000;
     settings_packet.data.pulse_threshold=0;
-    settings_packet.data.pulse_on_timeout=120;
+    settings_packet.data.pulse_on_timeout=50;
     settings_packet.data.pulse_min_interval=300;
 
     //check if valid settings present in eeprom 
