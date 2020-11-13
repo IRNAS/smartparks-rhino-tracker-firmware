@@ -91,7 +91,7 @@ void pulse_callback(){
       status_send_flag = HIGH;
 
       // turn on output to power the SDCard, do this delayed to give the Lora packet time to trigger and boot the RPi
-      timer_pulse.start(pulse_output_on_callback, 60 * 1000);
+      timer_pulse.start(pulse_output_on_callback, 45 * 1000);
     }
   }
 }
