@@ -12,7 +12,7 @@ statusPacket_t status_packet;
 
 extern charging_e charging_state;
 
-TimerMillis timer_pulse_off;
+TimerMillis timer_pulse;
 
 LIS2DW12CLASS lis;
 
@@ -20,23 +20,24 @@ boolean pulse_state = LOW;
 uint8_t pulse_counter = 0;
 unsigned long pulse_last_time = 0;
 
-
-void pulse_output_on_callback(){
-#ifdef PULSE_OUT
-  digitalWrite(PULSE_OUT, HIGH);
-  //digitalWrite(LED_RED, HIGH);
-#endif // PULSE_OUT
+void pulse_output_off_callback(){
+  #ifdef debug
+    serial_debug.println("SD POWER OFF");
+  #endif
+  #ifdef PULSE_OUT
+    digitalWrite(PULSE_OUT, LOW);
+  #endif // PULSE_OUT
 }
 
-void pulse_output_off_callback(){
-#ifdef PULSE_OUT
-  // make sure if the input pin is high, that the output is not turned off
-  if(digitalRead(PULSE_IN)){
-    return;
-  }
-  digitalWrite(PULSE_OUT, LOW);
-  //digitalWrite(LED_RED, LOW);
-#endif // PULSE_OUT
+void pulse_output_on_callback(){
+  #ifdef debug
+    serial_debug.println("SD POWER ON");
+  #endif
+  // schedule a delayed pulse off to power off the SDCard
+  timer_pulse.start(pulse_output_off_callback, settings_packet.data.pulse_on_timeout * 1000);
+  #ifdef PULSE_OUT
+    digitalWrite(PULSE_OUT, HIGH);
+  #endif // PULSE_OUT
 }
 
 /*
@@ -48,69 +49,49 @@ pulse callback does the following
 - if a pulse occurs during this, count up and do nothing
 */
 void pulse_callback(){
-  // #ifdef debug
-  //   serial_debug.println("PULSE DETECTED");
-  // #endif
-
   pulse_state = digitalRead(PULSE_IN);
   uint32_t start_of_pulse = millis();
 
-  if(pulse_state == LOW){
-    // if not delayed by timer, handle immediately
-    if(timer_pulse_off.active()){
-      //pass
+  while(digitalRead(PULSE_IN) == 1);
+  uint32_t end_of_pulse = millis();
+  
+  status_packet.data.duration_of_pulse = (end_of_pulse - start_of_pulse);
+  
+  #ifdef debug
+    Serial.print("PULSE DETECTED: ");
+    Serial.println(status_packet.data.duration_of_pulse);
+  #endif
+
+  // Only set send flag, if duration of pulse is longer 1900 ms, this will
+  // filter out all pulses that were not result of detected PIR activity
+  if(status_packet.data.duration_of_pulse > 1900){
+    pulse_counter++;
+
+    boolean trigger_output = pulse_last_time == 0; // On first pulse always trigger the output
+
+    // if number of pulses threshold has been reached, trigger output
+    if(settings_packet.data.pulse_threshold > 0 && pulse_counter >= settings_packet.data.pulse_threshold){
+      // do output
+      trigger_output = true;
     }
-    else{
-      pulse_output_off_callback();
+
+    // if enough has passed since last pulse
+    uint32_t pulse_interval = millis() - pulse_last_time;
+    
+    if(pulse_interval >= (settings_packet.data.pulse_min_interval * 1000)){
+      // do output
+      trigger_output = true;
     }
-  }
-  else{
-    while(digitalRead(PULSE_IN) == 1);
-    uint32_t end_of_pulse = millis();
     
-    status_packet.data.duration_of_pulse = (end_of_pulse - start_of_pulse);
-    
-    // #ifdef debug
-    //   Serial.print("Duration of pulse is: ");
-    //   Serial.println(status_packet.data.duration_of_pulse);
-    // #endif
+    // When we actually want to trigger but the timer is running, then skip the trigger because have already triggered recently.
+    if (trigger_output && !timer_pulse.active()) {
+      pulse_last_time = millis();
+      pulse_counter = 0;
+      // send LoRa message
+      status_send_flag = HIGH;
 
-    // Only set send flag, if duration of pulse is longer 1900 ms, this will
-    // filter out all pulses that were not result of detected PIR activity
-    if(status_packet.data.duration_of_pulse > 1900){
-      pulse_counter++;
-
-      boolean trigger_output = pulse_last_time == 0; // On first pulse always trigger the output
-
-      // if number of pulses threshold has been reached, trigger output
-      if(settings_packet.data.pulse_threshold > 0 && pulse_counter >= settings_packet.data.pulse_threshold){
-        // do output
-        trigger_output = true;
-      }
-
-      // if enough has passed since last pulse
-      uint32_t pulse_interval = millis() - pulse_last_time;
-      
-      if(pulse_interval >= (settings_packet.data.pulse_min_interval * 1000)){
-        // do output
-        trigger_output = true;
-      }
-
-      // When we actually want to trigger the output but the timer is ot running, then skip the trigger.
-      if(trigger_output && timer_pulse_off.active()) {
-        trigger_output = false;
-      }
-      
-      if (trigger_output) {
-        pulse_last_time = millis();
-        pulse_counter = 0;
-        // send LoRa message
-        status_send_flag = HIGH;
-        // turn on output to power the SDCard
-        pulse_output_on_callback();
-        // schedule a delayed pulse off to power doen the SDCard
-        timer_pulse_off.start(pulse_output_off_callback, settings_packet.data.pulse_on_timeout * 1000);
-      }
+      // turn on output to power the SDCard, do this delayed to give the Lora packet time to trigger and boot the RPi
+      timer_pulse.start(pulse_output_on_callback, 60 * 1000);
     }
   }
 }
@@ -129,8 +110,8 @@ serial_debug.print("p thr: ");
 serial_debug.print(settings_packet.data.pulse_threshold);
 serial_debug.print(" p to: ");
 serial_debug.print(settings_packet.data.pulse_on_timeout);
-serial_debug.print(" p min: ");
-serial_debug.print(timer_pulse_off.active());
+serial_debug.print(" p act: ");
+serial_debug.print(timer_pulse.active());
 serial_debug.println(" )");
 #endif
 
