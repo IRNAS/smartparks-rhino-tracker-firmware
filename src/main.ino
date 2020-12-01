@@ -381,8 +381,8 @@ void loop() {
       charging_state=CHARGE;
     }
 
-    status_send_flag = true;
-    settings_send_flag = true;
+    status_send_flag = false;
+    settings_send_flag = false;
     // transition
     state_transition(IDLE);
     break;
