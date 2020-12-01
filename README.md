@@ -88,8 +88,9 @@ Send to port 92 a single byte value of what DTC should be, this gets stored into
 
 ## ADS fence monitor calibration
 
-Send to port 93 a 2 byte value with pthe calibration factor multiplied by 10000;
-For example the sensor is returning 1300, we wish to calibrate this to 1800. Calculating from this 1.3846 factor, multiplied is 13856, convert this to hex 0x3616. Send this via downlink.
+Send to port 93 a 2 byte value with the calibration factor multiplied by 10000;
+For example the sensor is returning 1300 (pulse_voltage), we wish to calibrate this to 1800. Calculating from this 1.3846 factor, multiplied is 13856, convert this to hex 0x3616. Send this via downlink.
+To reset the values send 2 byte value 2710 (hex 0x2710) to port 93.
 
 ## Pulse counting mode
 The pulse counting and reporting mode is built to enable interfacing an external piece of electronics, for example a camera trap and detec actions as well as to control an ouput.
