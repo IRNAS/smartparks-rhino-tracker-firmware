@@ -52,6 +52,14 @@ struct statusData_t{
   uint8_t pulse_count;
   uint8_t pulse_energy;
   uint16_t pulse_voltage;
+  uint8_t ctzn_temp;
+  uint16_t conductivity_ctz;
+  uint16_t salinity;
+  uint16_t conductivity_no_comp;
+  uint8_t optod_temp;
+  uint16_t oxygen_sat;
+  uint16_t oxygen_mgL;
+  uint16_t oxygen_ppm;
 }__attribute__((packed));
 
 union statusPacket_t{

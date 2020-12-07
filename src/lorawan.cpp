@@ -9,9 +9,9 @@
 
 // This is FALLBACK only:
 // LoraWAN ABP configuration - Keys are stored in program memory - this is fallback
-const char *devAddr = "26011D63";
-const char *nwkSKey = "9518E9E68D1476BC3386409B76476208";
-const char *appSKey = "7972E2A484F76EF7B579D641D0BFEBD5";
+const char *devAddr = "26013A07";
+const char *nwkSKey = "A05EBD16950988D4884F525DC54B11FA";
+const char *appSKey = "9B01ABF4011F3A25B8FD8DD95EFC7E17";
 
 boolean lorawan_send_successful = false; // flags sending has been successful to the FSM
 

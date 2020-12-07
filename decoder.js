@@ -101,7 +101,7 @@ function Decoder(bytes) {
     decoded.accelx = get_num(bytes[11], -2000, 2000, 8, 1);
     decoded.accely = get_num(bytes[12], -2000, 2000, 8, 1);
     decoded.accelz = get_num(bytes[13], -2000, 2000, 8, 1);
-    decoded.battery_low = (bytes[15] << 8) | bytes[14];; // result in mV
+    decoded.battery_low = (bytes[15] << 8) | bytes[14]; // result in mV
     decoded.gps_on_time_total = (bytes[17] << 8) | bytes[16];
     decoded.gps_time = bytes[18] | (bytes[19] << 8) | (bytes[20] << 16) | (bytes[21] << 24);
     var d= new Date(decoded.gps_time*1000);
@@ -110,6 +110,24 @@ function Decoder(bytes) {
     decoded.pulse_energy = (bytes[23]<<4) | (bytes[24] | (bytes[25] << 8)>>12);
     decoded.pulse_voltage = (bytes[24] | (bytes[25] << 8)) & 0x0fff;
     decoded.voltage_fence_v = decoded.pulse_voltage * 8;
+
+    decoded.ctzn_temp    = get_num(bytes[26], 0, 40, 8, 1);
+    conductivity_ctz     = (bytes[28] << 8) | bytes[27];
+    salinity             = (bytes[30] << 8) | bytes[29];
+    conductivity_no_comp = (bytes[32] << 8) | bytes[31];
+
+    decoded.optod_temp = get_num(bytes[33], 0, 40, 8, 1);
+    oxygen_sat = (bytes[35] << 8) | bytes[34];
+    oxygen_mgL = (bytes[37] << 8) | bytes[36];
+    oxygen_ppm = (bytes[39] << 8) | bytes[38];
+
+    decoded.conductivity_ctz     = get_num(conductivity_ctz,     0, 100, 16, 2);
+    decoded.salinity             = get_num(salinity,             5,  60, 16, 2);
+    decoded.conductivity_no_comp = get_num(conductivity_no_comp, 0, 100, 16, 2);
+
+    decoded.oxygen_sat = get_num(oxygen_sat, 0, 200, 16, 2);
+    decoded.oxygen_mgL = get_num(oxygen_mgL, 5,  20, 16, 2);
+    decoded.oxygen_ppm = get_num(oxygen_ppm, 0,  20, 16, 2);
   }
   else if (port === 1) {
     decoded.lat = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];

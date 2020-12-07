@@ -1,9 +1,27 @@
 #include "status.h"
+#include <ponsel_sensor.h>
 
 uint8_t resetCause = 0xff;
 
-//#define debug
-//#define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
+
+struct pinout pins =
+{
+    .boost_en = BOOST_EN,
+    .uart_inh = UART_INH,
+    .uart_sel_a = UART_SEL_A,
+    .uart_sel_b =  UART_SEL_B,
+    .driver_en = DRIVER_EN,
+    .enable_driver = LOW,
+    .disable_driver = HIGH,
+};
+
+ponsel_sensor ctzn(Serial1, 50, CTZN, pins);
+ponsel_sensor optod(Serial1, 10, OPTOD, pins);
+
+static bool ctzn_present = false;
+static bool optod_present = false;
 
 boolean status_send_flag = false;
 boolean status_dropoff_flag = false;
@@ -161,6 +179,18 @@ void status_init(void){
 
 #endif //DROP_CHG DROP_EN
 
+
+  // Needed for communication with ponsel sensors
+  Serial1.begin(9600);
+
+  if (ctzn.begin()) {
+    serial_debug.println("Ctzn present");
+    ctzn_present = true;
+  }
+  if (optod.begin()) {
+    serial_debug.println("Optod present");
+    optod_present = true;
+  }
 }
 
 /**
@@ -257,6 +287,37 @@ boolean status_send(void){
   if(0!=status_packet.data.lat1){
     status_packet.data.gps_resend++;
   }
+
+    struct measurements values;
+
+    if(ctzn_present)
+    {
+        if (ctzn.read_measurements()) {
+#ifdef debug
+            ctzn.print_measurements();
+#endif
+            values = ctzn.get_measurements();
+            status_packet.data.ctzn_temp =            (uint8_t) get_bits(values.param1, 0, 40, 8);
+            status_packet.data.conductivity_ctz =     (uint16_t)get_bits(values.param2, 0,100,16);
+            status_packet.data.salinity =             (uint16_t)get_bits(values.param3, 5, 60,16);
+            status_packet.data.conductivity_no_comp = (uint16_t)get_bits(values.param4, 0,100,16);
+        }
+    }
+
+
+    if(optod_present)
+    {
+        if (optod.read_measurements()) {
+#ifdef debug
+            optod.print_measurements();
+#endif
+            values = optod.get_measurements();
+            status_packet.data.optod_temp =     (uint8_t) get_bits(values.param1, 0, 40, 8);
+            status_packet.data.oxygen_sat =     (uint16_t)get_bits(values.param2, 0,200,16);
+            status_packet.data.oxygen_mgL =     (uint16_t)get_bits(values.param3, 5, 20,16);
+            status_packet.data.oxygen_ppm =     (uint16_t)get_bits(values.param4, 0, 20,16);
+        }
+    }
 
   #ifdef debug
     serial_debug.print("status_send( ");

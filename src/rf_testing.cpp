@@ -13,6 +13,10 @@ static uint8_t message[256];
 // Configure scanning parameters
 float vcc            = 2.5;         //voltage to calculate the measurement
 
+static boolean rf_scan(void);
+static boolean rf_autotune(void);
+static boolean scan_vswr(uint32_t start, uint32_t stop, int8_t power, uint16_t samples, uint32_t time, uint8_t *output);
+
 /**
  * @brief Initialize the rf logic
  * 
@@ -22,8 +26,10 @@ void rf_init(void){
         serial_debug.print("rf_init - ( ");
         serial_debug.println(" )");
     #endif
+#ifdef VSWR_EN
     pinMode(VSWR_EN,OUTPUT);
     digitalWrite(VSWR_EN,LOW);
+#endif
 }
 
 /**
@@ -37,7 +43,8 @@ void rf_init(void){
  * @param output 
  * @return boolean 
  */
-boolean scan_vswr(uint32_t start, uint32_t stop, int8_t power, uint16_t samples, uint32_t time, uint8_t *output)
+#ifdef VSWR_ADC
+static boolean scan_vswr(uint32_t start, uint32_t stop, int8_t power, uint16_t samples, uint32_t time, uint8_t *output)
 {
     uint32_t freq = start;
     uint32_t step = (stop-start)/samples;
@@ -59,6 +66,7 @@ boolean scan_vswr(uint32_t start, uint32_t stop, int8_t power, uint16_t samples,
         }
         STM32L0.deepsleep(1000);
         STM32L0.wdtReset(); // just a hack due to a large delay in this loop
+
         digitalWrite(VSWR_EN,HIGH);
         
         while(LoRaWAN.setTxContinuousWave(freq,power,100)==false){
@@ -103,6 +111,7 @@ boolean scan_vswr(uint32_t start, uint32_t stop, int8_t power, uint16_t samples,
     }
     return true;
 }
+#endif
 
 /**
  * @brief Send rf values
@@ -119,11 +128,15 @@ boolean rf_send(void){
     boolean status = false;
 
     if(rf_settings_packet.data.type==1){
+#ifdef VSWR_ADC
         status= rf_autotune();
+#endif
     }
     else if(rf_settings_packet.data.type==2)
     {
+#ifdef VSWR_ADC
         status=rf_scan();
+#endif
     }
     
 
@@ -134,7 +147,8 @@ boolean rf_send(void){
     return status;
 }
 
-boolean rf_scan(){
+#ifdef VSWR_ADC
+static boolean rf_scan(){
     digitalWrite(VSWR_EN,LOW);
     delay(3000);
     // guard against overflow
@@ -152,8 +166,10 @@ boolean rf_scan(){
 
     return lorawan_send(rf_vswr_port, &message[0], length);
 }
+#endif
 
-boolean rf_autotune(void){
+#ifdef VSWR_ADC
+static boolean rf_autotune(void){
 
     #ifdef debug
         serial_debug.print("rf_autotune( ");
@@ -202,3 +218,4 @@ delay(3000);
 
     return lorawan_send(rf_vswr_port, &message[0], length);
 }
+#endif

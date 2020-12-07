@@ -198,6 +198,7 @@ void gps_power(boolean enable){
  * @param enable 
  */
 void gps_backup(boolean enable){
+#ifdef GPS_BCK
   if(enable){
     pinMode(GPS_BCK,OUTPUT);
     digitalWrite(GPS_BCK,HIGH);
@@ -206,6 +207,7 @@ void gps_backup(boolean enable){
     digitalWrite(GPS_BCK,LOW);
     pinMode(GPS_BCK,INPUT_PULLDOWN);
   }
+#endif
 }
 
 /**

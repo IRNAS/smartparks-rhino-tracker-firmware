@@ -35,7 +35,5 @@ extern rf_settingsPacket_t rf_settings_packet;
 
 void rf_init(void);
 boolean rf_send(void);
-boolean rf_scan(void);
-boolean rf_autotune(void);
 
 #endif
