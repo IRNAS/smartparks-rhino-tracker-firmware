@@ -60,6 +60,9 @@ struct statusData_t{
   uint16_t oxygen_sat;
   uint16_t oxygen_mgL;
   uint16_t oxygen_ppm;
+  uint8_t bme_temp;
+  uint8_t bme_pressure;
+  uint8_t bme_humid;
 }__attribute__((packed));
 
 union statusPacket_t{

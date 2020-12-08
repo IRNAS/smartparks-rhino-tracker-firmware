@@ -128,6 +128,11 @@ function Decoder(bytes) {
     decoded.oxygen_sat = get_num(oxygen_sat, 0, 200, 16, 2);
     decoded.oxygen_mgL = get_num(oxygen_mgL, 5,  20, 16, 2);
     decoded.oxygen_ppm = get_num(oxygen_ppm, 0,  20, 16, 2);
+
+    decoded.bme_temp        = get_num(bytes[40], -40,  85, 8, 1);
+    decoded.bme_pressure    = get_num(bytes[41], 300,1100, 8, 1);
+    decoded.bme_humid       = get_num(bytes[42],   0, 100, 8, 1);
+
   }
   else if (port === 1) {
     decoded.lat = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];

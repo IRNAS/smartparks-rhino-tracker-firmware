@@ -1,7 +1,7 @@
 #include "gps_tracker.h"
 
-//#define debug
-//#define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
 
 gpsPacket_t gps_packet;
 gpsLogPacket_t gps_log_packet;
@@ -258,7 +258,8 @@ boolean gps_begin(void){
   gps_busy_timeout(1000);
   boolean error=false;
   //configure ublox mode and the serial port it is connected to
-  GNSS.begin(GNSS.MODE_UBLOX, GNSS.RATE_1HZ, Serial1, 0, 0,0);//GPS_EN, GPS_BCK);
+  GNSS.begin(GNSS.MODE_UBLOX, GNSS.RATE_1HZ, Serial2, -1, GPS_EN, -1);//GPS_EN, GPS_BCK);
+
   gps_begin_happened=true;
   // enable wakeup allows the gps to wake the processor from sleep
   GNSS.enableWakeup();

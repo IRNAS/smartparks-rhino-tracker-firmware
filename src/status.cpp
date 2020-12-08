@@ -1,10 +1,13 @@
 #include "status.h"
 #include <ponsel_sensor.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
 
 uint8_t resetCause = 0xff;
+Adafruit_BME280 bme; // comm over I2C
 
 #define debug
-#define serial_debug  Serial
+#define serial_debug Serial
 
 struct pinout pins =
 {
@@ -22,6 +25,7 @@ ponsel_sensor optod(Serial1, 10, OPTOD, pins);
 
 static bool ctzn_present = false;
 static bool optod_present = false;
+static bool bme_present = false;
 
 boolean status_send_flag = false;
 boolean status_dropoff_flag = false;
@@ -179,17 +183,42 @@ void status_init(void){
 
 #endif //DROP_CHG DROP_EN
 
+    if (bme.begin(0x76)) {
+#ifdef serial_debug
+        serial_debug.println("BME280 present!");
+#endif 
+        bme_present = true;
+    }
+    else {
+#ifdef serial_debug
+        serial_debug.println("BME280 not present!");
+        serial_debug.println("I2C lines might not work!");
+#endif 
+    }
 
   // Needed for communication with ponsel sensors
   Serial1.begin(9600);
-
   if (ctzn.begin()) {
+#ifdef serial_debug
     serial_debug.println("Ctzn present");
+#endif
     ctzn_present = true;
   }
+  else {
+#ifdef serial_debug
+    serial_debug.println("Ctzn not present");
+#endif
+  }
   if (optod.begin()) {
+#ifdef serial_debug
     serial_debug.println("Optod present");
+#endif
     optod_present = true;
+  } 
+  else {
+#ifdef serial_debug
+    serial_debug.println("Optod not present");
+#endif
   }
 }
 
@@ -284,13 +313,31 @@ boolean status_send(void){
   status_fence_monitor_read();
 
   // increment prior to sending if valid data is there
-  if(0!=status_packet.data.lat1){
+  if (0!=status_packet.data.lat1) {
     status_packet.data.gps_resend++;
   }
 
-    struct measurements values;
+    float bme_temp      = bme.readTemperature();
+    float bme_pressure  = bme.readPressure() / 100;
+    float bme_humid     = bme.readHumidity();
 
-    if(ctzn_present)
+#ifdef debug
+    serial_debug.print("bme_temp: ");
+    serial_debug.println(bme_temp);
+    serial_debug.print("bme_pressure: ");
+    serial_debug.println(bme_pressure);
+    serial_debug.print("bme_humid: ");
+    serial_debug.println(bme_humid);
+#endif
+
+    if (bme_present) {
+        status_packet.data.bme_temp =       (uint8_t) get_bits(bme.readTemperature(), -40, 85, 8);
+        status_packet.data.bme_pressure =   (uint8_t) get_bits(bme.readPressure() / 100.0F, 300, 1100, 8);
+        status_packet.data.bme_humid =      (uint8_t) get_bits(bme.readHumidity(), 0, 100, 8);
+    }
+
+    struct measurements values;
+    if (ctzn_present)
     {
         if (ctzn.read_measurements()) {
 #ifdef debug
@@ -305,7 +352,7 @@ boolean status_send(void){
     }
 
 
-    if(optod_present)
+    if (optod_present)
     {
         if (optod.read_measurements()) {
 #ifdef debug
