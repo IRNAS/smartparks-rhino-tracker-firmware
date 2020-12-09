@@ -197,6 +197,9 @@ void status_init(void){
     }
 
   // Needed for communication with ponsel sensors
+#ifdef serial_debug
+    serial_debug.println("Checking for ponsel sensors...");
+#endif
   Serial1.begin(9600);
   if (ctzn.begin()) {
 #ifdef serial_debug
