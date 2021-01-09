@@ -14,6 +14,8 @@ const char *nwkSKey = "9518E9E68D1476BC3386409B76476208";
 const char *appSKey = "7972E2A484F76EF7B579D641D0BFEBD5";
 
 boolean lorawan_send_successful = false; // flags sending has been successful to the FSM
+unsigned long uplink_counter_tracker = 0; // variable to track uplink counter
+
 
 /**
  * @brief Initialize LoraWAN communication, returns fales if fails
@@ -71,6 +73,8 @@ boolean lorawan_init(void){
   for(uint32_t i=0;i<8;i++){
     key|=EEPROM.read(EEPROM_OFFSET_COMMISSIONING+4+i);
   }
+  // uplink_counter_tracker
+  uplink_counter_tracker=LoRaWAN.getUpLinkCounter();
   // if OTAA AppEUi is defined, try to join OTAA
   if(0x01!=key){
     join_success=LoRaWAN.joinOTAA();
@@ -115,7 +119,11 @@ boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size, uint8_t d
     serial_debug.println("lorawan_send() init");
   #endif
 
-  // DTC tuning logic
+  // Upon every send check how many packets have been sent in background by the stack
+  // If 5 packets more then actual data packets have been sent, then issue an immediate reboot
+  if(LoRaWAN.getUpLinkCounter() > (uplink_counter_tracker +5)){
+    STM32L0.reset();
+  }
 
   // Tuning capacitor
   uint8_t eeprom_dtc_1=EEPROM.read(EEPROM_DATA_START_SETTINGS+1);
@@ -181,6 +189,8 @@ boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size, uint8_t d
     #ifdef debug
       serial_debug.println("lorawan_send() sendPacket");
     #endif
+    // Checking agains Port 0 issue, set the value to last intentinal uplink counter
+    uplink_counter_tracker=LoRaWAN.getUpLinkCounter();
     lorawan_send_successful = false;
     return true;
   }
