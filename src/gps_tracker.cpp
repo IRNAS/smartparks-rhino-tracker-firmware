@@ -516,46 +516,49 @@ void gps_stop(void){
     gps_packet.data.lon2 = lon_packed >> 8;
     gps_packet.data.lon3 = lon_packed;
     gps_packet.data.alt = (uint16_t)altitude;
-    
-    // position logging
 
-    struct tm timeinfo;
-    timeinfo.tm_sec = gps_location.seconds();
-    timeinfo.tm_min = gps_location.minutes();
-    timeinfo.tm_hour = gps_location.hours();
-    timeinfo.tm_mday = gps_location.day();
-    timeinfo.tm_mon  = gps_location.month() - 1;
-    timeinfo.tm_year = gps_location.year() - 1900;
-    time_t time = mktime(&timeinfo);
+    // additional checks to determine if either of variables is aboslute 0
+    if((latitude!=0) & (longitude!=0)){
+      // position logging
 
-    gps_log_packet.data.lat1=gps_packet.data.lat1;
-    gps_log_packet.data.lat2=gps_packet.data.lat2;
-    gps_log_packet.data.lat3=gps_packet.data.lat3;
-    gps_log_packet.data.lon1=gps_packet.data.lon1;
-    gps_log_packet.data.lon2=gps_packet.data.lon2;
-    gps_log_packet.data.lon3=gps_packet.data.lon3;
-    uint32_t time_temp =(uint32_t)time-1600000000; // subtract the starting date 
-    time_temp=time_temp/60; // divide to get 60s precision
-    gps_log_packet.data.time1=time_temp >> 16;
-    gps_log_packet.data.time2=time_temp >> 8;
-    gps_log_packet.data.time3=time_temp;
-    uint8_t epe_temp = min(gps_packet.data.epe/12,7);
-    uint8_t ttf_temp = min(gps_packet.data.time_to_fix/5,15);
-    gps_log_packet.data.fix_stats=(gps_packet.data.motion<<7)|(epe_temp<<4)|(ttf_temp);
-    delay(10);
-    gps_log_add();
-    delay(10);
+      struct tm timeinfo;
+      timeinfo.tm_sec = gps_location.seconds();
+      timeinfo.tm_min = gps_location.minutes();
+      timeinfo.tm_hour = gps_location.hours();
+      timeinfo.tm_mday = gps_location.day();
+      timeinfo.tm_mon  = gps_location.month() - 1;
+      timeinfo.tm_year = gps_location.year() - 1900;
+      time_t time = mktime(&timeinfo);
 
-    gps_packet.data.time=(uint32_t)time;
+      gps_log_packet.data.lat1=gps_packet.data.lat1;
+      gps_log_packet.data.lat2=gps_packet.data.lat2;
+      gps_log_packet.data.lat3=gps_packet.data.lat3;
+      gps_log_packet.data.lon1=gps_packet.data.lon1;
+      gps_log_packet.data.lon2=gps_packet.data.lon2;
+      gps_log_packet.data.lon3=gps_packet.data.lon3;
+      uint32_t time_temp =(uint32_t)time-1600000000; // subtract the starting date 
+      time_temp=time_temp/60; // divide to get 60s precision
+      gps_log_packet.data.time1=time_temp >> 16;
+      gps_log_packet.data.time2=time_temp >> 8;
+      gps_log_packet.data.time3=time_temp;
+      uint8_t epe_temp = min(gps_packet.data.epe/12,7);
+      uint8_t ttf_temp = min(gps_packet.data.time_to_fix/5,15);
+      gps_log_packet.data.fix_stats=(gps_packet.data.motion<<7)|(epe_temp<<4)|(ttf_temp);
+      delay(10);
+      gps_log_add();
+      delay(10);
 
-    status_packet.data.lat1 = gps_packet.data.lat1;
-    status_packet.data.lat2 = gps_packet.data.lat2;
-    status_packet.data.lat3 = gps_packet.data.lat3;
-    status_packet.data.lon1 = gps_packet.data.lon1;
-    status_packet.data.lon2 = gps_packet.data.lon2;
-    status_packet.data.lon3 = gps_packet.data.lon3;
-    status_packet.data.gps_resend = 0;
-    status_packet.data.gps_time =(uint32_t)time;
+      gps_packet.data.time=(uint32_t)time;
+
+      status_packet.data.lat1 = gps_packet.data.lat1;
+      status_packet.data.lat2 = gps_packet.data.lat2;
+      status_packet.data.lat3 = gps_packet.data.lat3;
+      status_packet.data.lon1 = gps_packet.data.lon1;
+      status_packet.data.lon2 = gps_packet.data.lon2;
+      status_packet.data.lon3 = gps_packet.data.lon3;
+      status_packet.data.gps_resend = 0;
+      status_packet.data.gps_time =(uint32_t)time;
+    }
   }
   else{
     gps_packet.data.lat1 = 0;
