@@ -129,9 +129,9 @@ function Decoder(bytes) {
     decoded.snr = bytes[cnt++];
     decoded.lux = bytes[cnt++];
     decoded.motion = bytes[cnt++];
-    decoded.time = bytes[cnt++] | (bytes[cnt++] << 8) | (bytes[cnt++] << 16) | (bytes[cnt++] << 24);
-    var d= new Date(decoded.time*1000);
-    decoded.time_decoded = d.toLocaleString();
+    decoded.gps_time = bytes[cnt++] | (bytes[cnt++] << 8) | (bytes[cnt++] << 16) | (bytes[cnt++] << 24);
+    var d= new Date(decoded.gps_time*1000);
+    decoded.gps_time_decoded = d.toLocaleString();
   }
   else if (port === 11) {
     var locations=[];
