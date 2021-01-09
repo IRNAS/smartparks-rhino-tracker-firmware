@@ -52,6 +52,7 @@ struct statusData_t{
   uint8_t pulse_count;
   uint8_t pulse_energy;
   uint16_t pulse_voltage;
+  uint16_t downlink_counter;
 }__attribute__((packed));
 
 union statusPacket_t{

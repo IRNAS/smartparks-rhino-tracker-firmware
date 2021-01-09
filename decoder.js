@@ -110,6 +110,7 @@ function Decoder(bytes) {
     decoded.pulse_energy = (bytes[23]<<4) | (bytes[24] | (bytes[25] << 8)>>12);
     decoded.pulse_voltage = (bytes[24] | (bytes[25] << 8)) & 0x0fff;
     decoded.voltage_fence_v = decoded.pulse_voltage * 8;
+    decoded.downlink_counter = (bytes[26] | (bytes[27] << 8));
   }
   else if (port === 1) {
     decoded.lat = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];
