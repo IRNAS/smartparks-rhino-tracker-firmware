@@ -134,20 +134,26 @@ function Decoder(bytes) {
   }
   else if (port === 11) {
     var locations=[];
-    for(i = 0; i < 5; i++){
+    for(i = 0; i < 20; i++){
       var location={}
       location.lat = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];
       location.lon = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];
+      location.gps_time = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];
+      location.gps_time = location.gps_time * 60 + 1600000000;
+      var d= new Date(location.gps_time*1000);
+      location.gps_time_decoded = d.toLocaleString();
+      var fix_stats= bytes[cnt++];
+      location.motion = fix_stats>>7;
+      location.epe = ((fix_stats>>4)&0x07)*12;
+      location.ttf = (fix_stats&0x0f)*5;
       if(location.lat!==0 && location.lon!==0){
         location.lat = (location.lat / 16777215.0 * 180) - 90;
         location.lon = (location.lon / 16777215.0 * 360) - 180;
         location.lat = Math.round(location.lat*100000)/100000;
         location.lon = Math.round(location.lon*100000)/100000;
+        // push only valid locations
+        locations.push(location);
       }
-      location.time = bytes[cnt++] | (bytes[cnt++] << 8) | (bytes[cnt++] << 16) | (bytes[cnt++] << 24);
-      var d= new Date(location.time*1000);
-      location.time_decoded = d.toLocaleString();
-      locations.push(location);
     }
     decoded.locations=JSON.stringify(locations);
   }

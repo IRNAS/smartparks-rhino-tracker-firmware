@@ -11,10 +11,13 @@
 #include "board.h"
 #include "Wire.h"
 #include <AsyncAPDS9306.h>
+#include "stm32l0_eeprom.h"
 #include <stdint.h>
 #include <time.h>
 
 #define GPS_LOG_SIZE 400
+#define EEPROM_DATA_START_LOG 0x0100
+#define EEPROM_DATA_END_LOG 0x13FF
 /*#define LIS2DH12_ADDR 0x19
 #define LIS2DW12_WHO_AM_I                    0x0FU
 #define LIS2DW12_CTRL1                       0x20U
@@ -63,12 +66,15 @@ struct gpsLog_t{
   uint8_t lon1;
   uint8_t lon2;
   uint8_t lon3;
-  uint32_t time;
+  uint8_t time1;
+  uint8_t time2;
+  uint8_t time3;
+  uint8_t fix_stats;
 }__attribute__((packed));
 
 union gpsLogPacket_t{
-  gpsLog_t data[GPS_LOG_SIZE];
-  byte bytes[sizeof(gpsData_t)*GPS_LOG_SIZE];
+  gpsLog_t data;
+  byte bytes[sizeof(gpsLog_t)];
 };
 
 static const uint8_t gps_packet_port = 1;
@@ -88,6 +94,7 @@ boolean gps_busy_timeout(uint16_t timeout);
 void gps_power(boolean enable);
 void gps_backup(boolean enable);
 boolean gps_test(void);
+boolean gps_reset(void);
 boolean gps_begin(void);
 boolean gps_start(void);
 void gps_acquiring_callback(void);
@@ -97,6 +104,8 @@ void gps_end(void);
 void lux_init(void);
 float lux_read(void);
 boolean gps_send(void);
+void gps_log_init(void);
+void gps_log_add(void);
 boolean gps_log_send(void);
 void gps_log_clear(void);
 //void writeReg(uint8_t reg, uint8_t val);

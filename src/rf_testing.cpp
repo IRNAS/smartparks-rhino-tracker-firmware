@@ -150,7 +150,7 @@ boolean rf_scan(){
         length=LoRaWAN.getMaxPayloadSize();
     }
 
-    return lorawan_send(rf_vswr_port, &message[0], length);
+    return lorawan_send(rf_vswr_port, &message[0], length,settings_packet.data.lorawan_datarate_adr&0x0f);
 }
 
 boolean rf_autotune(void){
@@ -200,5 +200,5 @@ boolean rf_autotune(void){
 digitalWrite(VSWR_EN,LOW);
 delay(3000);
 
-    return lorawan_send(rf_vswr_port, &message[0], length);
+    return lorawan_send(rf_vswr_port, &message[0], length,settings_packet.data.lorawan_datarate_adr&0x0f);
 }

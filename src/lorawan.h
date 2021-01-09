@@ -16,7 +16,7 @@
 extern boolean lorawan_send_successful;
 
 boolean lorawan_init(void);
-boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size);
+boolean lorawan_send(uint8_t port, const uint8_t *buffer, size_t size, uint8_t datarate);
 boolean lorawan_joined(void);
 void lorawan_joinCallback(void);
 void lorawan_checkCallback(void);

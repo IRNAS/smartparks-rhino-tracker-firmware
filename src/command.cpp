@@ -19,6 +19,12 @@ void command_receive(uint8_t command){
         //reset received
         STM32L0.reset();
     }
+    else if(command==0xac){
+        //gps reset by calling the test command
+        gps_reset();
+        //schedule gps right away
+        gps_send_flag=true;
+    }
     else if(command==0xde){
         // due to a bug is sesion clearing, OTAA must be forced and then device reset
         const char *appEui  = "0101010101010101";

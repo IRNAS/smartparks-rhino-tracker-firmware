@@ -151,5 +151,5 @@ boolean settings_send(void){
     #ifdef debug
         serial_debug.println("settings_send()");
     #endif
-    return lorawan_send(settings_packet_port, &settings_packet.bytes[0], sizeof(settingsData_t));
+    return lorawan_send(settings_packet_port, &settings_packet.bytes[0], sizeof(settingsData_t),settings_packet.data.lorawan_datarate_adr&0x0f);
 }
