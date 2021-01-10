@@ -3,7 +3,8 @@ name: Build and release upon release created
 # Run on every release created
 on:
   release:
-    - created
+    types:
+      - created
 
 jobs:
   release:
