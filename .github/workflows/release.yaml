@@ -15,15 +15,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
-      - name: local-fix
-        uses: actions/checkout@master
-        run: |
-          # Hack to get setup-python to work on act
-          # (see https://github.com/nektos/act/issues/251)
-          if [ ! -f "/etc/lsb-release" ] ; then
-            echo "DISTRIB_RELEASE=18.04" > /etc/lsb-release
-          fi
-
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v1.1.1
         with:
