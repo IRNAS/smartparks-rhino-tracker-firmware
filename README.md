@@ -1,6 +1,8 @@
 # smartparks-rhino/lion-tracker-firmware
 Smartparks Rhino and Lion GPS tracker firmware repository. This firmware is the first generation solution for multiple LoraWAN devices. The implementation is as straightforward as possible to ensure simple operation, however not suitable for very complex device operation taks which is implemented int eh second generation in a separate repository.
 
+![Build](https://github.com/IRNAS/smartparks-rhino-tracker-firmware/workflows/Build/badge.svg?branch=master)
+
 WARNING: This documentation may not be up to date with the actual firwmare release.
 
 # Requirements:
