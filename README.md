@@ -212,3 +212,6 @@ for (i = 0; i < parsed_locations.length; i++)
     msg.payload.push(lat_lon_packet)
 }
 ```
+
+## Automatic build actions
+This repository is being set up to use automatic build actions.
