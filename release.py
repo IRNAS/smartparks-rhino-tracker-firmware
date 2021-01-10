@@ -12,6 +12,7 @@ try:
     numbers= re.split('v(\d+)\.(\d+)', firmware_version)
 except:
     numbers=[0,0,0,0] # backup if the release input fails
+    firmware_version="v0.0"
     print("Release version incorrect, defaulting to 0")
 print(numbers)
 #inject version
@@ -34,16 +35,12 @@ for board in board_list:
         print("Compile successful: "+ board)
     else:
         print("Compile failed: "+ board)
-    # generate bin
-    command_bin = "arm-none-eabi-objcopy -O binary "+path+"/main.ino.elf "+path+"/main.ino.bin"
-    compile_output = os.popen(command_bin).read()
-    # generate hex
-    command_hex = "arm-none-eabi-objcopy -O ihex "+path+"/main.ino.elf "+path+"/main.ino.hex"
-    compile_output = os.popen(command_hex).read()
+
     # rename and move all files to the format
     filename = firmware_name+"-"+firmware_version+"-"+board
-    os.popen("mv "+path+"/main.ino.elf "+filename+".elf").read()
-    os.popen("mv "+path+"/main.ino.bin "+filename+".bin").read()
-    os.popen("mv "+path+"/main.ino.dfu "+filename+".dfu").read()
-    os.popen("mv "+path+"/main.ino.hex "+filename+".hex").read()
+    os.popen("mv "+path+"/main.ino.elf "+path+"/"+filename+".elf").read()
+    os.popen("mv "+path+"/main.ino.bin "+path+"/"+filename+".bin").read()
+    os.popen("mv "+path+"/main.ino.dfu "+path+"/"+filename+".dfu").read()
+    os.popen("mv "+path+"/main.ino.hex "+path+"/"+filename+".hex").read()
+    os.popen("rm "+path+"/main.ino.map").read()
     
