@@ -38,7 +38,7 @@ jobs:
       - name: ZIP files
         uses: papeloto/action-zip@v1
         with:
-          files: ./build/smartparks-rhino-tracker-firmware*
+          files: ./build
           dest: ./build/smartparks-rhino-tracker-firmware-${{ github.event.release.tag_name }}.zip
 
       - name: Upload
