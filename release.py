@@ -5,10 +5,14 @@ import re
 
 
 # CONFIGURE the version manually
-firmware_version = sys.argv[1] #"v2.2"
-print(firmware_version)
-# Split this into major and minor
-numbers= re.split('v(\d+)\.(\d+)', firmware_version)
+try:
+    firmware_version = sys.argv[1] #"v2.2"
+    print(firmware_version)
+    # Split this into major and minor
+    numbers= re.split('v(\d+)\.(\d+)', firmware_version)
+except:
+    numbers=[0,0,0,0] # backup if the release input fails
+    print("Release version incorrect, defaulting to 0")
 print(numbers)
 #inject version
 command_sed="sed -i \"/#define FW_VERSION_MAJOR/c\#define " + "FW_VERSION_MAJOR "+str(numbers[1]) +"\" main/board.h"

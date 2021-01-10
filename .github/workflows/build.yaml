@@ -41,7 +41,7 @@ jobs:
           python-version: 3.8
 
       - name: Build for various board configurations
-        run: python release.py ${{ github.event.release.tag_name }}
+        run: python release.py v0.0
         
       - name: List files
         run: ls -R build/
