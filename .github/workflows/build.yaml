@@ -1,12 +1,12 @@
-name: Build and release upon release created
+name: Build
 
 # Run on every release created
 on:
-  release:
+  push:
 
 jobs:
-  release:
-    name: Build process
+  build:
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -34,13 +34,6 @@ jobs:
           if [ ! -f "/etc/lsb-release" ] ; then
             echo "DISTRIB_RELEASE=18.04" > /etc/lsb-release
           fi
-
-      - name: Install arm-none-eabi-gcc
-        uses: fiam/arm-none-eabi-gcc@v1.0.2
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-        with:
-          release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
       
       - name: setup python
         uses: actions/setup-python@v2
@@ -52,19 +45,3 @@ jobs:
         
       - name: List files
         run: ls -R build/
-
-      - name: ZIP files
-        uses: papeloto/action-zip@v1
-        with:
-          files: ./build/smartparks-rhino-tracker-firmware*
-          dest: ./build/smartparks-rhino-tracker-firmware-${{ github.event.release.tag_name }}.zip
-
-      - name: Upload
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./build/
-          asset_name: smartparks-rhino-tracker-firmware-${{ github.event.release.tag_name }}.zip
-          asset_content_type: binary/octet-stream
