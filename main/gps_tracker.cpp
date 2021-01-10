@@ -38,8 +38,6 @@ extern GNSSSatellites gps_satellites;
 
 extern statusPacket_t status_packet;
 
-AsyncAPDS9306 lux_sensor;
-
 /**
 GPS links:
 https://portal.u-blox.com/s/question/0D52p00008HKCskCAH/time-to-acquire-gps-position-when-almanac-and-ephemeris-data-be-cleared-
@@ -516,46 +514,49 @@ void gps_stop(void){
     gps_packet.data.lon2 = lon_packed >> 8;
     gps_packet.data.lon3 = lon_packed;
     gps_packet.data.alt = (uint16_t)altitude;
-    
-    // position logging
 
-    struct tm timeinfo;
-    timeinfo.tm_sec = gps_location.seconds();
-    timeinfo.tm_min = gps_location.minutes();
-    timeinfo.tm_hour = gps_location.hours();
-    timeinfo.tm_mday = gps_location.day();
-    timeinfo.tm_mon  = gps_location.month() - 1;
-    timeinfo.tm_year = gps_location.year() - 1900;
-    time_t time = mktime(&timeinfo);
+    // additional checks to determine if either of variables is aboslute 0
+    if((latitude!=0) & (longitude!=0)){
+      // position logging
 
-    gps_log_packet.data.lat1=gps_packet.data.lat1;
-    gps_log_packet.data.lat2=gps_packet.data.lat2;
-    gps_log_packet.data.lat3=gps_packet.data.lat3;
-    gps_log_packet.data.lon1=gps_packet.data.lon1;
-    gps_log_packet.data.lon2=gps_packet.data.lon2;
-    gps_log_packet.data.lon3=gps_packet.data.lon3;
-    uint32_t time_temp =(uint32_t)time-1600000000; // subtract the starting date 
-    time_temp=time_temp/60; // divide to get 60s precision
-    gps_log_packet.data.time1=time_temp >> 16;
-    gps_log_packet.data.time2=time_temp >> 8;
-    gps_log_packet.data.time3=time_temp;
-    uint8_t epe_temp = min(gps_packet.data.epe/12,7);
-    uint8_t ttf_temp = min(gps_packet.data.time_to_fix/5,15);
-    gps_log_packet.data.fix_stats=(gps_packet.data.motion<<7)|(epe_temp<<4)|(ttf_temp);
-    delay(10);
-    gps_log_add();
-    delay(10);
+      struct tm timeinfo;
+      timeinfo.tm_sec = gps_location.seconds();
+      timeinfo.tm_min = gps_location.minutes();
+      timeinfo.tm_hour = gps_location.hours();
+      timeinfo.tm_mday = gps_location.day();
+      timeinfo.tm_mon  = gps_location.month() - 1;
+      timeinfo.tm_year = gps_location.year() - 1900;
+      time_t time = mktime(&timeinfo);
 
-    gps_packet.data.time=(uint32_t)time;
+      gps_log_packet.data.lat1=gps_packet.data.lat1;
+      gps_log_packet.data.lat2=gps_packet.data.lat2;
+      gps_log_packet.data.lat3=gps_packet.data.lat3;
+      gps_log_packet.data.lon1=gps_packet.data.lon1;
+      gps_log_packet.data.lon2=gps_packet.data.lon2;
+      gps_log_packet.data.lon3=gps_packet.data.lon3;
+      uint32_t time_temp =(uint32_t)time-1600000000; // subtract the starting date 
+      time_temp=time_temp/60; // divide to get 60s precision
+      gps_log_packet.data.time1=time_temp >> 16;
+      gps_log_packet.data.time2=time_temp >> 8;
+      gps_log_packet.data.time3=time_temp;
+      uint8_t epe_temp = min(gps_packet.data.epe/12,7);
+      uint8_t ttf_temp = min(gps_packet.data.time_to_fix/5,15);
+      gps_log_packet.data.fix_stats=(gps_packet.data.motion<<7)|(epe_temp<<4)|(ttf_temp);
+      delay(10);
+      gps_log_add();
+      delay(10);
 
-    status_packet.data.lat1 = gps_packet.data.lat1;
-    status_packet.data.lat2 = gps_packet.data.lat2;
-    status_packet.data.lat3 = gps_packet.data.lat3;
-    status_packet.data.lon1 = gps_packet.data.lon1;
-    status_packet.data.lon2 = gps_packet.data.lon2;
-    status_packet.data.lon3 = gps_packet.data.lon3;
-    status_packet.data.gps_resend = 0;
-    status_packet.data.gps_time =(uint32_t)time;
+      gps_packet.data.time=(uint32_t)time;
+
+      status_packet.data.lat1 = gps_packet.data.lat1;
+      status_packet.data.lat2 = gps_packet.data.lat2;
+      status_packet.data.lat3 = gps_packet.data.lat3;
+      status_packet.data.lon1 = gps_packet.data.lon1;
+      status_packet.data.lon2 = gps_packet.data.lon2;
+      status_packet.data.lon3 = gps_packet.data.lon3;
+      status_packet.data.gps_resend = 0;
+      status_packet.data.gps_time =(uint32_t)time;
+    }
   }
   else{
     gps_packet.data.lat1 = 0;
@@ -613,97 +614,6 @@ void gps_end(void){
     serial_debug.print(" "); serial_debug.print(gps_on_time_total);
     serial_debug.println(")");
   #endif
-}
-
-/**
- * @brief initialize sensors upon boot or new settings
- * 
- * @details Make sure each sensors is firstlu properly reset and put into sleep and then if enabled in settings, initialize it
- * 
- */
-void lux_init(void){
-  #ifdef debug
-    serial_debug.print("lux_init(");
-    serial_debug.println(")");
-  #endif
-
-  // if this is enabled and previously an i2c device has been initialized, infinite loop happens
-  /*pinMode(PIN_WIRE_SCL,INPUT);
-  delay(1000);
-  if(digitalRead(PIN_WIRE_SCL)==LOW){
-    //no I2C pull-up detected
-    bitSet(status_packet.data.system_functions_errors,3);
-    #ifdef debug
-      serial_debug.print("lux_init(");
-      serial_debug.println("i2c error)");
-    #endif
-    return;
-  }*/
-
-  const APDS9306_ALS_GAIN_t again = APDS9306_ALS_GAIN_18;
-  const APDS9306_ALS_MEAS_RES_t atime = APDS9306_ALS_MEAS_RES_20BIT_400MS;
-
-  //initialize sensor even if not enabled to put it in low poewr
-#ifdef LIGHT_EN
-  pinMode(LIGHT_EN,OUTPUT);
-  digitalWrite(LIGHT_EN,HIGH);
-#endif // LIGHT_EN
-  delay(1000);
-  if (lux_sensor.begin(again, atime)==false) {
-    //set lux error
-    bitSet(status_packet.data.system_functions_errors,4);
-    #ifdef debug
-      serial_debug.print("lux_init(");
-      serial_debug.println("lux error)");
-    #endif
-  }
-#ifdef LIGHT_EN
-  digitalWrite(LIGHT_EN,LOW);
-  pinMode(LIGHT_EN,INPUT_PULLDOWN);
-#endif // LIGHT_EN
-  return;
-}
-
-/**
- * @brief read lux value
- * 
- */
-float lux_read(void){
-  unsigned long startTime;
-  unsigned long duration;
-#ifdef LIGHT_EN
-  digitalWrite(LIGHT_EN,HIGH);
-  delay(100);
-#endif // LIGHT_EN
-
-  if(bitRead(status_packet.data.system_functions_errors,4)){
-    return 0;
-  }
-
-  lux_sensor.startLuminosityMeasurement();
-
-  for(uint16_t i=0;i<100;i++){
-    if(lux_sensor.isMeasurementReady()){
-      break;
-    }
-    //STM32L0.deepsleep(10);
-    delay(10);
-  }
-
-  AsyncAPDS9306Data data = lux_sensor.getLuminosityMeasurement();
-
-  float lux = data.calculateLux();
-  #ifdef debug
-      serial_debug.print("lux_read(");
-      serial_debug.print(lux);
-      serial_debug.println(")");
-  #endif
-
-#ifdef LIGHT_EN
-  digitalWrite(LIGHT_EN,LOW);
-  pinMode(LIGHT_EN,INPUT_PULLDOWN);
-#endif // LIGHT_EN
-  return lux;
 }
 
 /**

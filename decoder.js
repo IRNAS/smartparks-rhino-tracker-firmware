@@ -110,6 +110,7 @@ function Decoder(bytes) {
     decoded.pulse_energy = (bytes[23]<<4) | (bytes[24] | (bytes[25] << 8)>>12);
     decoded.pulse_voltage = (bytes[24] | (bytes[25] << 8)) & 0x0fff;
     decoded.voltage_fence_v = decoded.pulse_voltage * 8;
+    decoded.downlink_counter = (bytes[26] | (bytes[27] << 8));
   }
   else if (port === 1) {
     decoded.lat = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];
@@ -128,9 +129,9 @@ function Decoder(bytes) {
     decoded.snr = bytes[cnt++];
     decoded.lux = bytes[cnt++];
     decoded.motion = bytes[cnt++];
-    decoded.time = bytes[cnt++] | (bytes[cnt++] << 8) | (bytes[cnt++] << 16) | (bytes[cnt++] << 24);
-    var d= new Date(decoded.time*1000);
-    decoded.time_decoded = d.toLocaleString();
+    decoded.gps_time = bytes[cnt++] | (bytes[cnt++] << 8) | (bytes[cnt++] << 16) | (bytes[cnt++] << 24);
+    var d= new Date(decoded.gps_time*1000);
+    decoded.gps_time_decoded = d.toLocaleString();
   }
   else if (port === 11) {
     var locations=[];

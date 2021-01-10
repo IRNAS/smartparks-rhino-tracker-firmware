@@ -10,7 +10,6 @@
 #include "GNSS.h"
 #include "board.h"
 #include "Wire.h"
-#include <AsyncAPDS9306.h>
 #include "stm32l0_eeprom.h"
 #include <stdint.h>
 #include <time.h>
@@ -45,7 +44,7 @@ struct gpsData_t{
   uint8_t time_to_fix;
   uint8_t epe;
   uint8_t snr;
-  uint8_t lux;
+  uint8_t unused;
   uint8_t motion;
   uint32_t time;
 }__attribute__((packed));
@@ -100,9 +99,6 @@ boolean gps_start(void);
 void gps_acquiring_callback(void);
 void gps_stop(void);
 void gps_end(void);
-//void accelerometer_init(void);
-void lux_init(void);
-float lux_read(void);
 boolean gps_send(void);
 void gps_log_init(void);
 void gps_log_add(void);

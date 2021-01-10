@@ -1,0 +1,36 @@
+name: Build
+
+# Run on every release created
+on:
+  push:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v1.1.1
+        with:
+          token: ${{ secrets.GITHUB_REPO_ACCESS_TOKEN }}`
+
+      - name: Install platform
+        run: |
+          arduino-cli core install IRNAS:stm32l0 --additional-urls "https://irnas.github.io/ArduinoCore-stm32l0/package_stm32l0_boards_index.json"
+          arduino-cli lib update-index
+          arduino-cli lib install "Adafruit ADS1X15"
+      
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Build for various board configurations
+        run: python release.py v0.0
+        
+      - name: List files
+        run: ls -R build/

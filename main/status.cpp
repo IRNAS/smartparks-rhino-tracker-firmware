@@ -251,6 +251,8 @@ boolean status_send(void){
   status_packet.data.pulse_count=pulse_counter;
   pulse_counter=0;
 
+  status_packet.data.downlink_counter=(uint16_t)LoRaWAN.getDownLinkCounter();
+
   status_fence_monitor_read();
 
   // increment prior to sending if valid data is there
