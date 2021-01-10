@@ -1,0 +1,61 @@
+name: Build check
+
+# Run on every push into master
+on: 
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Build process
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: local-fix
+        uses: actions/checkout@master
+        run: |
+          # Hack to get setup-python to work on act
+          # (see https://github.com/nektos/act/issues/251)
+          if [ ! -f "/etc/lsb-release" ] ; then
+            echo "DISTRIB_RELEASE=18.04" > /etc/lsb-release
+          fi
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v1.1.1
+        with:
+          token: ${{ secrets.GITHUB_REPO_ACCESS_TOKEN }}`
+      
+      - name: Create file
+        uses: DamianReeves/write-file-action@master
+        with:
+          path: ${{ env.home}}/arduino-cli.yaml
+          contents: "board_manager: \n  additional_urls: \n    - https://irnas.github.io/ArduinoCore-stm32l0/package_stm32l0_boards_index.json"
+          write-mode: append
+
+      - name: Install platform
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install IRNAS:stm32l0
+          arduino-cli lib update-index
+          arduino-cli lib install "Adafruit ADS1X15"
+      - name: Rename folder to main to keep arduino-cli happy
+        run: mv src main
+
+      - name: Install arm-none-eabi-gcc
+        uses: fiam/arm-none-eabi-gcc@v1.0.2
+        with:
+          release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
+      
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Build for various board configurations
+        run: python release.py v0.0
+      - name: List files
+        run: ls -R build/

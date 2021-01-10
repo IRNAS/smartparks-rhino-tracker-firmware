@@ -61,7 +61,7 @@ void settings_init(void){
     }
     #endif
     // reading here as this must not be restored from flash
-    settings_packet.data.fw_version=FW_VERSION;
+    settings_packet.data.fw_version=FW_VERSION_MAJOR<<16|FW_VERSION_MINOR;
 
     // note calibration data is 8 bytes inclusive of settings check byte
     for(int i=0;i<sizeof(calibrationData_t);i++){
