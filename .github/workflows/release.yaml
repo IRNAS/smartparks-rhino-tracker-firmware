@@ -21,18 +21,10 @@ jobs:
         uses: arduino/setup-arduino-cli@v1.1.1
         with:
           token: ${{ secrets.GITHUB_REPO_ACCESS_TOKEN }}`
-      
-      - name: Create file
-        uses: DamianReeves/write-file-action@master
-        with:
-          path: ${{ env.home}}/arduino-cli.yaml
-          contents: "board_manager: \n  additional_urls: \n    - https://irnas.github.io/ArduinoCore-stm32l0/package_stm32l0_boards_index.json"
-          write-mode: append
 
       - name: Install platform
         run: |
-          arduino-cli core update-index
-          arduino-cli core install IRNAS:stm32l0
+          arduino-cli core install IRNAS:stm32l0 --additional-urls "https://irnas.github.io/ArduinoCore-stm32l0/package_stm32l0_boards_index.json"
           arduino-cli lib update-index
           arduino-cli lib install "Adafruit ADS1X15"
           
