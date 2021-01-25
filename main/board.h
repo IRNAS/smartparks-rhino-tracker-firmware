@@ -1,11 +1,11 @@
 #ifndef BOARD_H_
 #define BOARD_H_
 
-#define FW_VERSION_MAJOR 0
-#define FW_VERSION_MINOR 0
+#define FW_VERSION_MAJOR 3
+#define FW_VERSION_MINOR 3
 // upper byte is major, lower is minor
 
-#define VER2_2_4_RHINO
+#define VER2_3_DROPOFF
 
 
 // lion
@@ -174,6 +174,10 @@
     //#define LIGHT_EN PB14 // NOT USED
     #define PIN_REED PH0
     #define BAT_MON_CALIB 1.14
+#endif
+
+#ifdef VER2_3_LION_OTA
+#define VER2_3_LION
 #endif
 
 // lion

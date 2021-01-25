@@ -212,8 +212,10 @@ bool state_check_timeout(void){
  */
 void setup() {
   //STM32L0.deepsleep(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
-  // Watchdog
+  // Watchdog - disavble only for OTA code
+  #ifndef VER2_3_LION_OTA
   STM32L0.wdtEnable(18000);
+  #endif
   analogReadResolution(12);
 
   pinMode(LED_RED,OUTPUT);
