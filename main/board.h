@@ -176,7 +176,7 @@
     #define BAT_MON_CALIB 1.14
 #endif
 
-#ifdef VER2_3_LION_OTA
+#ifdef VER2_3_LION_OTAA
 #define VER2_3_LION
 #endif
 
