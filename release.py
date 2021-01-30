@@ -35,6 +35,7 @@ for board in board_list:
         print("Compile successful: "+ board)
     else:
         print("Compile failed: "+ board)
+        sys.exit(1) # Exit with error to fail automatic build
 
     # rename and move all files to the format
     filename = firmware_name+"-"+firmware_version+"-"+board

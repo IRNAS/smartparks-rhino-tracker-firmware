@@ -176,12 +176,8 @@
     #define BAT_MON_CALIB 1.14
 #endif
 
-#ifdef VER2_3_LION_OTAA
-#define VER2_3_LION
-#endif
-
 // lion
-#ifdef VER2_3_LION
+#if defined(VER2_3_LION) || defined(VER2_3_LION_OTAA)
     #define LED_RED PA0
     #define VSWR_ADC PA3
     #define BAT_MON PA4
