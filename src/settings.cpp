@@ -28,20 +28,7 @@ void settings_init(void){
     settings_packet.data.system_status_interval=30;
     settings_packet.data.system_functions=0xff;
     settings_packet.data.lorawan_datarate_adr=3;
-    settings_packet.data.gps_periodic_interval=0;
-    settings_packet.data.gps_triggered_interval=0;
-    settings_packet.data.gps_triggered_threshold=0x0f;
-    settings_packet.data.gps_triggered_duration=0x0f;
-    settings_packet.data.gps_cold_fix_timeout=200;
-    settings_packet.data.gps_hot_fix_timeout=30;
-    settings_packet.data.gps_min_fix_time=5;
-    settings_packet.data.gps_min_ehpe=50;
-    settings_packet.data.gps_hot_fix_retry=5;
-    settings_packet.data.gps_cold_fix_retry=2;
-    settings_packet.data.gps_fail_retry=0; //must be 0 due to bug in GPS core
-    settings_packet.data.gps_settings=0b10001101;
     settings_packet.data.system_voltage_interval=30;
-    settings_packet.data.gps_charge_min=0;
     settings_packet.data.system_charge_min=0;
     settings_packet.data.system_charge_max=255;
     settings_packet.data.system_input_charge_min=10000;
@@ -76,39 +63,13 @@ void settings_from_downlink(void)
     settings_packet.data.system_status_interval=constrain(settings_packet_downlink.data.system_status_interval, 1, 24*60);
     settings_packet.data.system_functions=constrain(settings_packet_downlink.data.system_functions, 0,0xff);
     settings_packet.data.lorawan_datarate_adr=constrain(settings_packet_downlink.data.lorawan_datarate_adr, 0, 0xff);
-    settings_packet.data.gps_periodic_interval=constrain(settings_packet_downlink.data.gps_periodic_interval, 0, 24*60);
-    settings_packet.data.gps_triggered_interval=constrain(settings_packet_downlink.data.gps_triggered_interval, 0, 24*60);
-    settings_packet.data.gps_triggered_threshold=constrain(settings_packet_downlink.data.gps_triggered_threshold, 0,0x3f);
-    settings_packet.data.gps_triggered_duration=constrain(settings_packet_downlink.data.gps_triggered_duration, 0,0xff);
-    settings_packet.data.gps_cold_fix_timeout=constrain(settings_packet_downlink.data.gps_cold_fix_timeout, 0,600);
-    settings_packet.data.gps_hot_fix_timeout=constrain(settings_packet_downlink.data.gps_hot_fix_timeout, 0,600);
-    settings_packet.data.gps_min_fix_time=constrain(settings_packet_downlink.data.gps_min_fix_time, 0,60);
-    settings_packet.data.gps_min_ehpe=constrain(settings_packet_downlink.data.gps_min_ehpe, 0,100);
-    settings_packet.data.gps_hot_fix_retry=constrain(settings_packet_downlink.data.gps_hot_fix_retry, 0,0xff);
-    settings_packet.data.gps_cold_fix_retry=constrain(settings_packet_downlink.data.gps_cold_fix_retry, 0,0xff);
-    settings_packet.data.gps_fail_retry=constrain(settings_packet_downlink.data.gps_fail_retry, 0,0xff); //must be 1 due to bug in GPS core
-    settings_packet.data.gps_settings=constrain(settings_packet_downlink.data.gps_settings, 0,0xff);
     settings_packet.data.system_voltage_interval=constrain(settings_packet_downlink.data.system_voltage_interval, 0,0xff);
-    settings_packet.data.gps_charge_min=constrain(settings_packet_downlink.data.gps_charge_min, 0,0xff);
     settings_packet.data.system_charge_min=constrain(settings_packet_downlink.data.system_charge_min, 0,0xff);
     settings_packet.data.system_charge_max=constrain(settings_packet_downlink.data.system_charge_max, 0,0xff);
     settings_packet.data.system_input_charge_min=constrain(settings_packet_downlink.data.system_input_charge_min, 0,0xffff);
     settings_packet.data.pulse_on_timeout=constrain(settings_packet_downlink.data.pulse_on_timeout, 0,0xffff);
     settings_packet.data.pulse_threshold=constrain(settings_packet_downlink.data.pulse_threshold, 0,0xff);
     settings_packet.data.pulse_min_interval=constrain(settings_packet_downlink.data.pulse_min_interval, 0,0xffff);
-    settings_packet.data.gps_accel_z_threshold=constrain(settings_packet_downlink.data.gps_accel_z_threshold, 0,0xffff);
-
-    // Checks against stupid configurations
-
-    // Hot-fix timeout should not be smaller then the cold-fix timeout
-    if(settings_packet.data.gps_hot_fix_timeout>settings_packet.data.gps_cold_fix_timeout){
-        settings_packet.data.gps_hot_fix_timeout=settings_packet.data.gps_cold_fix_timeout;
-    }
-
-    // Min fix time should not be greater the hot fix time
-    if(settings_packet.data.gps_min_fix_time>settings_packet.data.gps_hot_fix_timeout){
-        settings_packet.data.gps_min_fix_time=settings_packet.data.gps_hot_fix_timeout;
-    }
 
     uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
     EEPROM.write(eeprom_settings_address,0xab);

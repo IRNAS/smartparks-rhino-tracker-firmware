@@ -277,16 +277,6 @@ void lorawan_receiveCallback(void)
               command_receive(data[0]);
           }
       }
-      // handle GPS commands
-      if(LoRaWAN.remotePort()==91){
-        if(size==5){
-          if(data[0]=0xcc){
-            uint16_t interval = data[1]|data[2]<<8;
-            uint16_t duration = data[3]|data[4]<<8;
-            gps_command_request(interval,duration);
-          }
-        }
-      }
     }
   }
 }

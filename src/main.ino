@@ -3,7 +3,6 @@
 #include "board.h"
 #include "command.h"
 #include "lorawan.h"
-#include "gps_tracker.h"
 #include "settings.h"
 #include "status.h"
 #include "project_utils.h"
@@ -12,23 +11,6 @@
 
 #define debug
 #define serial_debug  Serial
-
-// Initialize timer for periodic callback
-// TimerMillis periodic;
-GNSSLocation gps_location;
-GNSSSatellites gps_satellites;
-
-/**
- * @brief called upon pin change
- * 
- */
-void accelerometer_callback(void){
-  /*#ifdef debug
-    serial_debug.print("gps_accelerometer_callback(");
-    serial_debug.println(")");
-  #endif*/
-  gps_accelerometer_interrupt();
-}
 
 // Variable to track the reed switch status
 bool reed_switch = false;
@@ -43,10 +25,6 @@ enum state_e{
   SETTINGS_SEND,
   STATUS_SEND,
   RF_SEND,
-  GPS_START,
-  GPS_READ,
-  GPS_SEND,
-  GPS_LOG_SEND,
   LORAWAN_TRANSMIT,
   HIBERNATION
 };
@@ -144,10 +122,8 @@ boolean callbackPeriodic(void){
   // determine which events need to be scheduled, except in hibernation
   if(state!=HIBERNATION){
     status_scheduler();
-    gps_scheduler();
   }
   else{
-    gps_send_flag = false;
     status_send_flag = false;
   }
 
@@ -161,7 +137,7 @@ boolean callbackPeriodic(void){
   }
 
   // if any of the flags are high, wake up
-  if(settings_send_flag|settings_updated|status_send_flag|gps_send_flag|gps_log_flag){
+  if(settings_send_flag|settings_updated|status_send_flag){
     //STM32L0.wakeup();
     return true;
     /*#ifdef debug
@@ -227,7 +203,6 @@ void setup() {
   digitalWrite(LED_RED,LOW);
 
   pinMode(A_INT2, INPUT);
-  attachInterrupt(digitalPinToInterrupt(A_INT2),accelerometer_callback,CHANGE);
 
   // Serial port debug setup
   #ifdef serial_debug
@@ -278,7 +253,6 @@ void loop() {
 
   // update values in the status packet
   status_packet.data.resetCause=(STM32L0.resetCause()&0x07)|(state_latest_timeout<<3);
-  boolean gps_test_result =false;
 
   // update prevous state
   state_prev=state;
@@ -359,20 +333,11 @@ void loop() {
     status_init(); // currently does not report a fail, should not be possible anyhow
     // Accelerometer
     //accelerometer_init();
-    status_accelerometer_init(); 
     #ifdef debug
       if(bitRead(status_packet.data.system_functions_errors,3)){
         serial_debug.println("ERROR(accel)");
       }
     #endif
-    /*
-    gps_test_result = gps_test();
-    #ifdef debug
-      if(gps_test_result==false){
-        serial_debug.println("ERROR(gps)");
-      }
-    #endif        
-    */
     // check if charging is enabled at all
     if(bitRead(settings_packet.data.system_functions,7)==0){
       charging_state=DISABLED;
@@ -397,8 +362,7 @@ void loop() {
       state_transition(SETTINGS_SEND);
       break;
     }
-    // force-disable GPS as the safety - this should really not ever be needed
-    gps_power(false);
+    
     
     checkReed();
     if(reed_switch){
@@ -406,22 +370,14 @@ void loop() {
       STM32L0.reset();
     }
     // transition based on triggers
-    else if(settings_updated|status_send_flag|gps_send_flag|rf_send_flag|gps_log_flag){
+    else if(settings_updated|status_send_flag|rf_send_flag){
       if(settings_updated==true){
         state_transition(GENERAL_INIT);
         settings_updated=false;
       }
-      else if(gps_log_flag==true){
-        state_transition(GPS_LOG_SEND);
-        gps_log_flag=false;
-      }
       else if(status_send_flag==true){
         state_transition(STATUS_SEND);
         status_send_flag=false;
-      }
-      else if(gps_send_flag==true){
-        state_transition(GPS_START);
-        gps_send_flag=false;
       }
       else if(rf_send_flag==true){
         state_transition(RF_SEND);
@@ -474,64 +430,6 @@ void loop() {
       sleep=1000;
     }
     break;
-  case GPS_START:
-    // defaults for timing out
-    state_timeout_duration=0;
-    state_goto_timeout=GPS_SEND;
-    //if gps started continue
-    if(gps_start()){
-      state_transition(GPS_READ);
-    }
-    else{
-      state_transition(STATUS_SEND);
-    }
-    break;
-  case GPS_READ:
-    // defaults for timing out
-    state_timeout_duration=610*1000;
-    state_goto_timeout=GPS_SEND;
-    //if gps started continue
-    if(gps_done==true){
-      //if GPS error, send status
-      if(status_packet.data.system_functions_errors&0x03){
-        // send status instead of GPS
-        status_send_flag=true;
-        state_transition(IDLE);
-      }
-      else{
-        state_transition(GPS_SEND);
-      }
-    }
-    else{
-      sleep=4000;
-    }
-    break;
-  case GPS_SEND:
-    // defaults for timing out
-    state_timeout_duration=2000;
-    state_goto_timeout=IDLE;
-    // transition
-    if(gps_send()){
-      state_transition(LORAWAN_TRANSMIT);
-    }
-    else{
-      // sleep for 1 second and check
-     sleep=1000;
-    }
-    break;
-  case GPS_LOG_SEND:
-    // defaults for timing out
-    state_timeout_duration=2000;
-    state_goto_timeout=IDLE;
-    // transition
-    if(gps_log_send()){
-      state_transition(LORAWAN_TRANSMIT);
-    }
-    else{
-      // sleep for 1 second and check
-     sleep=1000;
-    }
-    break;
   case LORAWAN_TRANSMIT:
     // defaults for timing out, transmission should not take more then 10s
     state_timeout_duration=15000;
@@ -555,9 +453,7 @@ void loop() {
     if(reed_switch==false){
       state_transition(INIT);
       // Trigger all events
-      gps_send_flag = true;
       status_send_flag = true;
-      gps_send_flag = true;
     }
     else{
       sleep=60000; // until an event

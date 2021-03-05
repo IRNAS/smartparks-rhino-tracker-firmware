@@ -15,8 +15,6 @@ extern charging_e charging_state;
 TimerMillis timer_pulse;
 TimerMillis timer_debounce;
 
-LIS2DW12CLASS lis;
-
 boolean pulse_state = LOW;
 unsigned long debounce_start = 0;
 
@@ -139,7 +137,6 @@ serial_debug.println(" )");
  */
 void status_init(void){ 
     event_status_last=millis();
-    status_accelerometer_init();
     #ifdef debug
         serial_debug.print("status_init - status_timer_callback( ");
         serial_debug.print("interval: ");
@@ -235,18 +232,7 @@ boolean status_send(void){
   status_packet.data.system_functions_errors=status_packet.data.system_functions_errors&0b00011111;
   status_packet.data.system_functions_errors=status_packet.data.system_functions_errors|(charging_state<<5);
 
-  accel_data axis;
-  axis = status_accelerometer_read();
-
-  status_packet.data.accelx=(uint8_t)get_bits(axis.x_axis,-2000,2000,8);
-  status_packet.data.accely=(uint8_t)get_bits(axis.y_axis,-2000,2000,8);
-  status_packet.data.accelz=(uint8_t)get_bits(axis.z_axis,-2000,2000,8);
   status_packet.data.device_id=STM32L0.getSerial(); 
-
-  // increment prior to sending if valid data is there
-  if(0!=status_packet.data.lat1){
-    status_packet.data.gps_resend++;
-  }
 
   #ifdef debug
     serial_debug.print("status_send( ");
@@ -262,37 +248,4 @@ boolean status_send(void){
   #endif
 
   return lorawan_send(status_packet_port, &status_packet.bytes[0], sizeof(statusData_t));
-}
-
-/**
- * @brief initialize sensors upon boot or new settings
- * 
- * @details Make sure each sensors is firstly properly reset and put into sleep and then if enabled in settings, initialize it
- * 
- */
-void status_accelerometer_init(void){
-    #ifdef debug
-    serial_debug.print("sensor_accelerometer_init(");
-    serial_debug.println(")");
-  #endif
-
-  if(lis.begin()==false){
-      //set accelerometer error
-      bitSet(status_packet.data.system_functions_errors,3);
-      #ifdef debug
-        serial_debug.print("accelerometer_init(");
-        serial_debug.println("accel error)");
-      #endif
-      return;
-  }
-  else{
-    bitClear(status_packet.data.system_functions_errors,3);
-  }
-
-
-  lis.wake_up_free_fall_setup(settings_packet.data.gps_triggered_threshold, settings_packet.data.gps_triggered_duration, 0xff);
-}
-
-accel_data status_accelerometer_read(){
-  return lis.read_accel_values();
 }

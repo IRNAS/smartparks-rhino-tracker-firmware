@@ -25,48 +25,18 @@ extern boolean settings_updated;
  *    bit 6 - humidity sensor enabled
  *    bit 7 - charging sensor enabled
  * lorawan_datarate_adr - lorawan fix reporting datarate, range 0 - 5 (SF7-SF12), upper nibble is adr, lower nibble is datarate
- * gps_periodic_interval - gps periodic fix interval in minutes
- * gps_triggered_interval - gps triggered interval in minutes
- * gps_triggered_threshold - threshold of accelerometer to trigger a fix
- * gps_triggered_duration - number of accelerometer samples for activity
- * gps_cold_fix_timeout - cold fix timeout in seconds
- * gps_hot_fix_timeout - hot fix timeout in seconds
- * gps_min_fix_time - minimal fix time
- * gps_min_ehpe - minimal ehpe to be achieved
- * gps_hot_fix_retry - number of times a hot fix is retried before failing to cold-fix
- * gps_cold_fix_retry - number of time a cold fix is retried before failing the gps module
- * gps_fail_retry - number of times gps system is retried before putting it in failed state
- * gps_settings -
- *  bit 0 - 3d fix enabled
- *  bit 1 - linear backoff upon fail (based on interval time)
- *  bit 2 - hot fix enabled
- *  bit 3 - fully resolved required
  */
 struct settingsData_t{
   uint16_t  system_status_interval;
   uint8_t   system_functions;
   uint8_t   lorawan_datarate_adr;
-  uint16_t  gps_periodic_interval;
-  uint16_t  gps_triggered_interval;
-  uint8_t   gps_triggered_threshold;
-  uint8_t   gps_triggered_duration;
-  uint16_t  gps_cold_fix_timeout;
-  uint16_t  gps_hot_fix_timeout;
-  uint8_t   gps_min_fix_time;
-  uint8_t   gps_min_ehpe;
-  uint8_t   gps_hot_fix_retry;
-  uint8_t   gps_cold_fix_retry;
-  uint8_t   gps_fail_retry;
-  uint8_t   gps_settings;
   uint8_t   system_voltage_interval; // interval in minutes how often the voltage is measured and checked
-  uint8_t   gps_charge_min;     // gps voltage minimum 2.8V
   uint8_t   system_charge_min;  // charge voltage minimum 2.8V
   uint8_t   system_charge_max;  // charge voltage maximum 4.2v
   uint16_t  system_input_charge_min; // stop charging when input voltage is less then X
   uint8_t   pulse_threshold; // how many pulses must be received to send a packet
   uint8_t   pulse_on_timeout; // how long is the pulse output on after threshold reached
   uint16_t  pulse_min_interval; // how often at maximum can a device send a packet on pulse event
-  uint16_t  gps_accel_z_threshold; // accelerometer threshold for z value, such that gps does not trigger on wrong orientation
 }__attribute__((packed));
 
 union settingsPacket_t{
