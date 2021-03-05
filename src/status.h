@@ -19,10 +19,6 @@ extern boolean status_send_flag;
  * battery - battery status in %
  * temperature - temperature
  * vbus - voltage
- * system_functions_errors - errors of different modules, only applicable if respective module is enabled
- *    bit 3 - accelerometer error
- *    bit 4 - light sensor error
- *    bit 5-7 - charging
  */
 struct statusData_t{
   uint8_t resetCause; // reset cause lower 3 bits, state timeout upper 5 bits
@@ -45,7 +41,6 @@ extern statusPacket_t status_packet;
 
 void status_scheduler(void);
 void status_init(void);
-void status_measure_voltage(void);
 boolean status_send(void);
 
 #endif

@@ -14,29 +14,15 @@ extern boolean settings_updated;
  * @brief LoraWAN settings packet setup - port 3
  * 
  * @details Packet variables have the following information contained:
- * system_status_interval -  send interval in minutes, range 1 - 1440, default 60
- * system_functions - enable/disable certain features
- *    bit 0 - 
- *    bit 1 - 
- *    bit 2 - 
- *    bit 3 - accelerometer enabled
- *    bit 4 - light sensor enabled
- *    bit 5 - temperature sensor enabled
- *    bit 6 - humidity sensor enabled
- *    bit 7 - charging sensor enabled
  * lorawan_datarate_adr - lorawan fix reporting datarate, range 0 - 5 (SF7-SF12), upper nibble is adr, lower nibble is datarate
  */
 struct settingsData_t{
-  uint16_t  system_status_interval;
-  uint8_t   system_functions;
   uint8_t   lorawan_datarate_adr;
-  uint8_t   system_voltage_interval; // interval in minutes how often the voltage is measured and checked
-  uint8_t   system_charge_min;  // charge voltage minimum 2.8V
-  uint8_t   system_charge_max;  // charge voltage maximum 4.2v
-  uint16_t  system_input_charge_min; // stop charging when input voltage is less then X
-  uint8_t   pulse_threshold; // how many pulses must be received to send a packet
-  uint8_t   pulse_on_timeout; // how long is the pulse output on after threshold reached
-  uint16_t  pulse_min_interval; // how often at maximum can a device send a packet on pulse event
+  uint8_t   lora_threshold; // Minimum incoming LoRa siganl threshold values, to limit the range of incoming loRa messages
+  uint8_t   sd_power_delay; // After which delay we will power on the WiFi SD Card (in seconds)
+  uint8_t   sd_power_time; // How long the power to the SD Card will be turned on (in seconds)
+  uint16_t  debounce_time; // How long to wait for additional images after the first detection (in seconds)
+  uint16_t  max_debounce_time; // Maximum amount of time to wait for new images (in seconds)
 }__attribute__((packed));
 
 union settingsPacket_t{

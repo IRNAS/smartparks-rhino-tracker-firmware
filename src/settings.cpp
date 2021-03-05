@@ -25,16 +25,12 @@ uint8_t settings_get_packet_port(void){
  */
 void settings_init(void){
     //default settings
-    settings_packet.data.system_status_interval=30;
-    settings_packet.data.system_functions=0xff;
     settings_packet.data.lorawan_datarate_adr=3;
-    settings_packet.data.system_voltage_interval=30;
-    settings_packet.data.system_charge_min=0;
-    settings_packet.data.system_charge_max=255;
-    settings_packet.data.system_input_charge_min=10000;
-    settings_packet.data.pulse_threshold=0;
-    settings_packet.data.pulse_on_timeout=50;
-    settings_packet.data.pulse_min_interval=15;
+    settings_packet.data.lora_threshold=20;
+    settings_packet.data.sd_power_delay=20;
+    settings_packet.data.sd_power_time=50;
+    settings_packet.data.debounce_time=15;
+    settings_packet.data.max_debounce_time=60;
 
     //check if valid settings present in eeprom 
     uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
@@ -60,16 +56,11 @@ void settings_from_downlink(void)
 {
     // perform validation
     // copy to main settings
-    settings_packet.data.system_status_interval=constrain(settings_packet_downlink.data.system_status_interval, 1, 24*60);
-    settings_packet.data.system_functions=constrain(settings_packet_downlink.data.system_functions, 0,0xff);
     settings_packet.data.lorawan_datarate_adr=constrain(settings_packet_downlink.data.lorawan_datarate_adr, 0, 0xff);
-    settings_packet.data.system_voltage_interval=constrain(settings_packet_downlink.data.system_voltage_interval, 0,0xff);
-    settings_packet.data.system_charge_min=constrain(settings_packet_downlink.data.system_charge_min, 0,0xff);
-    settings_packet.data.system_charge_max=constrain(settings_packet_downlink.data.system_charge_max, 0,0xff);
-    settings_packet.data.system_input_charge_min=constrain(settings_packet_downlink.data.system_input_charge_min, 0,0xffff);
-    settings_packet.data.pulse_on_timeout=constrain(settings_packet_downlink.data.pulse_on_timeout, 0,0xffff);
-    settings_packet.data.pulse_threshold=constrain(settings_packet_downlink.data.pulse_threshold, 0,0xff);
-    settings_packet.data.pulse_min_interval=constrain(settings_packet_downlink.data.pulse_min_interval, 0,0xffff);
+    settings_packet.data.sd_power_delay=constrain(settings_packet_downlink.data.sd_power_delay, 0,0xff);
+    settings_packet.data.sd_power_time=constrain(settings_packet_downlink.data.sd_power_time, 0,0xff);
+    settings_packet.data.debounce_time=constrain(settings_packet_downlink.data.debounce_time, 0,0xffff);
+    settings_packet.data.max_debounce_time=constrain(settings_packet_downlink.data.max_debounce_time, 0,0xffff);
 
     uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
     EEPROM.write(eeprom_settings_address,0xab);

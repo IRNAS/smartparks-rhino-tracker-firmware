@@ -10,8 +10,6 @@ unsigned long event_status_last = 0;
 unsigned long event_status_voltage_last = 0;
 statusPacket_t status_packet;
 
-extern charging_e charging_state;
-
 TimerMillis timer_pulse;
 TimerMillis timer_debounce;
 
@@ -32,7 +30,7 @@ void pulse_output_on_callback() {
     serial_debug.println("SD POWER ON");
   #endif
   // schedule a delayed pulse off to power off the SDCard
-  timer_pulse.start(pulse_output_off_callback, settings_packet.data.pulse_on_timeout * 1000);
+  timer_pulse.start(pulse_output_off_callback, settings_packet.data.sd_power_time * 1000);
   #ifdef PULSE_OUT
     digitalWrite(PULSE_OUT, HIGH);
   #endif // PULSE_OUT
@@ -46,7 +44,7 @@ void trigger_output() {
   status_send_flag = HIGH; // send LoRa message
 
   // turn on output to power the SDCard, do this delayed to give the Lora packet time to trigger and boot the RPi
-  timer_pulse.start(pulse_output_on_callback, 20 * 1000); // TODO make sd_poweron_delay a setting
+  timer_pulse.start(pulse_output_on_callback, settings_packet.data.sd_power_delay * 1000);
 }
 
 /*
@@ -77,7 +75,7 @@ void pulse_callback() {
         // Let's see if our max timeout has elapsed, this is the maximum time we will allow delaying 
         // the output trigger to prevent the output to be delayed indefinitely.
 
-        if(millis() - debounce_start > 60 * 1000) { // TODO make max_wait a setting
+        if(millis() - debounce_start > settings_packet.data.max_debounce_time * 1000) {
           #ifdef debug
             serial_debug.println("Max wait reached");
           #endif
@@ -89,15 +87,15 @@ void pulse_callback() {
             serial_debug.println("Restart debounce");
           #endif
           // Restart the timer to extend the wait delay
-          timer_debounce.restart(settings_packet.data.pulse_min_interval * 1000);
+          timer_debounce.restart(settings_packet.data.debounce_time * 1000);
         }
       } else {
         #ifdef debug
           serial_debug.println("Start debounce");
         #endif
-        // Start a timer to see and wait if more triggers will occur in pulse_min_interval
+        // Start a timer to see and wait if more triggers will occur in debounce_time
         debounce_start = millis();
-        timer_debounce.start(trigger_output, settings_packet.data.pulse_min_interval * 1000);
+        timer_debounce.start(trigger_output, settings_packet.data.debounce_time * 1000);
       }
     }
   }
@@ -108,27 +106,18 @@ void pulse_callback() {
  * 
  */
 void status_scheduler(void){
-
 #ifdef debug
 serial_debug.print("status_scheduler -( ");
-serial_debug.print("p int: ");
-serial_debug.print(settings_packet.data.pulse_min_interval);
-serial_debug.print("p thr: ");
-serial_debug.print(settings_packet.data.pulse_threshold);
-serial_debug.print(" p to: ");
-serial_debug.print(settings_packet.data.pulse_on_timeout);
-serial_debug.print(" p act: ");
+serial_debug.print("p db: ");
+serial_debug.print(settings_packet.data.debounce_time);
+serial_debug.print("p mdb: ");
+serial_debug.print(settings_packet.data.max_debounce_time);
+serial_debug.print("p to: ");
+serial_debug.print(settings_packet.data.sd_power_time);
+serial_debug.print("p act: ");
 serial_debug.print(timer_pulse.active());
 serial_debug.println(" )");
 #endif
-
-  // // TODO: For now this will be commented out
-  // as it is sending status packages, Tue 14 Jul 2020 15:54:50 CEST
-  //unsigned long elapsed = millis()-event_status_last;
-  //if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
-  //  event_status_last=millis();
-  //  status_send_flag = true;
-  //}
 }
 
 /**
@@ -137,12 +126,6 @@ serial_debug.println(" )");
  */
 void status_init(void){ 
     event_status_last=millis();
-    #ifdef debug
-        serial_debug.print("status_init - status_timer_callback( ");
-        serial_debug.print("interval: ");
-        serial_debug.print(settings_packet.data.system_status_interval);
-        serial_debug.println(" )");
-    #endif
 
 #ifdef PULSE_IN
   pinMode(PULSE_IN, INPUT_PULLDOWN);
@@ -161,13 +144,7 @@ void status_init(void){
 void status_measure_voltage(){
   float stm32l0_temp = STM32L0.getTemperature();
   float stm32l0_vdd = STM32L0.getVDDA()*1000;
-  // disable charging before measurement
-  boolean charge_disabled=LOW;
-#ifdef CHG_DISABLE
-    pinMode(CHG_DISABLE, OUTPUT);
-    digitalWrite(CHG_DISABLE, HIGH);
-#endif // CHG_DISABLE
-float stm32l0_battery = 0;
+  float stm32l0_battery = 0;
 #ifdef BAT_MON_EN
   // measure battery voltage
   pinMode(BAT_MON_EN, OUTPUT);
@@ -184,13 +161,13 @@ float stm32l0_battery = 0;
 #endif //BAT_MON_EN
 
 #ifdef debug
-    serial_debug.print("status_measure_voltage( ");
-    serial_debug.print(", battery: ");
-    serial_debug.print(stm32l0_vdd);
-    serial_debug.print(" ");
-    serial_debug.print(stm32l0_battery);
-    serial_debug.println(" )");
-  #endif
+  serial_debug.print("status_measure_voltage( ");
+  serial_debug.print(", battery: ");
+  serial_debug.print(stm32l0_vdd);
+  serial_debug.print(" ");
+  serial_debug.print(stm32l0_battery);
+  serial_debug.println(" )");
+#endif
 
   // measure input voltage
   float input_voltage = 0;
@@ -212,9 +189,6 @@ float stm32l0_battery = 0;
   }
 input_voltage=input_calib_value * input_voltage * (2500/stm32l0_vdd); // mV
 
-#ifdef CHG_DISABLE
-  switch_charging_state();
-#endif // CHG_DISABLE
 #endif
   status_packet.data.battery=(uint8_t)stm32l0_battery; // 0-5000 input, assuming 2500mV is minimum that is subtracted and then divided by 10
   status_packet.data.temperature=(uint8_t)get_bits(stm32l0_temp,-20,80,8);
@@ -230,7 +204,6 @@ boolean status_send(void){
   //assemble information
   status_measure_voltage();
   status_packet.data.system_functions_errors=status_packet.data.system_functions_errors&0b00011111;
-  status_packet.data.system_functions_errors=status_packet.data.system_functions_errors|(charging_state<<5);
 
   status_packet.data.device_id=STM32L0.getSerial(); 
 

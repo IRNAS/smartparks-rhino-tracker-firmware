@@ -88,37 +88,6 @@ boolean callbackPeriodic(void){
     serial_debug.println(millis());
   #endif*/
 
-  // voltage protection
-  long elapsed = millis()-event_voltage_last;
-  if(elapsed>=(settings_packet.data.system_voltage_interval*60*1000)){
-    event_voltage_last=millis();
-    status_measure_voltage();
-#ifdef CHG_DISABLE
-    // undervoltage charging protection
-    if(charging_state==DISABLED){
-      charging_state=DISABLED;
-    }
-    else if(status_packet.data.input_voltage<settings_packet.data.system_input_charge_min){
-      charging_state=UNDERVOLTAGE;
-    }
-    else{
-      // cycle charging between two thresholds for battery voltage
-      if((status_packet.data.battery>settings_packet.data.system_charge_max) && settings_packet.data.system_charge_max>0){
-        // disable charging as voltage is greater then threshold
-        charging_state=CYCLE_DISCHARGE;
-      }
-      /// cycle charging between two thresholds for battery voltage
-      else if((status_packet.data.battery<settings_packet.data.system_charge_min) && settings_packet.data.system_charge_min>0){
-        // disable charging as voltage is greater then threshold
-        charging_state=CYCLE_CHARGE;
-      }
-      else if((charging_state!=CYCLE_CHARGE) & (charging_state!=CYCLE_DISCHARGE)){
-        charging_state=CHARGE;
-      }
-    }
-    switch_charging_state();
-#endif // CHG_DISABLE
-  }
   // determine which events need to be scheduled, except in hibernation
   if(state!=HIBERNATION){
     status_scheduler();
@@ -338,13 +307,6 @@ void loop() {
         serial_debug.println("ERROR(accel)");
       }
     #endif
-    // check if charging is enabled at all
-    if(bitRead(settings_packet.data.system_functions,7)==0){
-      charging_state=DISABLED;
-    }
-    else {
-      charging_state=CHARGE;
-    }
 
     status_send_flag = false;
     settings_send_flag = false;
