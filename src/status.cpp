@@ -13,14 +13,18 @@ statusPacket_t status_packet;
 extern charging_e charging_state;
 
 TimerMillis timer_pulse;
+TimerMillis timer_debounce;
 
 LIS2DW12CLASS lis;
 
 boolean pulse_state = LOW;
-uint8_t pulse_counter = 0;
-unsigned long pulse_last_time = 0;
+unsigned long debounce_start = 0;
 
-void pulse_output_off_callback(){
+void debounce_callback() {
+  trigger_output();
+}
+
+void pulse_output_off_callback() {
   #ifdef debug
     serial_debug.println("SD POWER OFF");
   #endif
@@ -29,7 +33,7 @@ void pulse_output_off_callback(){
   #endif // PULSE_OUT
 }
 
-void pulse_output_on_callback(){
+void pulse_output_on_callback() {
   #ifdef debug
     serial_debug.println("SD POWER ON");
   #endif
@@ -40,15 +44,21 @@ void pulse_output_on_callback(){
   #endif // PULSE_OUT
 }
 
+void trigger_output() {
+  #ifdef debug
+    serial_debug.println("Trigger output");
+  #endif
+  
+  status_send_flag = HIGH; // send LoRa message
+
+  // turn on output to power the SDCard, do this delayed to give the Lora packet time to trigger and boot the RPi
+  timer_pulse.start(pulse_output_on_callback, 20 * 1000); // TODO make sd_poweron_delay a setting
+}
+
 /*
-pulse callback does the following
-- count up the pulse counter on every rising edge
-- when a number of pulses is reached, trigger sending a message
-- on falling edge determine what to do
-- if minimal interval between output pulses conditions is OK, then create an output pulse of specified length
-- if a pulse occurs during this, count up and do nothing
+pulse callback
 */
-void pulse_callback(){
+void pulse_callback() {
   pulse_state = digitalRead(PULSE_IN);
   uint32_t start_of_pulse = millis();
 
@@ -65,33 +75,27 @@ void pulse_callback(){
   // Only set send flag, if duration of pulse is longer 1900 ms, this will
   // filter out all pulses that were not result of detected PIR activity
   if(status_packet.data.duration_of_pulse > 1900){
-    pulse_counter++;
-
-    boolean trigger_output = pulse_last_time == 0; // On first pulse always trigger the output
-
-    // if number of pulses threshold has been reached, trigger output
-    if(settings_packet.data.pulse_threshold > 0 && pulse_counter >= settings_packet.data.pulse_threshold){
-      // do output
-      trigger_output = true;
-    }
-
-    // if enough has passed since last pulse
-    uint32_t pulse_interval = millis() - pulse_last_time;
     
-    if(pulse_interval >= (settings_packet.data.pulse_min_interval * 1000)){
-      // do output
-      trigger_output = true;
-    }
-    
-    // When we actually want to trigger but the timer is running, then skip the trigger because have already triggered recently.
-    if (trigger_output && !timer_pulse.active()) {
-      pulse_last_time = millis();
-      pulse_counter = 0;
-      // send LoRa message
-      status_send_flag = HIGH;
+    // When power on the sd card is on (or waiting to turn on) skip this trigger
+    if (!timer_pulse.active()) {
+      if(timer_debounce.active()) {
+        // Debounce timer is already running.
+        // Let's see if our max timeout has elapsed, this is the maximum time we will allow delaying 
+        // the output trigger to prevent the output to be delayed indefinitely.
 
-      // turn on output to power the SDCard, do this delayed to give the Lora packet time to trigger and boot the RPi
-      timer_pulse.start(pulse_output_on_callback, 20 * 1000);
+        if(millis() - debounce_start > 300 * 1000) { // TODO make max_wait a setting
+          // Maximum wait time has been reached, trigger the output immediately
+          timer_debounce.stop();
+          trigger_output();
+        } else {
+          // Restart the timer to extend the wait delay
+          timer_debounce.restart(settings_packet.data.pulse_min_interval * 1000);
+        }
+      } else {
+        // Start a timer to see and wait if more triggers will occur in pulse_min_interval
+        debounce_start = millis();
+        timer_debounce.start(debounce_callback, settings_packet.data.pulse_min_interval * 1000);
+      }
     }
   }
 }
