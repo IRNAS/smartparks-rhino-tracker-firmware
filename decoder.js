@@ -104,7 +104,6 @@ function Decoder(bytes) {
     decoded.gps_time = bytes[18] | (bytes[19] << 8) | (bytes[20] << 16) | (bytes[21] << 24);
     var d= new Date(decoded.gps_time*1000);
     decoded.gps_time_decoded = d.toLocaleString();
-    decoded.pulse_counter = bytes[22];
   }
   else if (port === 1) {
     decoded.lat = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];

@@ -47,7 +47,7 @@ void settings_init(void){
     settings_packet.data.system_input_charge_min=10000;
     settings_packet.data.pulse_threshold=0;
     settings_packet.data.pulse_on_timeout=50;
-    settings_packet.data.pulse_min_interval=300;
+    settings_packet.data.pulse_min_interval=15;
 
     //check if valid settings present in eeprom 
     uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;

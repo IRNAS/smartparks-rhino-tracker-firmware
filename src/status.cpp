@@ -2,8 +2,8 @@
 
 uint8_t resetCause = 0xff;
 
-// #define debug
-// #define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
 
 boolean status_send_flag = false;
 unsigned long event_status_last = 0;
@@ -19,10 +19,6 @@ LIS2DW12CLASS lis;
 
 boolean pulse_state = LOW;
 unsigned long debounce_start = 0;
-
-void debounce_callback() {
-  trigger_output();
-}
 
 void pulse_output_off_callback() {
   #ifdef debug
@@ -83,18 +79,27 @@ void pulse_callback() {
         // Let's see if our max timeout has elapsed, this is the maximum time we will allow delaying 
         // the output trigger to prevent the output to be delayed indefinitely.
 
-        if(millis() - debounce_start > 300 * 1000) { // TODO make max_wait a setting
+        if(millis() - debounce_start > 60 * 1000) { // TODO make max_wait a setting
+          #ifdef debug
+            serial_debug.println("Max wait reached");
+          #endif
           // Maximum wait time has been reached, trigger the output immediately
           timer_debounce.stop();
           trigger_output();
         } else {
+          #ifdef debug
+            serial_debug.println("Restart debounce");
+          #endif
           // Restart the timer to extend the wait delay
           timer_debounce.restart(settings_packet.data.pulse_min_interval * 1000);
         }
       } else {
+        #ifdef debug
+          serial_debug.println("Start debounce");
+        #endif
         // Start a timer to see and wait if more triggers will occur in pulse_min_interval
         debounce_start = millis();
-        timer_debounce.start(debounce_callback, settings_packet.data.pulse_min_interval * 1000);
+        timer_debounce.start(trigger_output, settings_packet.data.pulse_min_interval * 1000);
       }
     }
   }
@@ -237,7 +242,6 @@ boolean status_send(void){
   status_packet.data.accely=(uint8_t)get_bits(axis.y_axis,-2000,2000,8);
   status_packet.data.accelz=(uint8_t)get_bits(axis.z_axis,-2000,2000,8);
   status_packet.data.device_id=STM32L0.getSerial(); 
-  status_packet.data.pulse_count=pulse_counter;
 
   // increment prior to sending if valid data is there
   if(0!=status_packet.data.lat1){

@@ -46,7 +46,6 @@ struct statusData_t{
   uint16_t input_voltage;
   uint16_t gps_on_time_total;
   uint32_t gps_time;
-  uint8_t pulse_count;
   uint32_t duration_of_pulse;   
   uint64_t device_id;   
   uint8_t none;                 // Used to align struct to 16 bit (32?) boundary
