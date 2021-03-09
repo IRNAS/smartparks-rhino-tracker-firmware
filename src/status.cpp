@@ -95,7 +95,11 @@ void pulse_callback() {
         #endif
         // Start a timer to see and wait if more triggers will occur in debounce_time
         debounce_start = millis();
-        timer_debounce.start(trigger_output, settings_packet.data.debounce_time * 1000);
+        if (settings_packet.data.debounce_time <= 0) {
+          trigger_output();
+        } else {
+          timer_debounce.start(trigger_output, settings_packet.data.debounce_time * 1000);
+        }
       }
     }
   }

@@ -9,7 +9,6 @@
 #include <TimerMillis.h>
 #include "board.h"
 #include "status.h"
-#include "rf_testing.h"
 #include "stm32l0_eeprom.h"
 
 extern boolean lorawan_send_successful;

@@ -260,15 +260,6 @@ void lorawan_receiveCallback(void)
               settings_from_downlink();
           }
       }
-      //handle rf testing
-      if(LoRaWAN.remotePort()==rf_vswr_port){
-          //check if length is correct
-          if(size==sizeof(rf_settingsData_t)){
-              // now the settings can be copied into the structure
-              memcpy(&rf_settings_packet.bytes[0],&data, sizeof(rf_settingsData_t));
-              rf_send_flag=true;
-          }
-      }
       //handle commands
       if(LoRaWAN.remotePort()==command_get_packet_port()){
           //check if length is correct, single byte expected

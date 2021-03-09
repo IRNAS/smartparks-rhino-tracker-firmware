@@ -18,7 +18,6 @@ extern boolean settings_updated;
  */
 struct settingsData_t{
   uint8_t   lorawan_datarate_adr;
-  uint8_t   lora_threshold; // Minimum incoming LoRa siganl threshold values, to limit the range of incoming loRa messages
   uint8_t   sd_power_delay; // After which delay we will power on the WiFi SD Card (in seconds)
   uint8_t   sd_power_time; // How long the power to the SD Card will be turned on (in seconds)
   uint16_t  debounce_time; // How long to wait for additional images after the first detection (in seconds)
