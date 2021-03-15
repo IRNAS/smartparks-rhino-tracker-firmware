@@ -26,10 +26,10 @@ uint8_t settings_get_packet_port(void){
 void settings_init(void){
     //default settings
     settings_packet.data.lorawan_datarate_adr=3;
-    settings_packet.data.sd_power_delay=20;
-    settings_packet.data.sd_power_time=50;
-    settings_packet.data.debounce_time=0;
-    settings_packet.data.max_debounce_time=60;
+    settings_packet.data.sd_power_delay=30;
+    settings_packet.data.sd_power_time=40;
+    settings_packet.data.debounce_time=15;
+    settings_packet.data.max_debounce_time=0;
 
     //check if valid settings present in eeprom 
     uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
