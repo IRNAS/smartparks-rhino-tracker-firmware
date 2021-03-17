@@ -7,7 +7,6 @@
 #include "project_utils.h"
 #include "settings.h"
 #include "board.h"
-#include "LIS2DW12.h"
 
 extern boolean status_send_flag;
 
@@ -20,33 +19,13 @@ extern boolean status_send_flag;
  * battery - battery status in %
  * temperature - temperature
  * vbus - voltage
- * system_functions_errors - errors of different modules, only applicable if respective module is enabled
- *    bit 0 - gps periodic error
- *    bit 1 - gps triggered error
- *    bit 2 - gps fix error
- *    bit 3 - accelerometer error
- *    bit 4 - light sensor error
- *    bit 5-7 - charging
  */
 struct statusData_t{
   uint8_t resetCause; // reset cause lower 3 bits, state timeout upper 5 bits
   uint8_t battery;
   uint8_t temperature;
   uint8_t system_functions_errors;
-  uint8_t lat1;
-  uint8_t lat2;
-  uint8_t lat3;
-  uint8_t lon1;
-  uint8_t lon2;
-  uint8_t lon3;
-  uint8_t gps_resend;
-  uint8_t accelx;
-  uint8_t accely;
-  uint8_t accelz;
   uint16_t input_voltage;
-  uint16_t gps_on_time_total;
-  uint32_t gps_time;
-  uint8_t pulse_count;
   uint32_t duration_of_pulse;   
   uint64_t device_id;   
   uint8_t none;                 // Used to align struct to 16 bit (32?) boundary
@@ -62,9 +41,6 @@ extern statusPacket_t status_packet;
 
 void status_scheduler(void);
 void status_init(void);
-void status_measure_voltage(void);
 boolean status_send(void);
-void status_accelerometer_init(void);
-accel_data status_accelerometer_read(void);
 
 #endif
