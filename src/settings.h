@@ -22,6 +22,7 @@ struct settingsData_t{
   uint8_t   sd_power_time; // How long the power to the SD Card will be turned on (in seconds)
   uint16_t  debounce_time; // How long to wait for additional images after the first detection (in seconds)
   uint16_t  max_debounce_time; // Maximum amount of time to wait for new images (in seconds)
+  uint16_t  event_interval; // Amount of time to wait after the last trigger (in seconds)
 }__attribute__((packed));
 
 union settingsPacket_t{

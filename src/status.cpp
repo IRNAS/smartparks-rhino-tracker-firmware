@@ -15,8 +15,10 @@ TimerMillis timer_debounce;
 
 boolean pulse_state = LOW;
 unsigned long debounce_start = 0;
+unsigned long last_trigger_end = 0;
 
 void pulse_output_off_callback() {
+  last_trigger_end = millis();
 #ifdef debug
   serial_debug.println("SD POWER OFF");
 #endif
@@ -96,16 +98,19 @@ void pulse_callback() {
           timer_debounce.restart(settings_packet.data.debounce_time * 1000);
         }
       } else {
+        // First lets see if the event interval has elapsed already before triggering
+        if (last_trigger_end == 0 || (millis() - last_trigger_end) >= (settings_packet.data.event_interval * 1000)) {
+          // Start a timer to see and wait if more triggers will occur in
+          // debounce_time
+          debounce_start = millis();
+          if (settings_packet.data.debounce_time <= 0) {
+            trigger_output();
+          } else {
 #ifdef debug
-        serial_debug.println("Start debounce");
+            serial_debug.println("Start debounce");
 #endif
-        // Start a timer to see and wait if more triggers will occur in
-        // debounce_time
-        debounce_start = millis();
-        if (settings_packet.data.debounce_time <= 0) {
-          trigger_output();
-        } else {
-          timer_debounce.start(trigger_output, settings_packet.data.debounce_time * 1000);
+            timer_debounce.start(trigger_output, settings_packet.data.debounce_time * 1000);
+          }
         }
       }
     }

@@ -28,8 +28,9 @@ void settings_init(void){
     settings_packet.data.lorawan_datarate_adr=3;
     settings_packet.data.sd_power_delay=30;
     settings_packet.data.sd_power_time=40;
-    settings_packet.data.debounce_time=15;
-    settings_packet.data.max_debounce_time=0;
+    settings_packet.data.debounce_time=60;
+    settings_packet.data.max_debounce_time=60 * 5;
+    settings_packet.data.event_interval=60 * 5;
 
     //check if valid settings present in eeprom 
     uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
@@ -60,6 +61,7 @@ void settings_from_downlink(void)
     settings_packet.data.sd_power_time=constrain(settings_packet_downlink.data.sd_power_time, 0,0xff);
     settings_packet.data.debounce_time=constrain(settings_packet_downlink.data.debounce_time, 0,0xffff);
     settings_packet.data.max_debounce_time=constrain(settings_packet_downlink.data.max_debounce_time, 0,0xffff);
+    settings_packet.data.event_interval=constrain(settings_packet_downlink.data.event_interval, 0,0xffff);
 
     uint8_t eeprom_settings_address = EEPROM_DATA_START_SETTINGS;
     EEPROM.write(eeprom_settings_address,0xab);
