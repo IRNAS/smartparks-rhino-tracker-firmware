@@ -208,7 +208,11 @@ void lorawan_joinCallback(void)
       #ifdef debug
         serial_debug.println("JOINED");
       #endif
+      // TTN specific implementation for ABP
+      // Do not define this for the OTAA version to make it more compatible
+      #ifndef VER2_3_LION_OTAA
       LoRaWAN.setRX2Channel(869525000, 3); // SF12 - 0 for join, then SF 9 - 3, see https://github.com/TheThingsNetwork/ttn/issues/155
+      #endif
     }
     else
     {

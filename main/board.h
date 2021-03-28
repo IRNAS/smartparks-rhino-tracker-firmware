@@ -1,11 +1,11 @@
 #ifndef BOARD_H_
 #define BOARD_H_
 
-#define FW_VERSION_MAJOR 0
-#define FW_VERSION_MINOR 0
+#define FW_VERSION_MAJOR 3
+#define FW_VERSION_MINOR 3
 // upper byte is major, lower is minor
 
-#define VER2_2_4_RHINO
+#define VER2_3_DROPOFF
 
 
 // lion
@@ -177,7 +177,7 @@
 #endif
 
 // lion
-#ifdef VER2_3_LION
+#if defined(VER2_3_LION) || defined(VER2_3_LION_OTAA)
     #define LED_RED PA0
     #define VSWR_ADC PA3
     #define BAT_MON PA4

@@ -24,7 +24,7 @@ compile_output = os.popen(command_sed).read()
 firmware_compile = "arduino-cli compile --fqbn IRNAS:stm32l0:IRNAS-env-module-L072Z main --output-dir "
 path = "build"
 firmware_name = "smartparks-rhino-tracker-firmware"
-board_list = {"VER2_3_DROPOFF","VER2_3_FENCE","VER2_3_LION","VER2_2_4_RHINO"}
+board_list = {"VER2_3_DROPOFF","VER2_3_FENCE","VER2_3_LION","VER2_2_4_RHINO","VER2_3_LION_OTAA"}
 
 for board in board_list:
     command=firmware_compile+path
@@ -35,6 +35,7 @@ for board in board_list:
         print("Compile successful: "+ board)
     else:
         print("Compile failed: "+ board)
+        sys.exit(1) # Exit with error to fail automatic build
 
     # rename and move all files to the format
     filename = firmware_name+"-"+firmware_version+"-"+board

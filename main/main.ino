@@ -212,8 +212,10 @@ bool state_check_timeout(void){
  */
 void setup() {
   //STM32L0.deepsleep(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
-  // Watchdog
+  // Watchdog - disavble only for OTA code
+  #ifndef VER2_3_LION_OTAA
   STM32L0.wdtEnable(18000);
+  #endif
   analogReadResolution(12);
 
   pinMode(LED_RED,OUTPUT);
@@ -337,6 +339,12 @@ void loop() {
       state_timeout_duration=24*60*60*1000;
     }
     state_goto_timeout=LORAWAN_JOIN_START;
+
+    checkReed();
+    if(reed_switch){
+      // Resets the system, upon boot it should go to hibernation
+      STM32L0.reset();
+    }
     // transition
     if(lorawan_joined()){
       state_transition(GENERAL_INIT);
