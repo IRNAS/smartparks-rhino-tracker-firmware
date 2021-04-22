@@ -10,25 +10,13 @@
 #include "rf_testing.h"
 #include "wiring_private.h"
 
-// #define debug
-// #define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
 
 // Initialize timer for periodic callback
 // TimerMillis periodic;
 GNSSLocation gps_location;
 GNSSSatellites gps_satellites;
-
-/**
- * @brief called upon pin change
- * 
- */
-void accelerometer_callback(void){
-  /*#ifdef debug
-    serial_debug.print("gps_accelerometer_callback(");
-    serial_debug.println(")");
-  #endif*/
-  gps_accelerometer_interrupt();
-}
 
 // Variable to track the reed switch status
 bool reed_switch = false;
@@ -105,6 +93,7 @@ boolean callbackPeriodic(void){
   //periodic.start(callbackPeriodic, 5000);
   STM32L0.wdtReset();
   
+    serial_debug.println("PERIODIC");
   /*#ifdef debug
     serial_debug.print("wdt(): ");
     serial_debug.println(millis());
@@ -144,7 +133,6 @@ boolean callbackPeriodic(void){
   // determine which events need to be scheduled, except in hibernation
   if(state!=HIBERNATION){
     status_scheduler();
-    gps_scheduler();
   }
   else{
     gps_send_flag = false;
@@ -221,13 +209,6 @@ void setup() {
   // TODO add it back if needed in field   
   //DTC_Initialize(STM32L0_GPIO_PIN_PB12, 1, STM32L0_GPIO_PIN_NONE, 0b0);
 
-  pinMode(LED_RED,OUTPUT);
-  digitalWrite(LED_RED,HIGH);
-  delay(200);
-  digitalWrite(LED_RED,LOW);
-
-  pinMode(A_INT2, INPUT);
-  attachInterrupt(digitalPinToInterrupt(A_INT2),accelerometer_callback,CHANGE);
 
   // Serial port debug setup
   #ifdef serial_debug
@@ -238,16 +219,6 @@ void setup() {
     serial_debug.print("resetCause: ");
     serial_debug.println(STM32L0.resetCause(),HEX);
   #endif
-
-  pinMode(PIN_WIRE_SCL,INPUT);
-  delay(100);
-  if(digitalRead(PIN_WIRE_SCL)==LOW){
-    //no I2C pull-up detected
-    bitSet(status_packet.data.system_functions_errors,3);
-    #ifdef debug
-      serial_debug.println("ERROR(i2c)");
-    #endif
-  }
 
   // start the FSM with LoraWAN init
   // setup default settings
@@ -357,29 +328,12 @@ void loop() {
     state_goto_timeout=IDLE;
     // setup default settings
     status_init(); // currently does not report a fail, should not be possible anyhow
-    // Accelerometer
-    //accelerometer_init();
-    status_accelerometer_init(); 
+
     #ifdef debug
       if(bitRead(status_packet.data.system_functions_errors,3)){
         serial_debug.println("ERROR(accel)");
       }
     #endif
-    /*
-    gps_test_result = gps_test();
-    #ifdef debug
-      if(gps_test_result==false){
-        serial_debug.println("ERROR(gps)");
-      }
-    #endif        
-    */
-    // check if charging is enabled at all
-    if(bitRead(settings_packet.data.system_functions,7)==0){
-      charging_state=DISABLED;
-    }
-    else {
-      charging_state=CHARGE;
-    }
 
     status_send_flag = false;
     settings_send_flag = false;
@@ -390,16 +344,11 @@ void loop() {
     // defaults for timing out
     state_timeout_duration=25*60*60*1000; // 25h maximum
     state_goto_timeout=INIT;
-    // LED diode
-    //digitalWrite(LED_RED,LOW);
-    // send settings immediately when requested
+
     if(settings_send_flag){
       state_transition(SETTINGS_SEND);
       break;
     }
-    // force-disable GPS as the safety - this should really not ever be needed
-    gps_power(false);
-    
     checkReed();
     if(reed_switch){
       // Resets the system, expect goign straight to Hiberantion

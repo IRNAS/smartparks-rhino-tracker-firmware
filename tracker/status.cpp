@@ -2,8 +2,8 @@
 
 uint8_t resetCause = 0xff;
 
-// #define debug
-// #define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
 
 boolean status_send_flag = false;
 unsigned long event_status_last = 0;
@@ -52,14 +52,16 @@ void pulse_callback(){
   pulse_state = digitalRead(PULSE_IN);
   uint32_t start_of_pulse = millis();
 
+  serial_debug.print("PULSE START: ");
   while(digitalRead(PULSE_IN) == 1);
   uint32_t end_of_pulse = millis();
+  serial_debug.print("PULSE END: ");
   
   status_packet.data.duration_of_pulse = (end_of_pulse - start_of_pulse);
   
   #ifdef debug
-    Serial.print("PULSE DETECTED: ");
-    Serial.println(status_packet.data.duration_of_pulse);
+    serial_debug.print("PULSE DETECTED: ");
+    serial_debug.println(status_packet.data.duration_of_pulse);
   #endif
 
   // Only set send flag, if duration of pulse is longer 1900 ms, this will
@@ -88,6 +90,8 @@ void pulse_callback(){
       pulse_last_time = millis();
       pulse_counter = 0;
       // send LoRa message
+
+        serial_debug.print("SENDING PULSE");
       status_send_flag = HIGH;
 
       // turn on output to power the SDCard, do this delayed to give the Lora packet time to trigger and boot the RPi
@@ -117,11 +121,12 @@ serial_debug.println(" )");
 
   // // TODO: For now this will be commented out
   // as it is sending status packages, Tue 14 Jul 2020 15:54:50 CEST
-  //unsigned long elapsed = millis()-event_status_last;
-  //if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
-  //  event_status_last=millis();
-  //  status_send_flag = true;
-  //}
+  unsigned long elapsed = millis()-event_status_last;
+  if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
+   event_status_last=millis();
+   status_send_flag = true;
+    serial_debug.println(" SEND FLAG ON");
+  }
 }
 
 /**
@@ -130,7 +135,6 @@ serial_debug.println(" )");
  */
 void status_init(void){ 
     event_status_last=millis();
-    status_accelerometer_init();
     #ifdef debug
         serial_debug.print("status_init - status_timer_callback( ");
         serial_debug.print("interval: ");

@@ -9,3 +9,4 @@ build
 *.elf
 *.dfu
 tags
+compile_commands.json

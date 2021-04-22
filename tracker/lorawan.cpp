@@ -1,16 +1,16 @@
 #include "lorawan.h"
 #include "avr/eeprom.h"
 
-//#define debug
-//#define serial_debug  Serial
+#define debug
+#define serial_debug  Serial
 
 // All keys are provisionted to memory with special firmware.
 
 // This is FALLBACK only:
 // LoraWAN ABP configuration - Keys are stored in program memory - this is fallback
-const char *devAddr = "26011D63";
-const char *nwkSKey = "9518E9E68D1476BC3386409B76476208";
-const char *appSKey = "7972E2A484F76EF7B579D641D0BFEBD5";
+const char *devAddr = "260112AB";
+const char *nwkSKey = "F32C89CBFCD382236E7374AC6ACF1004";
+const char *appSKey = "BF5EE6818B123E783F5736F8183E95C5";
 
 boolean lorawan_send_successful = false; // flags sending has been successful to the FSM
 
@@ -48,6 +48,7 @@ boolean lorawan_init(void){
   LoRaWAN.setSaveSession(true); // this will save the session for reboot, useful if reboot happens with in poor signal conditons
   int join_success=0;
 
+    return LoRaWAN.joinABP(devAddr, nwkSKey, appSKey);
   //#ifdef LORAWAN_OTAA
   //Get the device ID
   //LoRaWAN.getDevEui(devEui, 18);
