@@ -48,7 +48,6 @@ boolean lorawan_init(void){
   LoRaWAN.setSaveSession(true); // this will save the session for reboot, useful if reboot happens with in poor signal conditons
   int join_success=0;
 
-    return LoRaWAN.joinABP(devAddr, nwkSKey, appSKey);
   //#ifdef LORAWAN_OTAA
   //Get the device ID
   //LoRaWAN.getDevEui(devEui, 18);
