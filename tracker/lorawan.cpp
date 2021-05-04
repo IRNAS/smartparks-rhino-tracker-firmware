@@ -45,9 +45,18 @@ boolean lorawan_init(void){
   LoRaWAN.onTransmit(lorawan_doneCallback);
   LoRaWAN.onReceive(lorawan_receiveCallback);
 
-  LoRaWAN.setSaveSession(true); // this will save the session for reboot, useful if reboot happens with in poor signal conditons
-  int join_success=0;
+  LoRaWAN.setSaveSession(
+      true); // this will save the session for reboot, useful if reboot happens
+             // with in poor signal conditons
+  int join_success = 0;
+  LoRaWAN.joinABP(devAddr, nwkSKey, appSKey);
+  uint8_t buff[4] = {0xde, 0xad, 0xbe, 0xef};
 
+  while (1) {
+    serial_debug.println("SEEEEND");
+    lorawan_send(5, buff, 4);
+    delay(5000);
+  }
   //#ifdef LORAWAN_OTAA
   //Get the device ID
   //LoRaWAN.getDevEui(devEui, 18);
