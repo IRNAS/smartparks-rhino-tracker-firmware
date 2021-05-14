@@ -164,13 +164,6 @@ void setup() {
   // TODO add it back if needed in field   
   //DTC_Initialize(STM32L0_GPIO_PIN_PB12, 1, STM32L0_GPIO_PIN_NONE, 0b0);
 
-  pinMode(LED_RED,OUTPUT);
-  digitalWrite(LED_RED,HIGH);
-  delay(200);
-  digitalWrite(LED_RED,LOW);
-
-  pinMode(A_INT2, INPUT);
-
   // Serial port debug setup
   #ifdef serial_debug
     serial_debug.begin(115200);
@@ -180,16 +173,6 @@ void setup() {
     serial_debug.print("resetCause: ");
     serial_debug.println(STM32L0.resetCause(),HEX);
   #endif
-
-  pinMode(PIN_WIRE_SCL,INPUT);
-  delay(100);
-  if(digitalRead(PIN_WIRE_SCL)==LOW){
-    //no I2C pull-up detected
-    bitSet(status_packet.data.system_functions_errors,3);
-    #ifdef debug
-      serial_debug.println("ERROR(i2c)");
-    #endif
-  }
 
   // start the FSM with LoraWAN init
   // setup default settings
@@ -230,7 +213,6 @@ void loop() {
     // defaults for timing out
     state_timeout_duration=0;
     state_goto_timeout=INIT;
-    // LED diode
     // setup default settings
     settings_init();
     // load settings, currently can not return an error, thus proceed directly
@@ -285,8 +267,6 @@ void loop() {
     if(lorawan_joined()){
       state_transition(GENERAL_INIT);
       lora_join_fail_count=0;
-      // LED diode
-      //digitalWrite(LED_RED,LOW);
     }
     else{
       sleep=5000;
@@ -298,8 +278,6 @@ void loop() {
     state_goto_timeout=IDLE;
     // setup default settings
     status_init(); // currently does not report a fail, should not be possible anyhow
-    // Accelerometer
-    //accelerometer_init();
     #ifdef debug
       if(bitRead(status_packet.data.system_functions_errors,3)){
         serial_debug.println("ERROR(accel)");
@@ -315,8 +293,6 @@ void loop() {
     // defaults for timing out
     state_timeout_duration=25*60*60*1000; // 25h maximum
     state_goto_timeout=INIT;
-    // LED diode
-    //digitalWrite(LED_RED,LOW);
     // send settings immediately when requested
     if(settings_send_flag){
       state_transition(SETTINGS_SEND);
