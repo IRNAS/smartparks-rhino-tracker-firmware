@@ -15,6 +15,13 @@ This device is a power-efficeint GPS tracker sending data via LoraWAN. There are
  * `status+gps - port 12` - device status message being sent with the specified `status_interval` in minutes - recommended to do this every 24h, combined with last gps position. Particularly useful if gps fix interval is longer then the status interval.
  * `gps log` - 
 
+## Secrets
+Put the LoRa keys in `secrets.h` file
+
+    #define RELAY_NETWORKKEY "..."
+    #define RELAY_APPKEY "..."
+    #define RELAY_DEVICEADDRESS "..."
+
 ## Reed switch
 The magnetic REED switch is put in place to put the device in hibernation for transport purposes or prior to installation. Removing the magnet will initialize the operation in 60s of removing it. Note that putting the device in hibernation performs a system reset and forces an OTAA rejoin if that mode is programmed.
 

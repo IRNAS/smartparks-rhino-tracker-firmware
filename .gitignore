@@ -3,9 +3,11 @@
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/arduino.json
 /src/test/build/*
 scatter-mode.html
 build
 *.elf
 *.dfu
 tags
+secrets.h
