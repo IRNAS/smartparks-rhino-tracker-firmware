@@ -2,8 +2,8 @@
 
 uint8_t resetCause = 0xff;
 
-#define debug
-#define serial_debug Serial
+// #define debug
+// #define serial_debug Serial
 
 boolean status_send_flag = false;
 unsigned long event_status_last = 0;

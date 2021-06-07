@@ -8,8 +8,8 @@
 #include "project_utils.h"
 #include "wiring_private.h"
 
-#define debug
-#define serial_debug  Serial
+// #define debug
+// #define serial_debug  Serial
 
 // Variable to track the reed switch status
 bool reed_switch = false;
