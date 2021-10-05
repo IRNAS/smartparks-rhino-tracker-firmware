@@ -2,6 +2,12 @@ import json
 import struct
 import argparse
 
+"""
+Run with `python3 encoder_settings_json.py [--test]`.
+--test is an optional parameter which specifies whether to test the new version of encoder against the old js version of the encoder.
+WARNING: This might slow things down substantially.
+"""
+
 """Set values"""
 data = {}
 data['system_status_interval'] = 5
@@ -263,3 +269,6 @@ if args.test:
         print(f"Encoded payload: {binary.hex()}")
     else:
         print(f"Encoded payload {list(binary)} does not match encoded payload from previous version of the encoder: {list(js_encoder_output)}")
+else:
+    print(f"WARNING: Payload not verified with old version of encoder!")
+    print(f"Encoded payload: {binary.hex()}")
