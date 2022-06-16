@@ -5,7 +5,7 @@
 #define FW_VERSION_MINOR 3
 // upper byte is major, lower is minor
 
-#define VER2_3_DROPOFF
+#define VER2_3_LION_OTAA
 
 
 // lion
