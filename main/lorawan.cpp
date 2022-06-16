@@ -5,13 +5,9 @@
 //#define debug
 //#define serial_debug  Serial
 
-// All keys are provisionted to memory with special firmware.
-
-// This is FALLBACK only:
-// LoraWAN ABP configuration - Keys are stored in program memory - this is fallback
-const char *devAddr = "26011D63";
-const char *nwkSKey = "9518E9E68D1476BC3386409B76476208";
-const char *appSKey = "7972E2A484F76EF7B579D641D0BFEBD5";
+const char *appEui = "0101010101010101";
+const char *appKey = "2B7E151628AED2A6ABF7158809CF4F3C";
+const char *devEui = "0101010101010101";
 
 boolean lorawan_send_successful = false; // flags sending has been successful to the FSM
 unsigned long uplink_counter_tracker = 0; // variable to track uplink counter
@@ -45,16 +41,14 @@ boolean lorawan_init(void){
   LoRaWAN.onTransmit(lorawan_doneCallback);
   LoRaWAN.onReceive(lorawan_receiveCallback);
 
-  LoRaWAN.setSaveSession(true); // this will save the session for reboot, useful if reboot happens with in poor signal conditons
-  int join_success=0;
+  LoRaWAN.setSaveSession(false); // rejoin onr eboot
 
   //#ifdef LORAWAN_OTAA
   //Get the device ID
-  //LoRaWAN.getDevEui(devEui, 18);
-  //LoRaWAN.setLinkCheckLimit(48); // number of uplinks link check is sent, 5 for experimenting, 48 otherwise
-  //LoRaWAN.setLinkCheckDelay(4); // number of uplinks waiting for an answer, 2 for experimenting, 4 otherwise
-  //LoRaWAN.setLinkCheckThreshold(4); // number of times link check fails to assert link failed, 1 for experimenting, 4 otherwise
-  //LoRaWAN.joinOTAA(appEui, appKey, devEui);
+  LoRaWAN.setLinkCheckLimit(48); // number of uplinks link check is sent, 5 for experimenting, 48 otherwise
+  LoRaWAN.setLinkCheckDelay(4); // number of uplinks waiting for an answer, 2 for experimenting, 4 otherwise
+  LoRaWAN.setLinkCheckThreshold(4); // number of times link check fails to assert link failed, 1 for experimenting, 4 otherwise
+  LoRaWAN.joinOTAA(appEui, appKey, devEui);
 
   //check stored keys to figure out what mode the device is configured in
   
@@ -68,7 +62,7 @@ boolean lorawan_init(void){
     uint8_t  AppSKey[16];
     uint32_t Crc32;
 } LoRaWANCommissioning;*/
-
+/*
   uint8_t key = 0;
   for(uint32_t i=0;i<8;i++){
     key|=EEPROM.read(EEPROM_OFFSET_COMMISSIONING+4+i);
@@ -102,7 +96,7 @@ boolean lorawan_init(void){
   if(0==join_success){
     return LoRaWAN.joinABP(devAddr, nwkSKey, appSKey);
   }
-
+*/
   return true;
 }
 
