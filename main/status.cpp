@@ -17,7 +17,7 @@ TimerMillis timer_pulse_off;
 
 LIS2DW12CLASS lis;
 
-Adafruit_ADS1015 ads;     /* Use thi for the 12-bit version */
+// Adafruit_ADS1015 ads;     /* Use thi for the 12-bit version */
 
 boolean pulse_state = LOW;
 unsigned long pulse_last_time = 0;
@@ -157,7 +157,7 @@ void status_init(void){
   pinMode(DROP_EN, OUTPUT);
   digitalWrite(DROP_EN,LOW);
 
-  ads.begin();
+  // ads.begin();
 
 #endif //DROP_CHG DROP_EN
 
@@ -458,8 +458,8 @@ delay(3000);
 
   int16_t capacitor, charge;
 
-  capacitor = ads.readADC_SingleEnded(0);//*3;
-  charge = ads.readADC_SingleEnded(1);//*3*1.846;
+  //capacitor = ads.readADC_SingleEnded(0);//*3;
+  //charge = ads.readADC_SingleEnded(1);//*3*1.846;
 
   #ifdef debug
   serial_debug.print("capacitor mv: "); serial_debug.println(capacitor);
@@ -473,8 +473,8 @@ delay(3000);
   unsigned long start = millis();
   // charge for 600s or less if voltage is reached sooner
   while(millis()<(start+(600000))){
-    capacitor = ads.readADC_SingleEnded(0)*3;
-    charge = ads.readADC_SingleEnded(1)*3*1.846;
+    //capacitor = ads.readADC_SingleEnded(0)*3;
+    //charge = ads.readADC_SingleEnded(1)*3*1.846;
     #ifdef debug
     serial_debug.print("capacitor mv: "); serial_debug.println(capacitor);
     serial_debug.print("charge mv: "); serial_debug.println(charge);
@@ -501,7 +501,7 @@ delay(3000);
   STM32L0.deepsleep(500); // sleep for 100ms
 
   while(millis()<(start+10000)){
-    capacitor = ads.readADC_SingleEnded(0)*3;
+    //capacitor = ads.readADC_SingleEnded(0)*3;
     #ifdef debug
     serial_debug.print("capacitor mv: "); serial_debug.println(capacitor);
     #endif

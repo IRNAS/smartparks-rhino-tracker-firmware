@@ -9,7 +9,7 @@
 #include "settings.h"
 #include "board.h"
 #include "LIS2DW12.h"
-#include <Adafruit_ADS1015.h>
+// #include <Adafruit_ADS1015.h>
 
 
 extern boolean status_send_flag;
